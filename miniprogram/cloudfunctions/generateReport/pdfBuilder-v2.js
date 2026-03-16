@@ -76,6 +76,66 @@ function drawSectionTitle(doc, title) {
   doc.y += 20;
 }
 
+function renderRedLines(doc, redLines) {
+  const rl = redLines || {};
+  const forbidden = Array.isArray(rl.forbidden) ? rl.forbidden : [];
+  const safetyItems = Array.isArray(rl.safetyItems) ? rl.safetyItems : [];
+  const conflictNotes = Array.isArray(rl.conflictNotes) ? rl.conflictNotes : [];
+
+  const boxY = doc.y;
+  const linesCount = forbidden.length + safetyItems.length + conflictNotes.length;
+  const boxH = 18 + linesCount * 17 + (safetyItems.length > 0 ? 20 : 0) + (conflictNotes.length > 0 ? 16 : 0) + 10;
+
+  doc.rect(55, boxY, 5, boxH).fill(COLORS.risk_red);
+  doc.rect(60, boxY, 480, boxH).fill(COLORS.risk_red_bg);
+
+  let y = boxY + 10;
+  const X = 69;
+
+  doc.fillColor(COLORS.risk_red).fontSize(14)
+    .text("明确禁止项（违反即视为方案不合格）", X, y);
+  y += 18;
+
+  forbidden.forEach((item) => {
+    doc.fillColor(COLORS.risk_red).fontSize(11)
+      .text("✗ ", X, y, { continued: true });
+    doc.fillColor(COLORS.text_body).fontSize(11)
+      .text(String(item || ""), { width: 458 });
+    y += 16;
+  });
+
+  if (safetyItems.length > 0) {
+    y += 6;
+    doc.fillColor(COLORS.risk_red).fontSize(11)
+      .text("◆ 安全专项条款", X, y);
+    y += 16;
+
+    safetyItems.forEach((item) => {
+      doc.fillColor(COLORS.risk_red).fontSize(11)
+        .text("◆ ", X, y, { continued: true });
+      doc.fillColor(COLORS.text_body).fontSize(11)
+        .text(String(item || ""), { width: 458 });
+      y += 16;
+    });
+  }
+
+  if (rl.safetyBudgetWarning) {
+    doc.fillColor(COLORS.warn_orange).fontSize(10)
+      .text(String(rl.safetyBudgetWarning), X, y, { width: 458 });
+    y += 14;
+  }
+
+  if (conflictNotes.length > 0) {
+    conflictNotes.forEach((note) => {
+      doc.fillColor(COLORS.warn_orange).fontSize(10)
+        .text(`! ${String(note || "")}`, X, y, { width: 458 });
+      y += 14;
+    });
+  }
+
+  doc.y = boxY + boxH + 18;
+}
+
 // 各章渲染函数
 function renderCover(doc, cover) {
   // 安全回退
@@ -95,17 +155,17 @@ function renderCover(doc, cover) {
       .text(cover.degradedMsg, 55, 8, { width: 485, align: "center" });
   }
   
-  // 主标题（移除字符间空格，避免字体缺失空格导致□）
+  // 主标题
   doc.fillColor("#FFFFFF").fontSize(24)
-    .text("门窗技术招标文件", 55, 108, { width: 485, align: "center" });
+    .text("门 窗 技 术 招 标 文 件", 55, 108, { width: 485, align: "center" });
   
-  // 文件编号（使用半角符号，避免全角符号缺失）
+  // 文件编号
   doc.fontSize(12)
-    .text(`文件编号: ${pdfNo}    签发日期: ${issueDate}`, 55, 148, { width: 485, align: "center" });
+    .text(`文件编号：${pdfNo}　　签发日期：${issueDate}`, 55, 148, { width: 485, align: "center" });
   
   // 项目信息卡
-  doc.roundedRect(55, 172, 485, 78, 6).fill("#FFFFFF");
-  doc.fillColor(COLORS.text_body).fontSize(10.5)
+  doc.roundedRect(55, 172, 485, 98, 6).fill("#FFFFFF");
+  doc.fillColor(COLORS.brand_navy).fontSize(10.5)
     .text(`${city}${cover.district ? " " + cover.district : ""} · ${climate}`, 69, 186)
     .text(floorDesc, 69, 204);
   
@@ -126,9 +186,9 @@ function renderCover(doc, cover) {
   // 白色内容区
   doc.rect(0, 290, 595, 552).fill("#FFFFFF");
   
-  // 签发人（绝对定位，避免与页脚冲突）
-  doc.fillColor(COLORS.text_body).fontSize(10.5)
-    .text("签发人: 李Sir · 门窗技术顾问", 55, 780, { width: 485, align: "right" });
+  // 签发人
+  doc.fillColor("#FFFFFF").fontSize(10.5)
+    .text("签发人：李Sir · 门窗技术顾问", 55, 278, { width: 485, align: "right" });
 }
 
 function renderChapter1(doc, c1) {
@@ -201,38 +261,7 @@ function renderChapter2(doc, c2) {
 
   // 产品红线
   drawSectionTitle(doc, "2.4 产品红线");
-  const rl = c2.redLines || { forbidden: [], safetyItems: [] };
-  const forbidden = rl.forbidden || [];
-  const safetyItems = rl.safetyItems || [];
-  const boxH = 20 + forbidden.length * 16 + (safetyItems.length > 0 ? 40 : 0) + 10;
-  
-  doc.rect(55, doc.y, 5, boxH).fill(COLORS.risk_red);
-  doc.rect(60, doc.y, 480, boxH).fill(COLORS.risk_red_bg);
-  
-  let ry = doc.y + 10;
-  doc.fillColor(COLORS.risk_red).fontSize(12).text("明确禁止项", 70, ry);
-  ry += 18;
-  
-  forbidden.forEach(item => {
-    doc.fillColor(COLORS.text_body).fontSize(10.5).text(`✗ ${item}`, 76, ry);
-    ry += 16;
-  });
-  
-  if (safetyItems.length > 0) {
-    ry += 6;
-    doc.fillColor(COLORS.risk_red).fontSize(9).text("◆ 安全专项条款", 70, ry);
-    ry += 16;
-    safetyItems.forEach(item => {
-      doc.fillColor(COLORS.text_body).fontSize(10.5).text(`🛡 ${item}`, 76, ry);
-      ry += 16;
-    });
-  }
-  
-  if (rl.safetyBudgetWarning) {
-    doc.fillColor(COLORS.warn_orange).fontSize(9).text(rl.safetyBudgetWarning, 76, ry);
-  }
-  
-  doc.y += boxH + 15;
+  renderRedLines(doc, c2.redLines);
 
   // 配置表
   const spec = c2.budgetSpec || { label: "舒适型 B档", profile: "", glass: "", hardware: "", seal: "" };
@@ -447,7 +476,7 @@ function renderChapter4(doc, c4) {
       if (col.h !== "签字盖章") {
         doc.moveTo(x + 5, y + rowH - 6).lineTo(x + col.w - 5, y + rowH - 6)
           .dash(2, { space: 3 }).lineWidth(0.4).stroke("#CCCCCC");
-        doc.undash();
+        doc.undash().lineWidth(1);
       }
       x += col.w;
     });
