@@ -1,0 +1,173 @@
+<view class="container">
+  <!-- 进度条 -->
+  <view class="progress-bar">
+    <view class="progress-fill" style="width: {{(currentStep+1)/totalSteps*100}}%"></view>
+    <text class="progress-text">第 {{currentStep+1}} / {{totalSteps}} 题</text>
+  </view>
+
+  <!-- Q1: 城市 - 强制重新渲染 -->
+<view class="step" wx:if="{{currentStep === 0}}">
+  <view class="question-title">1. 您的房屋所在城市？</view>
+  
+  <!-- 关键修复：使用 wx:if 强制重新渲染 picker -->
+  <picker 
+    wx:if="{{cityList && cityList.length > 0}}" 
+    mode="selector" 
+    range="{{cityList}}" 
+    bindchange="onCityChange">
+    <view class="picker">{{formData.city || '请选择城市'}}</view>
+  </picker>
+  
+  <!-- 数据未加载时的占位（理论上不会显示） -->
+  <view wx:else class="picker-loading">数据加载中...</view>
+  
+  <input class="input" placeholder="请输入行政区（如朝阳区）" 
+         value="{{formData.district}}" bindinput="onDistrictInput" />
+         
+  <view class="city-hint" wx:if="{{cityHint}}">
+    <view class="hint-title">参考标准（{{formData.city}}）</view>
+    <view class="hint-item">抗风压 P3 {{cityHint.p3}} kPa</view>
+    <view class="hint-item">隔声量 Rw {{cityHint.rw}} dB</view>
+    <view class="hint-item">传热系数 K {{cityHint.k}}</view>
+    <view class="hint-note">{{cityHint.note}}</view>
+  </view>
+</view>
+
+  <!-- Q2: 楼层 -->
+  <view class="step" wx:if="{{currentStep === 1}}">
+    <view class="question-title">2. 您的楼层信息？</view>
+    <view class="input-group">
+      <text>所在楼层：</text>
+      <input type="number" class="input short" value="{{formData.floor}}" bindinput="onFloorChange" />
+    </view>
+    <view class="input-group">
+      <text>总楼层：</text>
+      <input type="number" class="input short" value="{{formData.totalFloors}}" bindinput="onTotalFloorsChange" />
+    </view>
+    <view class="hint" wx:if="{{showRatio}}">高度比：{{heightRatio}}%</view>
+  </view>
+
+  <!-- Q3: 痛点 -->
+  <view class="step" wx:if="{{currentStep === 2}}">
+    <view class="question-title">3. 当前窗户最困扰您的问题？</view>
+    <view class="pain-points">
+      <view class="pain-point-item {{formData.painPoint === item ? 'selected' : ''}}" 
+            wx:for="{{painPoints}}" 
+            wx:key="*this"
+            data-value="{{item}}"
+            bindtap="onPainPointSelect">
+        {{item}}
+      </view>
+    </view>
+  </view>
+
+  <!-- Q4: 噪音 -->
+  <view class="step" wx:if="{{currentStep === 3}}">
+    <view class="question-title">4. 主要噪音来源？</view>
+    <picker mode="selector" range="{{noiseTypes}}" bindchange="onNoiseChange">
+      <view class="picker">{{formData.noiseType || '请选择噪音环境'}}</view>
+    </picker>
+    <view class="hint" wx:if="{{formData.noiseType === '主干道（<20米）' || formData.noiseType === '主干道（20-50米）'}}">
+      主干道附近建议Rw≥40dB
+    </view>
+  </view>
+
+  <!-- Q5: 朝向 -->
+  <view class="step" wx:if="{{currentStep === 4}}">
+    <view class="question-title">5. 房屋朝向与遮阳？</view>
+    <picker mode="selector" range="{{orientations}}" bindchange="onOrientationChange">
+      <view class="picker">朝向：{{formData.orientation || '请选择'}}</view>
+    </picker>
+    <view class="radio-group" wx:if="{{formData.orientation}}">
+      <text>是否有西晒遮挡：</text>
+      <radio-group bindchange="onShadingChange">
+        <label><radio value="false" checked="{{!formData.westShading}}"/>无遮挡（西晒严重）</label>
+        <label><radio value="true" checked="{{formData.westShading}}"/>有遮挡/幕墙</label>
+      </radio-group>
+    </view>
+    <view class="hint" wx:if="{{formData.orientation === '西' && !formData.westShading}}">
+      ⚠️ 西向无遮挡房间，夏季空调负荷增加约30%
+    </view>
+  </view>
+
+  <!-- Q6: 供暖 -->
+  <view class="step" wx:if="{{currentStep === 5}}">
+    <view class="question-title">6. 冬季供暖方式？</view>
+    <picker mode="selector" range="{{heatingTypes}}" bindchange="onHeatingChange">
+      <view class="picker">{{formData.heatingType || '请选择供暖方式'}}</view>
+    </picker>
+    <view class="hint" wx:if="{{formData.heatingType === '集中供暖'}}">
+      集中供暖区域建议K值≤2.0，减少热量流失
+    </view>
+  </view>
+
+  <!-- Q7: 家庭结构 -->
+  <view class="step" wx:if="{{currentStep === 6}}">
+    <view class="question-title">7. 家庭结构？</view>
+    <picker mode="selector" range="{{['有老人/幼儿', '年轻夫妇', '独居', '出租']}}" bindchange="onFamilyChange">
+      <view class="picker">{{formData.familyType || '请选择家庭结构'}}</view>
+    </picker>
+  </view>
+
+  <!-- Q8: 预算与冲突警告 -->
+  <view class="step" wx:if="{{currentStep === 7}}">
+    <view class="question-title">8. 预算档位？</view>
+    
+    <picker mode="selector" range="{{budgetTiers}}" range-key="label" bindchange="onBudgetChange">
+      <view class="picker">{{formData.budgetTier ? formData.budgetTier + '档已选择' : '请选择预算'}}</view>
+    </picker>
+    
+    <!-- 已选档位提示 -->
+    <view class="hint" wx:if="{{formData.budgetTier}}">已选择：{{formData.budgetTier}}档</view>
+    
+    <!-- 完整警告信息（含3条建议） -->
+    <view class="conflict-warning" wx:if="{{conflictWarning}}" style="line-height: 1.6;">
+      <view style="font-weight: bold; font-size: 16px; margin-bottom: 8px;">❌ 配置不兼容</view>
+      <view>28层 + A档预算无法达到抗风压标准（GB/T 7106要求≥3.5kPa）</view>
+      <view style="margin-top: 10px; font-size: 14px; border-top: 1px solid #ffccc7; padding-top: 8px;">
+        建议：
+        <view style="margin-left: 8px; margin-top: 4px;">① 升级至B档（推荐）</view>
+        <view style="margin-left: 8px; margin-top: 4px;">② 降至16层以下</view>
+        <view style="margin-left: 8px; margin-top: 4px; color: #999;">③ 强制生成风险版（不推荐）</view>
+      </view>
+    </view>
+
+    <!-- 双按钮：[上一题] 和 [强制生成风险版] -->
+    <view wx:if="{{conflictWarning}}" style="display: flex; gap: 10px; margin-top: 30px;">
+      <button class="btn-prev" bindtap="prevStep" style="flex: 1;">上一题</button>
+      <button class="btn-danger" bindtap="forceNextStep" style="flex: 2; background: #ff4d4f; color: white;">
+        [强制生成风险版]
+      </button>
+    </view>
+    
+    <!-- 无冲突时：正常下一题 -->
+    <button wx:if="{{!conflictWarning}}" class="btn-next" bindtap="nextStep" style="margin-top: 30px; width: 100%;">
+      下一题
+    </button>
+  </view>
+
+  <!-- Q9: 优先级 -->
+  <view class="step" wx:if="{{currentStep === 8}}">
+    <view class="question-title">9. 最优先考虑？</view>
+    <picker mode="selector" range="{{['隔音降噪', '保温节能', '采光视野', '控制预算']}}" bindchange="onPriorityChange">
+      <view class="picker">{{formData.priority || '请选择优先项'}}</view>
+    </picker>
+  </view>
+
+  <!-- Q10: 工期 -->
+  <view class="step" wx:if="{{currentStep === 9}}">
+    <view class="question-title">10. 计划工期？</view>
+    <picker mode="selector" range="{{['1个月内', '1-3个月', '3个月以上', '不着急']}}" bindchange="onTimelineChange">
+      <view class="picker">{{formData.timeline || '请选择工期'}}</view>
+    </picker>
+  </view>
+
+  <!-- 通用导航（Q8 除外，Q8 在内部有自己的按钮组） -->
+  <view class="nav-buttons" wx:if="{{currentStep !== 7}}">
+    <button class="btn-prev" bindtap="prevStep" wx:if="{{currentStep > 0}}">上一题</button>
+    <button class="btn-next" bindtap="nextStep" wx:if="{{currentStep < totalSteps-1}}">下一题</button>
+    <button class="btn-submit" bindtap="submit" wx:if="{{currentStep === totalSteps-1}}">生成招标文件</button>
+  </view>
+
+  <view class="draft-tip">已自动保存草稿</view>
+</view>

@@ -1,0 +1,9 @@
+.picker {
+  padding: 20rpx;
+  border: 2rpx solid #f0f0f0;
+  border-radius: 12rpx;
+}
+button.btn-primary {
+  width: 80%;
+  margin: 40rpx auto 0;
+}

@@ -1,0 +1,166 @@
+.container {
+  padding: 20px;
+  background: #f5f5f5;
+  min-height: 100vh;
+}
+
+.progress-bar {
+  height: 4px;
+  background: #e0e0e0;
+  border-radius: 2px;
+  margin-bottom: 30px;
+  position: relative;
+}
+
+.progress-fill {
+  height: 100%;
+  background: #07c160;
+  border-radius: 2px;
+  transition: width 0.3s;
+}
+
+.progress-text {
+  position: absolute;
+  right: 0;
+  top: -20px;
+  font-size: 12px;
+  color: #999;
+}
+
+.step {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.question-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.picker, .input {
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin-bottom: 15px;
+  background: white;
+}
+
+.input.short {
+  width: 100px;
+  display: inline-block;
+}
+
+.city-hint {
+  background: #e6f7f0;
+  border-left: 4px solid #07c160;
+  padding: 15px;
+  margin-top: 20px;
+  border-radius: 4px;
+}
+
+.hint-title {
+  font-weight: bold;
+  color: #07c160;
+  margin-bottom: 10px;
+}
+
+.hint-item {
+  font-size: 14px;
+  color: #666;
+  margin: 5px 0;
+}
+
+.hint-note {
+  font-size: 12px;
+  color: #999;
+  margin-top: 10px;
+  font-style: italic;
+}
+
+.pain-points {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.pain-point-item {
+  padding: 12px 20px;
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  background: white;
+  transition: all 0.2s;
+}
+
+.pain-point-item.selected {
+  background: #07c160;
+  color: white;
+  border-color: #07c160;
+}
+
+.nav-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 30px;
+}
+
+.btn-next, .btn-submit {
+  background: #07c160;
+  color: white;
+  flex: 1;
+}
+
+.btn-prev {
+  background: #f0f0f0;
+  color: #666;
+  width: 100px;
+}
+
+.draft-tip {
+  text-align: center;
+  color: #999;
+  font-size: 12px;
+  margin-top: 20px;
+}
+
+/* 冲突预警（红色警告） */
+.conflict-warning {
+  background: #fff2f0;
+  border: 1px solid #ffccc7;
+  color: #cf1322;
+  padding: 12px;
+  border-radius: 4px;
+  margin-top: 15px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* 单选组样式 */
+.radio-group {
+  margin-top: 15px;
+  padding: 10px;
+  background: #f9f9f9;
+  border-radius: 4px;
+}
+
+.radio-group label {
+  display: block;
+  margin: 8px 0;
+  font-size: 14px;
+}
+
+/* 危险/警告按钮样式 */
+.btn-danger {
+  background: #ff4d4f !important;
+  color: white !important;
+  animation: shake 0.5s; /* 可选：抖动动画提醒 */
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}

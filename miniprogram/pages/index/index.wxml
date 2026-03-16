@@ -1,0 +1,45 @@
+<view class="container">
+  <!-- 品牌头部 -->
+  <view class="brand-header">
+    <image class="logo" src="/assets/logo.png" mode="aspectFit"></image>
+    <view class="brand-title">李Sir门窗标准制定</view>
+    <view class="brand-subtitle">30秒生成专业招标文件，拒绝智商税</view>
+  </view>
+
+  <!-- 核心价值点 -->
+  <view class="value-props">
+    <view class="prop-item">
+      <text class="prop-icon">🛡️</text>
+      <text class="prop-text">抗风压计算\n安全合规</text>
+    </view>
+    <view class="prop-item">
+      <text class="prop-icon">📊</text>
+      <text class="prop-text">预算分级\n精准匹配</text>
+    </view>
+    <view class="prop-item">
+      <text class="prop-icon">⚡</text>
+      <text class="prop-text">30秒生成\nPDF招标文件</text>
+    </view>
+  </view>
+
+  <!-- 主行动按钮（CTA） -->
+  <view class="action-area">
+    <button class="btn-primary" bindtap="startAssessment">
+      立即测评（免费）
+    </button>
+    <button class="btn-secondary" bindtap="viewHistory">
+      查看历史报告
+    </button>
+  </view>
+
+  <!-- 信任背书 -->
+  <view class="trust-badges">
+    <view class="badge">✓ 符合 GB/T 7106 标准</view>
+    <view class="badge">✓ 已服务 10,000+ 业主</view>
+  </view>
+
+  <!-- 底部 L2 入口（弱引导） -->
+  <view class="footer-link" bindtap="showExpertQR">
+    <text>已有方案需要审核？预约李Sir专家咨询 →</text>
+  </view>
+</view>

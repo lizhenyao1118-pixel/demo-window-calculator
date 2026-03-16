@@ -1,0 +1,93 @@
+<view class="container">
+  <!-- 风险版水印（仅在强制生成时显示） -->
+  <view class="risk-watermark" wx:if="{{isDisclaimer}}">
+    ⚠️ 配置冲突提示版
+  </view>
+
+  <view class="exp-banner" wx:if="{{expPosition === 'top'}}">{{expTitle}}</view>
+
+  <!-- 头部状态 -->
+  <view class="header {{isDisclaimer ? 'risk-header' : 'normal-header'}}">
+    <view class="status-icon">{{isDisclaimer ? '⚠️' : '✅'}}</view>
+    <view class="status-title">
+      {{isDisclaimer ? '招标文件已生成（风险提示版）' : '招标文件已生成'}}
+    </view>
+    <view class="progress-bar {{progressStyle}}">
+      <view class="progress-fill {{progressStyle}}"></view>
+    </view>
+    <view class="status-subtitle" wx:if="{{isDisclaimer}}">
+      检测到预算与楼层配置冲突，建议仅用于咨询
+    </view>
+  </view>
+
+  <!-- 文件信息卡片 -->
+  <view class="file-card">
+    <view class="file-name">门窗招标技术文件_{{formData.city}}_{{timestamp}}.pdf</view>
+    <view class="file-meta">
+      <text>生成时间：{{timestamp}}</text>
+      <text wx:if="{{isDisclaimer}}" class="risk-tag">风险提示</text>
+    </view>
+    
+    <!-- 配置摘要 -->
+    <view class="config-summary">
+      <view class="config-item">
+        <text class="label">城市：</text>
+        <text>{{formData.city}} {{formData.district}}</text>
+      </view>
+      <view class="config-item">
+        <text class="label">楼层：</text>
+        <text>{{formData.floor}}/{{formData.totalFloors}}层</text>
+      </view>
+      <view class="config-item">
+        <text class="label">预算档位：</text>
+        <text class="{{isDisclaimer ? 'risk-text' : ''}}">{{formData.budgetTier}}档</text>
+      </view>
+      <view class="config-item" wx:if="{{formData.priority}}">
+        <text class="label">优先项：</text>
+        <text>{{formData.priority}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="exp-banner" wx:if="{{expPosition === 'middle'}}">{{expTitle}}</view>
+
+  <!-- 操作按钮区 -->
+  <view class="action-area">
+    <button class="btn-primary" bindtap="downloadPDF">
+      {{isDisclaimer ? '下载风险提示版' : '下载招标文件'}}
+    </button>
+    
+    <button class="btn-secondary" bindtap="previewPDF">
+      在线预览
+    </button>
+  </view>
+
+  <view class="exp-banner" wx:if="{{expPosition === 'bottom'}}">{{expTitle}}</view>
+
+  <!-- L2入口：专家审核（风险版 - 强提示） -->
+  <view class="l2-entry" wx:if="{{isDisclaimer}}">
+    <view class="l2-title">⚠️ 配置存在风险，建议人工复核</view>
+    <view class="l2-desc">
+      当前配置可能存在安全隐患，建议添加李Sir微信获取专业审核与优化方案。
+    </view>
+    <!-- 修改：改为普通按钮，bindtap触发二维码 -->
+    <button class="btn-l2" bindtap="showQRCode">
+      查看微信二维码（添加李Sir）
+    </button>
+    <view class="l2-note">长按二维码识别，备注"门窗审核"</view>
+  </view>
+
+  <!-- 正常版的L2入口（弱化显示） -->
+  <view class="l2-entry-normal" wx:if="{{!isDisclaimer}}">
+    <view class="divider">—— 增值服务 ——</view>
+    <!-- 修改：去掉open-type，改为tap事件 -->
+    <button class="btn-l2-light" bindtap="showQRCode">
+      需要专家把关？点击查看微信二维码
+    </button>
+  </view>
+
+  <!-- 重新评估 -->
+  <view class="footer-action">
+    <text class="link-text" bindtap="restart">重新评估需求</text>
+  </view>
+</view>

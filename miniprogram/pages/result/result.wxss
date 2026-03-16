@@ -1,0 +1,239 @@
+.container {
+  padding: 20px;
+  background: #f5f5f5;
+  min-height: 100vh;
+}
+
+/* 风险版水印 */
+.risk-watermark {
+  position: fixed;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-30deg);
+  font-size: 60px;
+  color: rgba(255, 77, 79, 0.1);
+  font-weight: bold;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* 头部状态 */
+.header {
+  background: white;
+  padding: 30px 20px;
+  border-radius: 12px;
+  text-align: center;
+  margin-bottom: 20px;
+  position: relative;
+  z-index: 1;
+}
+
+.normal-header {
+  border-top: 4px solid #07c160;
+}
+
+.risk-header {
+  border-top: 4px solid #ff4d4f;
+  background: #fff2f0;
+}
+
+.status-icon {
+  font-size: 48px;
+  margin-bottom: 10px;
+}
+
+.status-title {
+  font-size: 20px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.status-subtitle {
+  font-size: 14px;
+  color: #ff4d4f;
+}
+
+.exp-banner {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  text-align: center;
+  color: #333;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.progress-bar {
+  height: 8px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(0,0,0,0.08);
+  margin: 12px 0 4px;
+}
+
+.progress-fill {
+  height: 100%;
+  width: 66%;
+  border-radius: 999px;
+}
+
+.progress-fill.classic {
+  background: #1890ff;
+}
+
+.progress-fill.gradient {
+  background: linear-gradient(90deg, #1890ff 0%, #52c41a 50%, #13c2c2 100%);
+  background-size: 200% 100%;
+  animation: progressGradient 1.6s ease-in-out infinite;
+}
+
+@keyframes progressGradient {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}
+
+/* 文件卡片 */
+.file-card {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.file-name {
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 10px;
+  word-break: break-all;
+}
+
+.file-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #999;
+  margin-bottom: 20px;
+}
+
+.risk-tag {
+  background: #ff4d4f;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+}
+
+.config-summary {
+  border-top: 1px solid #eee;
+  padding-top: 15px;
+}
+
+.config-item {
+  display: flex;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.label {
+  color: #666;
+  width: 80px;
+}
+
+.risk-text {
+  color: #ff4d4f;
+  font-weight: bold;
+}
+
+/* 按钮区 */
+.action-area {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 30px;
+}
+
+.btn-primary {
+  flex: 1;
+  background: #07c160;
+  color: white;
+  border-radius: 8px;
+}
+
+.btn-secondary {
+  flex: 1;
+  background: #f0f0f0;
+  color: #666;
+  border-radius: 8px;
+}
+
+/* L2入口（风险版 - 强提示） */
+.l2-entry {
+  background: linear-gradient(135deg, #ff4d4f 0%, #ff7875 100%);
+  color: white;
+  padding: 25px 20px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+
+.l2-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.l2-desc {
+  font-size: 13px;
+  line-height: 1.5;
+  margin-bottom: 15px;
+  opacity: 0.95;
+}
+
+.btn-l2 {
+  background: white;
+  color: #ff4d4f;
+  font-weight: bold;
+  border-radius: 20px;
+  margin-bottom: 8px;
+}
+
+.l2-note {
+  font-size: 11px;
+  opacity: 0.8;
+}
+
+/* L2入口（正常版 - 弱提示） */
+.l2-entry-normal {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.divider {
+  color: #999;
+  font-size: 12px;
+  margin-bottom: 15px;
+}
+
+.btn-l2-light {
+  background: #e6f7ff;
+  color: #1890ff;
+  border: 1px solid #1890ff;
+  border-radius: 20px;
+}
+
+.footer-action {
+  text-align: center;
+  padding: 20px;
+}
+
+.link-text {
+  color: #1890ff;
+  font-size: 14px;
+  text-decoration: underline;
+}

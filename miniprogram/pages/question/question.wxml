@@ -1,0 +1,26 @@
+<view class="container">
+  <view class="card section">
+    <view class="label">所在城市</view>
+    <picker mode="selector" range="{{cities}}" value="{{cityIndex}}" bindchange="onCityChange">
+      <view class="picker">
+        {{cities[cityIndex] || '请选择城市'}}
+      </view>
+    </picker>
+  </view>
+
+  <view class="card section">
+    <view class="label">楼层</view>
+    <input type="number" placeholder="请输入楼层，例如 10" value="{{floor}}" bindinput="onFloorInput"/>
+  </view>
+
+  <view class="card section">
+    <view class="label">预算</view>
+    <picker mode="selector" range="{{budgets}}" value="{{budgetIndex}}" bindchange="onBudgetChange">
+      <view class="picker">
+        {{budgets[budgetIndex] || '请选择预算'}}
+      </view>
+    </picker>
+  </view>
+
+  <button class="btn-primary" bindtap="submit">计算结果</button>
+</view>

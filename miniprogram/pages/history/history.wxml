@@ -1,0 +1,51 @@
+<view class="container">
+  <view class="header">
+    <text class="title">我的招标文件</text>
+    <text class="subtitle">共 {{list.length}} 份报告</text>
+  </view>
+  
+  <!-- 错误提示 -->
+  <view class="error-tip" wx:if="{{errorMsg}}">
+    <text>{{errorMsg}}</text>
+    <button class="btn-retry" bindtap="loadHistory">重试</button>
+  </view>
+  
+  <!-- 列表 -->
+  <view class="report-list" wx:if="{{list.length > 0}}">
+    <view class="report-item {{item.isDisclaimer ? 'risk' : ''}}" 
+          wx:for="{{list}}" 
+          wx:key="_id"
+          bindtap="openReport"
+          data-fileid="{{item.fileID}}"
+          data-risk="{{item.isDisclaimer}}">
+      
+      <view class="item-header">
+        <text class="file-name">{{item.formData.city || '未命名'}}报告</text>
+        <text class="risk-tag" wx:if="{{item.isDisclaimer}}">风险提示</text>
+        <text class="normal-tag" wx:else>正常</text>
+      </view>
+      
+      <view class="item-meta">
+        <text class="date">{{item.createdAt}}</text>
+        <text class="size">{{item.sizeKB}} KB</text>
+      </view>
+      
+      <view class="item-brief" wx:if="{{item.formData}}">
+        楼层:{{item.formData.floor}}/{{item.formData.totalFloors}}层 | 
+        预算:{{item.formData.budgetTier}}档
+      </view>
+    </view>
+  </view>
+  
+  <!-- 加载中 -->
+  <view class="loading" wx:if="{{loading}}">
+    加载中...
+  </view>
+  
+  <!-- 空状态 -->
+  <view class="empty-state" wx:if="{{!loading && list.length === 0 && !errorMsg}}">
+    <text class="empty-icon">📄</text>
+    <text class="empty-text">暂无历史报告</text>
+    <button class="btn-primary" bindtap="startNew">立即开始测评</button>
+  </view>
+</view>

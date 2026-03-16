@@ -1,0 +1,10 @@
+{
+  "name": "benchmark-pdf",
+  "version": "1.0.0",
+  "description": "PDF生成性能基准测试",
+  "main": "index.js",
+  "dependencies": {
+    "pdfkit": "^0.15.0",
+    "wx-server-sdk": "^2.6.3"
+  }
+}

@@ -1,0 +1,102 @@
+.container {
+  padding: 40rpx;
+  background: linear-gradient(180deg, #e6f7ff 0%, #ffffff 100%);
+  min-height: 100vh;
+}
+
+.brand-header {
+  text-align: center;
+  margin-bottom: 60rpx;
+}
+
+.logo {
+  width: 120rpx;
+  height: 120rpx;
+  margin-bottom: 20rpx;
+}
+
+.brand-title {
+  font-size: 48rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 10rpx;
+}
+
+.brand-subtitle {
+  font-size: 28rpx;
+  color: #666;
+}
+
+.value-props {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 80rpx;
+  padding: 0 20rpx;
+}
+
+.prop-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 30%;
+}
+
+.prop-icon {
+  font-size: 48rpx;
+  margin-bottom: 16rpx;
+}
+
+.prop-text {
+  font-size: 24rpx;
+  color: #333;
+  line-height: 1.4;
+  white-space: pre-line;
+}
+
+.action-area {
+  margin-bottom: 60rpx;
+}
+
+.btn-primary {
+  background: #07c160;
+  color: white;
+  border-radius: 50rpx;
+  margin-bottom: 30rpx;
+  font-size: 32rpx;
+  font-weight: bold;
+}
+
+.btn-secondary {
+  background: #f0f0f0;
+  color: #333;
+  border-radius: 50rpx;
+  font-size: 28rpx;
+}
+
+.trust-badges {
+  display: flex;
+  justify-content: center;
+  gap: 30rpx;
+  margin-bottom: 60rpx;
+}
+
+.badge {
+  font-size: 24rpx;
+  color: #07c160;
+  background: rgba(7, 193, 96, 0.1);
+  padding: 10rpx 20rpx;
+  border-radius: 30rpx;
+}
+
+.footer-link {
+  text-align: center;
+  margin-top: auto;
+  padding-bottom: 40rpx;
+}
+
+.footer-link text {
+  color: #1890ff;
+  font-size: 28rpx;
+  text-decoration: underline;
+}
