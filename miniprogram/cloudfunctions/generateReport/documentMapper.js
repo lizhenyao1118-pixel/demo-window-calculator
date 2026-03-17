@@ -25,6 +25,30 @@ const FIELD_MAP = {
   SHGC: 'SHGC_target'
 };
 
+const NOISE_SCENE = {
+  main_road: {
+    lt20: '紧邻主干道，白天车流噪声约70-75dB，夜间也难以低于55dB——相当于在卧室里持续开着电视的背景音量',
+    '20to50': '距主干道约20-50m，白天噪声约60-65dB，夜间约50dB——相当于室内一直有吸尘器运转的声音',
+    gt50: '距主干道50m以上，白天噪声约55dB，较为可控但仍能听到明显车流声'
+  },
+  elevated: {
+    lt20: '紧邻高架桥，低频轰鸣明显，白天峰值可达80dB——重型货车经过时会有明显震动和轰鸣',
+    '20to50': '距高架约20-50m，低频振动感仍较强——夜间重型车辆经过时仍能感知'
+  },
+  rail: {
+    lt20: '紧邻轨道交通，列车过站时脉冲噪声可达85dB——伴随明显震动',
+    '20to50': '距轨道约20-50m，列车噪声间歇性明显——每次列车经过持续约10-15秒'
+  },
+  quiet: '周边环境较为安静，夜间本底噪声约35-40dB——相当于图书馆或郊区的安静程度'
+};
+
+const LIFE_TARGET = {
+  sound: '关窗后室内噪声降至40dB以下，达到可以安睡和正常交谈的环境，不再被窗外车流声吵醒',
+  heat: '夏季西晒时室内温度比室外低8-10℃，空调制冷负担显著降低，窗边不再有灼热感',
+  wind: '台风或强风天气窗户无哨声、无晃动，暴雨时室内绝对无渗漏，保持干燥舒适',
+  safety: '儿童或老人独自在家时，窗户不会成为安全隐患，即使意外碰撞也不会发生坠落风险'
+};
+
 // Claude 确认的最终版预算档位（2026-03-14）
 const BUDGET_SPEC = {
   A: {
@@ -137,6 +161,33 @@ function getNoiseLabel(noiseType, noiseDist) {
     distLabel: dists[noiseDist] || noiseDist,
     levelLabel: noiseDist === 'lt20' ? '高噪声环境' : noiseDist === '20to50' ? '中等噪声' : '低噪声'
   };
+}
+
+function getRwRequired(noiseType, noiseDist, painPoint, floor) {
+  const BASE = {
+    quiet: 25,
+    main_road: 35,
+    elevated: 35,
+    rail: 35
+  };
+
+  let rw = Number(BASE[noiseType]);
+  if (!Number.isFinite(rw)) rw = 30;
+
+  if (noiseDist === 'lt20') rw += 3;
+
+  if (painPoint === 'sound') rw += 3;
+
+  if (Number(floor) > 20) rw += 2;
+
+  return Math.min(rw, 45);
+}
+
+function getNoiseSceneDesc(noiseType, noiseDist) {
+  if (noiseType === 'quiet') return NOISE_SCENE.quiet;
+  const byType = NOISE_SCENE[noiseType];
+  if (!byType || typeof byType !== 'object') return '';
+  return byType[noiseDist] || byType['20to50'] || byType.lt20 || byType.gt50 || '';
 }
 
 function getHeatingDesc(heatingType) {
@@ -332,13 +383,13 @@ function getUpgrades() {
 function buildAnalysisParagraph(answers, resolved) {
   const { city, floor, total_floors, pain_point, noise_type, noise_dist, west_shading, orientation } = answers;
   const band = getHeightBand(floor, total_floors);
-  const painTag = getPainTag(pain_point);
   
   let text = '';
   
   if (pain_point === 'sound') {
-    const noiseDesc = noise_type !== 'quiet' ? `${getNoiseLabel(noise_type, noise_dist).typeLabel}附近` : '';
-    text = `您的项目位于${city}${noiseDesc}的第${floor}层（${band.label}），噪音评级较高。以下技术标准以隔声性能为首要目标，Rw≥${getField(resolved, 'Rw')}dB是本次采购的核心红线。请商家按第四章要求提交响应方案。`;
+    const sceneDesc = getNoiseSceneDesc(noise_type, noise_dist);
+    const lifeTarget = LIFE_TARGET.sound;
+    text = `您所在项目位于${city}第${floor}层（${band.label}），${sceneDesc}。本次采购的核心目标是：${lifeTarget}。要实现这一目标，窗户隔声量需达到Rw≥${getField(resolved, 'Rw')}dB。这是本次招标的技术红线，商家提案低于此值不予考虑。`;
   } else if (pain_point === 'heat') {
     const westDesc = (west_shading === false && orientation === 'west') ? '西晒无遮阳，热辐射压力较高，' : '';
     text = `您的项目位于${city}${getClimateLabel(resolved.climate_zone)}的第${floor}层。${westDesc}以下标准以热工性能为核心，SHGC≤${getField(resolved, 'SHGC')}是夏季隔热的关键指标，请商家提供Low-E玻璃配置方案及检测报告。`;
@@ -350,7 +401,7 @@ function buildAnalysisParagraph(answers, resolved) {
     text = `您的项目位于${city}第${floor}层（${band.label}），综合考虑了${getClimateLabel(resolved.climate_zone)}的气候区标准与建筑环境，以下技术指标基于GB/T 8478-2020计算。`;
   }
   
-  return text.length > 80 ? text.slice(0, 78) + '...' : text;
+  return text;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -359,6 +410,16 @@ function buildAnalysisParagraph(answers, resolved) {
 
 function mapToSections(resolved, answers, pdfNo) {
   assertResolved(resolved);
+
+  try {
+    const painPoint = answers.pain_point || answers.priority;
+    const currentRw = Number(getField(resolved, 'Rw'));
+    const rw = getRwRequired(answers.noise_type, answers.noise_dist, painPoint, answers.floor);
+    if (Number.isFinite(rw) && (!Number.isFinite(currentRw) || rw > currentRw)) {
+      resolved.Rw_required = rw;
+    }
+  } catch (e) {
+  }
   
   const now = new Date();
   const issueDate = `${now.getFullYear()}年${String(now.getMonth() + 1).padStart(2, '0')}月${String(now.getDate()).padStart(2, '0')}日`;
