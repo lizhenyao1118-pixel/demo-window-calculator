@@ -18,22 +18,36 @@ function adaptAssessmentData(data) {
     '主干道': 'main_road',
     '高架桥': 'elevated',
     '轨道交通': 'rail',
-    '安静': 'quiet'
+    '安静': 'quiet',
+    main_road: 'main_road',
+    elevated: 'elevated',
+    rail: 'rail',
+    quiet: 'quiet'
   };
   
   // 距离映射（假设前端格式）
   const distMap = {
     '<20m': 'lt20',
     '20-50m': '20to50',
-    '>50m': 'gt50'
+    '>50m': 'gt50',
+    lt20: 'lt20',
+    '20to50': '20to50',
+    gt50: 'gt50'
   };
   
   // 优先项映射
   const priorityMap = {
     '隔音降噪': 'sound',
     '视野景观': 'view',
-    '性价比': 'budget',
-    '通风透气': 'vent'
+    '性价比': 'price',
+    '通风透气': 'vent',
+    sound: 'sound',
+    heat: 'heat',
+    wind: 'wind',
+    safety: 'safety',
+    price: 'price',
+    view: 'view',
+    vent: 'vent'
   };
   
   // 供暖映射
@@ -47,9 +61,20 @@ function adaptAssessmentData(data) {
     city: data.city || '北京',
     floor: parseInt(data.floor) || 1,
     total_floors: parseInt(data.totalFloors) || 1,
-    pain_point: priorityMap[data.priority] || 'sound',
-    noise_type: noiseMap[data.noiseType] || 'quiet',
-    noise_dist: distMap[data.noiseDist] || 'gt50',
+    pain_point: priorityMap[data.pain_point || data.priority] || 'sound',
+    noise_type:
+      noiseMap[data.noise_type || data.noiseType] ||
+      (typeof data.noiseType === 'string' && data.noiseType.includes('主干') ? 'main_road' : null) ||
+      (typeof data.noiseType === 'string' && data.noiseType.includes('高架') ? 'elevated' : null) ||
+      (typeof data.noiseType === 'string' && data.noiseType.includes('轨道') ? 'rail' : null) ||
+      (typeof data.noiseType === 'string' && (data.noiseType.includes('安静') || data.noiseType.includes('安') ) ? 'quiet' : null) ||
+      'quiet',
+    noise_dist:
+      distMap[data.noise_dist || data.noiseDist] ||
+      (typeof data.noiseDist === 'string' && data.noiseDist.includes('<20') ? 'lt20' : null) ||
+      (typeof data.noiseDist === 'string' && (data.noiseDist.includes('20') && data.noiseDist.includes('50')) ? '20to50' : null) ||
+      (typeof data.noiseDist === 'string' && (data.noiseDist.includes('>50') || data.noiseDist.includes('50m以上')) ? 'gt50' : null) ||
+      'gt50',
     orientation: (data.orientation || 'south').toLowerCase(),
     west_shading: data.westShading === true || data.westShading === '有遮挡',
     heating_type: heatingMap[data.heatingType] || 'none',
@@ -86,6 +111,9 @@ exports.main = async (event, context) => {
     
     // Phase 1 新流程：使用 documentMapper 构建 sections（替换原有 sections 构建逻辑）
     const sections = mapToSections(computed, adaptedData, pdfNo);
+    console.log('Resolved Rw_required:', computed.Rw_required);
+    console.log('Noise type:', adaptedData.noise_type);
+    console.log('Noise dist:', adaptedData.noise_dist);
     console.log('[Cloud] Sections 映射完成:', {
       city: sections.cover.city,
       tier: sections.chapter3.currentTier,
