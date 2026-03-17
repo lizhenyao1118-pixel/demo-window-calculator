@@ -64,11 +64,16 @@
   <!-- Q4: 噪音 -->
   <view class="step" wx:if="{{currentStep === 3}}">
     <view class="question-title">4. 主要噪音来源？</view>
-    <picker mode="selector" range="{{noiseTypes}}" bindchange="onNoiseChange">
-      <view class="picker">{{formData.noiseType || '请选择噪音环境'}}</view>
+    <picker mode="selector" range="{{noiseTypeOptions}}" range-key="label" bindchange="onNoiseTypeChange">
+      <view class="picker">{{formData.noise_type_label || '请选择噪音来源'}}</view>
     </picker>
-    <view class="hint" wx:if="{{formData.noiseType === '主干道（<20米）' || formData.noiseType === '主干道（20-50米）'}}">
-      主干道附近建议Rw≥40dB
+
+    <picker mode="selector" range="{{noiseDistOptions}}" range-key="label" bindchange="onNoiseDistChange">
+      <view class="picker">{{formData.noise_dist_label || '请选择距离'}}</view>
+    </picker>
+
+    <view class="hint" wx:if="{{formData.noise_type === 'main_road' && formData.noise_dist === 'lt20'}}">
+      主干道近距离建议Rw≥41dB
     </view>
   </view>
 

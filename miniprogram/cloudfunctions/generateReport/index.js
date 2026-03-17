@@ -93,6 +93,8 @@ exports.main = async (event, context) => {
   const { OPENID } = cloud.getWXContext();
   
   console.log('[Cloud] 接收数据：', assessmentData);
+  console.log('Raw answers.noise_type:', assessmentData && assessmentData.noise_type);
+  console.log('Raw answers.noise_dist:', assessmentData && assessmentData.noise_dist);
   
   try {
     // 1. 生成文件名（保留原有逻辑）

@@ -26,8 +26,10 @@ Page({
       painPoint: '',
       floor: null,
       totalFloors: null,
-      noiseType: '',
-      noiseDist: '',
+      noise_type: '',
+      noise_dist: '',
+      noise_type_label: '',
+      noise_dist_label: '',
       orientation: '',
       westShading: false,
       heatingType: '',
@@ -38,7 +40,17 @@ Page({
     },
     cityHint: null,
     painPoints: ['隔音降噪', '保温节能', '安全防盗', '采光视野', '省钱经济'],
-    noiseTypes: ['主干道（<20米）', '主干道（20-50米）', '轨道交通', '工地/工厂', '安静小区'],
+    noiseTypeOptions: [
+      { label: '主干道/马路', value: 'main_road' },
+      { label: '高架桥', value: 'elevated' },
+      { label: '轨道交通/地铁', value: 'rail' },
+      { label: '安静/无特殊噪音', value: 'quiet' }
+    ],
+    noiseDistOptions: [
+      { label: '<20m / 紧邻', value: 'lt20' },
+      { label: '20-50m / 较近', value: '20to50' },
+      { label: '>50m / 较远', value: 'gt50' }
+    ],
     orientations: ['东', '南', '西', '北', '东南', '西南', '东北', '西北'],
     heatingTypes: ['集中供暖', '自采暖', '无供暖'],
     budgetTiers: [
@@ -83,7 +95,10 @@ Page({
         painPoint: '',
         floor: null,
         totalFloors: null,
-        noiseType: '',
+        noise_type: '',
+        noise_dist: '',
+        noise_type_label: '',
+        noise_dist_label: '',
         orientation: '',
         westShading: false,
         heatingType: '',
@@ -92,7 +107,17 @@ Page({
       },
       cityHint: null,
       painPoints: ['隔音降噪', '保温节能', '安全防盗', '采光视野', '省钱经济'],
-      noiseTypes: ['主干道（<20米）', '主干道（20-50米）', '轨道交通', '工地/工厂', '安静小区'],
+      noiseTypeOptions: [
+        { label: '主干道/马路', value: 'main_road' },
+        { label: '高架桥', value: 'elevated' },
+        { label: '轨道交通/地铁', value: 'rail' },
+        { label: '安静/无特殊噪音', value: 'quiet' }
+      ],
+      noiseDistOptions: [
+        { label: '<20m / 紧邻', value: 'lt20' },
+        { label: '20-50m / 较近', value: '20to50' },
+        { label: '>50m / 较远', value: 'gt50' }
+      ],
       orientations: ['东', '南', '西', '北', '东南', '西南', '东北', '西北'],
       heatingTypes: ['集中供暖', '自采暖', '无供暖'],
       budgetTiers: [
@@ -118,7 +143,10 @@ Page({
         'formData.painPoint': draft.data.painPoint || '',
         'formData.floor': draft.data.floor || null,
         'formData.totalFloors': draft.data.totalFloors || null,
-        'formData.noiseType': draft.data.noiseType || '',
+        'formData.noise_type': draft.data.noise_type || '',
+        'formData.noise_dist': draft.data.noise_dist || '',
+        'formData.noise_type_label': draft.data.noise_type_label || '',
+        'formData.noise_dist_label': draft.data.noise_dist_label || '',
         'formData.orientation': draft.data.orientation || '',
         'formData.westShading': draft.data.westShading || false,
         'formData.heatingType': draft.data.heatingType || '',
@@ -214,13 +242,30 @@ Page({
   },
 
   // Q4: 噪音
-  onNoiseChange(e) {
-    const noiseType = this.data.noiseTypes[e.detail.value];
-    this.setData({ 'formData.noiseType': noiseType });
+  onNoiseTypeChange(e) {
+    const opt = this.data.noiseTypeOptions[e.detail.value];
+    const noiseType = opt ? opt.value : 'quiet';
+    const noiseLabel = opt ? opt.label : '安静/无特殊噪音';
+    this.setData({
+      'formData.noise_type': noiseType,
+      'formData.noise_type_label': noiseLabel
+    });
     this.saveDraft();
     
     // 埋点：步骤完成（Q4）
     trackStep(4, { noise_type: noiseType });
+  },
+
+  onNoiseDistChange(e) {
+    const opt = this.data.noiseDistOptions[e.detail.value];
+    const noiseDist = opt ? opt.value : 'gt50';
+    const noiseLabel = opt ? opt.label : '>50m / 较远';
+    this.setData({
+      'formData.noise_dist': noiseDist,
+      'formData.noise_dist_label': noiseLabel
+    });
+    this.saveDraft();
+    trackStep(4, { noise_dist: noiseDist });
   },
 
   // Q5: 朝向
