@@ -385,6 +385,38 @@ function renderChapter4(doc, c4) {
   
   drawChapterHeader(doc, "第四", title, color);
   
+  if (c4.riskSection && c4.riskSection.items && c4.riskSection.items.length > 0) {
+    const severity = c4.riskSection.severity || 'info';
+    const leftColor = severity === 'error' ? COLORS.risk_red : severity === 'warning' ? COLORS.warn_orange : COLORS.safe_green;
+    const bgColor = severity === 'error' ? COLORS.risk_red_bg : severity === 'warning' ? COLORS.warn_orange_bg : COLORS.safe_green_bg;
+
+    drawSectionTitle(doc, c4.riskSection.title || "配置提示");
+
+    const itemLines = (c4.riskSection.items || []).length;
+    const extraH = c4.riskSection.cost_estimate ? 16 : 0;
+    const boxH = 18 + itemLines * 14 + extraH + 12;
+
+    doc.rect(55, doc.y, 5, boxH).fill(leftColor);
+    doc.rect(60, doc.y, 480, boxH).fill(bgColor);
+
+    let y = doc.y + 10;
+    doc.fillColor(leftColor).fontSize(12).text(c4.riskSection.title || "配置提示", 70, y);
+    y += 18;
+
+    (c4.riskSection.items || []).forEach((item) => {
+      doc.fillColor(COLORS.text_body).fontSize(10).text(`· ${item}`, 70, y, { width: 460 });
+      y += 14;
+    });
+
+    if (c4.riskSection.cost_estimate) {
+      y += 2;
+      doc.fillColor(leftColor).fontSize(10).text(c4.riskSection.cost_estimate, 70, y, { width: 460 });
+      y += 14;
+    }
+
+    doc.y = doc.y + boxH + 12;
+  }
+
   // 风险提示或优化建议
   if (isRisk && c4.risks && c4.risks.length > 0) {
     drawSectionTitle(doc, "风险提示（须重点关注）");
@@ -514,12 +546,18 @@ function renderWatermark(doc, isRisk) {
 function addFooters(doc, disclaimer) {
   const range = doc.bufferedPageRange();
   const shortDisc = (disclaimer || "").slice(0, 55) + "...";
+  const footerNotice = [
+    '以上价格区间基于一线城市市场水平，二三线城市实际采购成本可能降低15-25%。',
+    '玻璃配置推荐基于声学/热工/安全三维约束自动计算，商家可提供等效替代方案并附检测报告。',
+    '本文件生成时间：' + new Date().toLocaleDateString('zh-CN')
+  ].join(' ');
   
   for (let i = 0; i < range.count; i++) {
     doc.switchToPage(range.start + i);
     doc.moveTo(55, 790).lineTo(540, 790).stroke(COLORS.border);
-    doc.fillColor(COLORS.text_light).fontSize(8).text(shortDisc, 55, 798);
-    doc.fillColor(COLORS.text_secondary).fontSize(8).text(`${i + 1} / ${range.count}`, 502, 798);
+    doc.fillColor(COLORS.text_light).fontSize(7).text(footerNotice, 55, 796, { width: 420 });
+    doc.fillColor(COLORS.text_light).fontSize(7).text(shortDisc, 55, 812, { width: 420 });
+    doc.fillColor(COLORS.text_secondary).fontSize(8).text(`${i + 1} / ${range.count}`, 502, 804);
   }
 }
 

@@ -28,7 +28,10 @@ function resolveGlassConfig(Rw_req, K_req, SHGC_req, window_features, budget_tie
   const perf_level = Math.max(final_rw_level, thermal_level, shgc_level, safety_level);
 
   const budget_spec = BUDGET_SPEC[budget_tier];
-  const budget_max_level = budget_spec && GLASS_LEVELS[budget_spec.glass_max_level] ? GLASS_LEVELS[budget_spec.glass_max_level].level : 1;
+  let budget_max_level = budget_spec && GLASS_LEVELS[budget_spec.glass_max_level] ? GLASS_LEVELS[budget_spec.glass_max_level].level : 1;
+  if (budget_tier === 'A' && GLASS_LEVELS.laminated_hollow) {
+    budget_max_level = Math.max(budget_max_level, GLASS_LEVELS.laminated_hollow.level);
+  }
 
   let final_level = Math.min(perf_level, maxAvailableLevel);
   let conflict = null;

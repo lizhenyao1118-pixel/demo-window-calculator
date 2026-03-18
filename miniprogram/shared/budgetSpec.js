@@ -5,7 +5,7 @@ const GLASS_LEVELS = {
   basic_hollow: { level: 1, rw_max: 33, k_max: 2.8, base_cost: 0, name: '普通中空玻璃（5+9A+5）' },
   low_e_hollow: { level: 2, rw_max: 33, k_max: 2.4, base_cost: 80, name: 'Low-E中空玻璃（5Low-E+12A+5）' },
   low_e_argon: { level: 3, rw_max: 36, k_max: 2.0, base_cost: 120, name: 'Low-E充氩中空（5Low-E+12Ar+5）' },
-  laminated_hollow: { level: 4, rw_max: 40, k_max: 2.0, base_cost: 150, name: '夹胶中空玻璃（6+0.76PVB+6+12Ar+5）' },
+  laminated_hollow: { level: 4, rw_max: 42, k_max: 2.0, base_cost: 150, name: '夹胶中空玻璃（6+0.76PVB+6+12Ar+5）' },
   triple_pane: { level: 5, rw_max: 45, k_max: 1.4, base_cost: 400, name: '三玻两腔（5+9A+5+9A+5Low-E）' }
 };
 
@@ -15,8 +15,8 @@ const BUDGET_SPEC = {
     price_range: '600–900 元/㎡',
     price_hint: '600元以下在一线城市难以保证断桥铝品质',
     bar_ratio: 0.35,
-    glass_max_level: 'low_e_hollow',
-    glass_rw_max: 33,
+    glass_max_level: 'laminated_hollow',
+    glass_rw_max: 42,
     profile: { min_wall_thickness: 1.5, min_insulation_strip: 24, brand_tier: 'domestic_standard' },
     hardware: { min_load_kg: 60, brand: 'domestic_budget' },
     seal: { layers: 2, material: 'EPDM_rubber' }
@@ -26,7 +26,7 @@ const BUDGET_SPEC = {
     price_range: '900–1400 元/㎡',
     bar_ratio: 0.55,
     glass_max_level: 'laminated_hollow',
-    glass_rw_max: 40,
+    glass_rw_max: 42,
     profile: { min_wall_thickness: 1.6, min_insulation_strip: 28, brand_tier: 'system_domestic' },
     hardware: { min_load_kg: 80, brand: 'domestic_premium' },
     seal: { layers: 3, material: 'EPDM_rubber' }
