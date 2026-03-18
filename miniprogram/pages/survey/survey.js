@@ -15,6 +15,13 @@ const CITY_DB = {
   '沈阳': { p3: '≥3.0', rw: '≥40', k: '≤1.5', note: '严寒地区，保温要求高' }
 };
 
+const BUDGET_OPTIONS = [
+  { value: 'A', label: '经济实用 A档', hint: '600-900元/㎡（断桥铝入门，壁厚≥1.5mm）' },
+  { value: 'B', label: '舒适均衡 B档', hint: '900-1400元/㎡（国产系统窗，壁厚≥1.6mm）' },
+  { value: 'C', label: '品质进阶 C档', hint: '1400-2000元/㎡（进口/高端系统，壁厚≥1.8mm）' },
+  { value: 'D', label: '定制高端 D档', hint: '2000元+/㎡（进口定制，壁厚≥2.0mm）' }
+];
+
 Page({
   data: {
     currentStep: 0,
@@ -26,8 +33,10 @@ Page({
       painPoint: '',
       floor: null,
       totalFloors: null,
-      noiseType: '',
-      noiseDist: '',
+      noise_type: '',
+      noise_dist: '',
+      noise_type_label: '',
+      noise_dist_label: '',
       orientation: '',
       westShading: false,
       heatingType: '',
@@ -38,15 +47,20 @@ Page({
     },
     cityHint: null,
     painPoints: ['隔音降噪', '保温节能', '安全防盗', '采光视野', '省钱经济'],
-    noiseTypes: ['主干道（<20米）', '主干道（20-50米）', '轨道交通', '工地/工厂', '安静小区'],
+    noiseTypeOptions: [
+      { label: '主干道/马路', value: 'main_road' },
+      { label: '高架桥', value: 'elevated' },
+      { label: '轨道交通/地铁', value: 'rail' },
+      { label: '安静/无特殊噪音', value: 'quiet' }
+    ],
+    noiseDistOptions: [
+      { label: '<20m / 紧邻', value: 'lt20' },
+      { label: '20-50m / 较近', value: '20to50' },
+      { label: '>50m / 较远', value: 'gt50' }
+    ],
     orientations: ['东', '南', '西', '北', '东南', '西南', '东北', '西北'],
     heatingTypes: ['集中供暖', '自采暖', '无供暖'],
-    budgetTiers: [
-      { code: 'A', label: 'A档（经济型 <800元/㎡）' },
-      { code: 'B', label: 'B档（舒适型 800-1200元/㎡）' },
-      { code: 'C', label: 'C档（品质型 1200-1800元/㎡）' },
-      { code: 'D', label: 'D档（奢华型 >1800元/㎡）' }
-    ],
+    budgetTiers: BUDGET_OPTIONS,
     showRatio: false,
     conflictWarning: null,
     forceContinue: false,
@@ -83,7 +97,10 @@ Page({
         painPoint: '',
         floor: null,
         totalFloors: null,
-        noiseType: '',
+        noise_type: '',
+        noise_dist: '',
+        noise_type_label: '',
+        noise_dist_label: '',
         orientation: '',
         westShading: false,
         heatingType: '',
@@ -92,15 +109,20 @@ Page({
       },
       cityHint: null,
       painPoints: ['隔音降噪', '保温节能', '安全防盗', '采光视野', '省钱经济'],
-      noiseTypes: ['主干道（<20米）', '主干道（20-50米）', '轨道交通', '工地/工厂', '安静小区'],
+      noiseTypeOptions: [
+        { label: '主干道/马路', value: 'main_road' },
+        { label: '高架桥', value: 'elevated' },
+        { label: '轨道交通/地铁', value: 'rail' },
+        { label: '安静/无特殊噪音', value: 'quiet' }
+      ],
+      noiseDistOptions: [
+        { label: '<20m / 紧邻', value: 'lt20' },
+        { label: '20-50m / 较近', value: '20to50' },
+        { label: '>50m / 较远', value: 'gt50' }
+      ],
       orientations: ['东', '南', '西', '北', '东南', '西南', '东北', '西北'],
       heatingTypes: ['集中供暖', '自采暖', '无供暖'],
-      budgetTiers: [
-        { code: 'A', label: 'A档（经济型 <800元/㎡）' },
-        { code: 'B', label: 'B档（舒适型 800-1200元/㎡）' },
-        { code: 'C', label: 'C档（品质型 1200-1800元/㎡）' },
-        { code: 'D', label: 'D档（奢华型 >1800元/㎡）' }
-      ],
+      budgetTiers: BUDGET_OPTIONS,
       showRatio: false,
       heightRatio: 0,
       conflictWarning: null,
@@ -118,7 +140,10 @@ Page({
         'formData.painPoint': draft.data.painPoint || '',
         'formData.floor': draft.data.floor || null,
         'formData.totalFloors': draft.data.totalFloors || null,
-        'formData.noiseType': draft.data.noiseType || '',
+        'formData.noise_type': draft.data.noise_type || '',
+        'formData.noise_dist': draft.data.noise_dist || '',
+        'formData.noise_type_label': draft.data.noise_type_label || '',
+        'formData.noise_dist_label': draft.data.noise_dist_label || '',
         'formData.orientation': draft.data.orientation || '',
         'formData.westShading': draft.data.westShading || false,
         'formData.heatingType': draft.data.heatingType || '',
@@ -214,13 +239,30 @@ Page({
   },
 
   // Q4: 噪音
-  onNoiseChange(e) {
-    const noiseType = this.data.noiseTypes[e.detail.value];
-    this.setData({ 'formData.noiseType': noiseType });
+  onNoiseTypeChange(e) {
+    const opt = this.data.noiseTypeOptions[e.detail.value];
+    const noiseType = opt ? opt.value : 'quiet';
+    const noiseLabel = opt ? opt.label : '安静/无特殊噪音';
+    this.setData({
+      'formData.noise_type': noiseType,
+      'formData.noise_type_label': noiseLabel
+    });
     this.saveDraft();
     
     // 埋点：步骤完成（Q4）
     trackStep(4, { noise_type: noiseType });
+  },
+
+  onNoiseDistChange(e) {
+    const opt = this.data.noiseDistOptions[e.detail.value];
+    const noiseDist = opt ? opt.value : 'gt50';
+    const noiseLabel = opt ? opt.label : '>50m / 较远';
+    this.setData({
+      'formData.noise_dist': noiseDist,
+      'formData.noise_dist_label': noiseLabel
+    });
+    this.saveDraft();
+    trackStep(4, { noise_dist: noiseDist });
   },
 
   // Q5: 朝向
@@ -266,7 +308,7 @@ Page({
   // Q8: 预算（冲突预警核心）
   onBudgetChange(e) {
     const index = e.detail.value;
-    const budget = this.data.budgetTiers[index].code;
+    const budget = this.data.budgetTiers[index].value;
     const { floor, totalFloors } = this.data.formData;
     
     let warning = null;
