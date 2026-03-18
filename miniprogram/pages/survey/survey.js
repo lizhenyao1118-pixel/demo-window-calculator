@@ -15,6 +15,13 @@ const CITY_DB = {
   '沈阳': { p3: '≥3.0', rw: '≥40', k: '≤1.5', note: '严寒地区，保温要求高' }
 };
 
+const BUDGET_OPTIONS = [
+  { value: 'A', label: '经济实用 A档', hint: '600-900元/㎡（断桥铝入门，壁厚≥1.5mm）' },
+  { value: 'B', label: '舒适均衡 B档', hint: '900-1400元/㎡（国产系统窗，壁厚≥1.6mm）' },
+  { value: 'C', label: '品质进阶 C档', hint: '1400-2000元/㎡（进口/高端系统，壁厚≥1.8mm）' },
+  { value: 'D', label: '定制高端 D档', hint: '2000元+/㎡（进口定制，壁厚≥2.0mm）' }
+];
+
 Page({
   data: {
     currentStep: 0,
@@ -53,12 +60,7 @@ Page({
     ],
     orientations: ['东', '南', '西', '北', '东南', '西南', '东北', '西北'],
     heatingTypes: ['集中供暖', '自采暖', '无供暖'],
-    budgetTiers: [
-      { code: 'A', label: 'A档（经济型 <800元/㎡）' },
-      { code: 'B', label: 'B档（舒适型 800-1200元/㎡）' },
-      { code: 'C', label: 'C档（品质型 1200-1800元/㎡）' },
-      { code: 'D', label: 'D档（奢华型 >1800元/㎡）' }
-    ],
+    budgetTiers: BUDGET_OPTIONS,
     showRatio: false,
     conflictWarning: null,
     forceContinue: false,
@@ -120,12 +122,7 @@ Page({
       ],
       orientations: ['东', '南', '西', '北', '东南', '西南', '东北', '西北'],
       heatingTypes: ['集中供暖', '自采暖', '无供暖'],
-      budgetTiers: [
-        { code: 'A', label: 'A档（经济型 <800元/㎡）' },
-        { code: 'B', label: 'B档（舒适型 800-1200元/㎡）' },
-        { code: 'C', label: 'C档（品质型 1200-1800元/㎡）' },
-        { code: 'D', label: 'D档（奢华型 >1800元/㎡）' }
-      ],
+      budgetTiers: BUDGET_OPTIONS,
       showRatio: false,
       heightRatio: 0,
       conflictWarning: null,
@@ -311,7 +308,7 @@ Page({
   // Q8: 预算（冲突预警核心）
   onBudgetChange(e) {
     const index = e.detail.value;
-    const budget = this.data.budgetTiers[index].code;
+    const budget = this.data.budgetTiers[index].value;
     const { floor, totalFloors } = this.data.formData;
     
     let warning = null;
