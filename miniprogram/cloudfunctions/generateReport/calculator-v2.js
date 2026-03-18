@@ -103,7 +103,7 @@ function buildSafetyRedLine(family_risk) {
   return items;
 }
 
-const { BUDGET_SPEC } = require('../../shared/budgetSpec.js');
+const { BUDGET_SPEC } = require('./shared/budgetSpec.js');
 
 // 主计算入口
 function calculateAll(assessment) {

@@ -1,6 +1,6 @@
 // V3 自动化验证套件 - 6组典型边界条件测试
 const { resolveGlassConfig } = require('../generateReport/arbitrator.js');
-const { BUDGET_SPEC } = require('../../shared/budgetSpec.js');
+const { BUDGET_SPEC } = require('../generateReport/shared/budgetSpec.js');
 const { calculateAll } = require('../generateReport/calculator-v2.js');
 
 const TEST_CASES = [

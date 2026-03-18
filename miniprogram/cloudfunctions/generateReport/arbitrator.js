@@ -1,5 +1,5 @@
 // arbitrator.js — V3 统一玻璃仲裁器（解决双轨制冲突）
-const { GLASS_LEVELS, BUDGET_SPEC, getNextTier } = require('../../shared/budgetSpec.js');
+const { GLASS_LEVELS, BUDGET_SPEC, getNextTier } = require('./shared/budgetSpec.js');
 
 function resolveGlassConfig(Rw_req, K_req, SHGC_req, window_features, budget_tier, priority) {
   const maxAvailableLevel = Math.max(...Object.keys(GLASS_LEVELS).map(k => GLASS_LEVELS[k].level));

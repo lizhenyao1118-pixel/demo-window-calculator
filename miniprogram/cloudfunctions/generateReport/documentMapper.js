@@ -25,7 +25,7 @@ const FIELD_MAP = {
   SHGC: 'SHGC_target'
 };
 
-const { GLASS_LEVELS, BUDGET_SPEC } = require('../../shared/budgetSpec.js');
+const { GLASS_LEVELS, BUDGET_SPEC } = require('./shared/budgetSpec.js');
 const { resolveGlassConfig } = require('./arbitrator.js');
 
 const NOISE_SCENE = {
