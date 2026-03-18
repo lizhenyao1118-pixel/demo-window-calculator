@@ -52,6 +52,75 @@ const LIFE_TARGET = {
   safety: '儿童或老人独自在家时，窗户不会成为安全隐患，即使意外碰撞也不会发生坠落风险'
 };
 
+const ACCEPTANCE_NODES = {
+  entry: {
+    title: '【进场验收】',
+    items: [
+      '对照合同核查品牌、型号、颜色、开启方式',
+      '玻璃3C标志（本体印刷，非贴纸）；中空玻璃无雾气',
+      '核对玻璃边部标签与合同约定一致，不能仅凭外观判断膜层',
+      '索取壁厚检测报告，如有条件要求商家现场演示拆一处压线核查'
+    ]
+  },
+  installation: {
+    title: '【安装验收】',
+    items: [
+      '随机查看固定螺丝：打在实体结构上，间距约40-60cm',
+      '发泡剂全周饱满均匀，外露部分平整',
+      '密封胶一圈连续、平整无裂缝，施工条件符合说明书要求',
+      '排水孔未被胶封死，窗台外侧有向外坡度'
+    ]
+  },
+  final: {
+    title: '【竣工验收】',
+    items: [
+      '打火机火焰靠近扇框交接处，无明显偏吹（简易气密自检）',
+      '花洒淋水3分钟，室内无渗水（物业允许时）',
+      '每扇窗反复开合5-10次，胶条压实，无异响卡阻',
+      '外开窗确认防坠绳/限位器安装（高层必查）',
+      '执手操作力正常，儿童安全相关配件（限位器高度、夹胶玻璃）按合同核查'
+    ]
+  }
+};
+
+const MERCHANT_RESPONSE_SECTION = {
+  header: {
+    title: '商家答题表（统一问卷）',
+    subtitle: '请将本表发给3-5家商家，对方如实填写后回传，便于横向对比'
+  },
+  instructions: [
+    '① 同时发给3-5家，要求3-5工作日内回复',
+    '② 优先选择填写完整、回答具体的商家',
+    '③ 对比同一格（壁厚/玻璃/质保），不对比总价'
+  ],
+  basicInfo: {
+    title: '── 第一段：商家基本信息 ─────────────────────────',
+    fields: ['公司名称', '品牌', '是否授权', '施工年限']
+  },
+  technicalTable: {
+    title: '── 第二段：技术答题表 ────────────────────────────',
+    hint: '（第一列加浅灰底色提示文字）',
+    note: '请写不出来就空着，业主会看得很清楚',
+    columns: ['品牌及系列', '型材壁厚', '玻璃配置', '检测报告编号', '含税报价', '工期', '质保', '签字']
+  },
+  attitudeQuestions: {
+    title: '── 第三段：施工态度问答 ─────────────────────────',
+    questions: [
+      '1. 窗洞偏差处理：如遇窗洞不规整（误差>1cm），贵司通常如何处理？',
+      '2. 质保响应：质保期内出现漏水/五金故障，响应时效和解决方案是？',
+      '3. 看不见的施工细节：发泡剂填充、螺丝固定等隐蔽环节，如何确保质量？'
+    ]
+  },
+  footer: {
+    title: '── 落款区 ────────────────────────────────────────',
+    elements: [
+      '商家签名（无需公章）：_________  日期：_________',
+      '回传方式：扫描/拍照发送至业主微信',
+      '签名代表对上述填写内容的确认；如进入签约，请将关键指标写入合同'
+    ]
+  }
+};
+
 // ═══════════════════════════════════════════════════════════════
 // 工具函数
 // ═══════════════════════════════════════════════════════════════
@@ -185,33 +254,7 @@ function getDeadlineText(timeline) {
 }
 
 function getAcceptanceNodes(climateZone) {
-  const isCold = ['cold', 'severe_cold'].includes(climateZone);
-  
-  return [
-    {
-      stage: '进场验收',
-      items: [
-        '核查产品铭牌：品牌、型号与报价单一致',
-        '索取型材截面图及壁厚检测报告，实测值≥承诺值',
-        '核查玻璃配置：Low-E膜层、间隔层厚度'
-      ]
-    },
-    {
-      stage: '安装验收',
-      items: [
-        '发泡剂填充：窗框与洞口间隙全周填充，无漏缝',
-        isCold ? '打胶须在5°C以上施工；宽度≥8mm' : '中性硅酮密封胶宽度≥8mm'
-      ]
-    },
-    {
-      stage: '竣工验收',
-      items: [
-        '手持烟雾笔检测缝隙：无可见气流',
-        '淋水测试3分钟：室内无渗漏',
-        '所有扇开启顺畅，执手转动轻盈'
-      ]
-    }
-  ];
+  return [ACCEPTANCE_NODES.entry, ACCEPTANCE_NODES.installation, ACCEPTANCE_NODES.final];
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -572,7 +615,8 @@ function mapToSections(resolved, answers, pdfNo) {
         cost_estimate: budgetSpec.conflict ? `预计玻璃成本增加：${budgetSpec.cost_delta}元/㎡` : null
       },
       deadlineText: getDeadlineText(answers.timeline),
-      acceptanceNodes: getAcceptanceNodes(resolved.climate_zone) // 修复：使用 climate_zone
+      acceptanceNodes: getAcceptanceNodes(resolved.climate_zone),
+      merchantResponse: MERCHANT_RESPONSE_SECTION
     },
     
     attachments: {

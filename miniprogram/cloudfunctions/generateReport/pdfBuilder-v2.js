@@ -64,9 +64,11 @@ const COLORS = {
 function drawChapterHeader(doc, num, title, color) {
   if (842 - doc.y < 140) doc.addPage();
   const y = doc.y;
+  const chapterLabel = (typeof num === 'string' && num.startsWith('第') && !num.includes('章')) ? `${num}章` : num;
+  const badgeText = typeof chapterLabel === 'string' ? chapterLabel.replace('第', '').replace('章', '').slice(0, 1) : String(chapterLabel);
   doc.rect(55, y, 36, 28).fill(color);
-  doc.fillColor("#FFFFFF").fontSize(12).text(num, 55, y + 8, { width: 36, align: "center" });
-  doc.fillColor(color).fontSize(18).text(` ${title}`, 91, y + 5);
+  doc.fillColor("#FFFFFF").fontSize(12).text(badgeText, 55, y + 8, { width: 36, align: "center" });
+  doc.fillColor(color).fontSize(18).text(` ${chapterLabel} ${title}`, 91, y + 5);
   doc.moveTo(55, y + 30).lineTo(540, y + 30).lineWidth(1.5).stroke(color);
   doc.y = y + 40;
 }
@@ -157,30 +159,30 @@ function renderCover(doc, cover) {
   
   // 主标题
   doc.fillColor("#FFFFFF").fontSize(24)
-    .text("门 窗 技 术 招 标 文 件", 55, 108, { width: 485, align: "center" });
+    .text("门 窗 技 术 招 标 文 件", 55, 96, { width: 485, align: "center" });
   
   // 文件编号
   doc.fontSize(12)
-    .text(`文件编号：${pdfNo}　　签发日期：${issueDate}`, 55, 148, { width: 485, align: "center" });
+    .text(`文件编号：${pdfNo}　　签发日期：${issueDate}`, 55, 134, { width: 485, align: "center" });
   
   // 项目信息卡
-  doc.roundedRect(55, 172, 485, 98, 6).fill("#FFFFFF");
+  doc.roundedRect(55, 156, 485, 98, 6).fill("#FFFFFF");
   doc.fillColor(COLORS.brand_navy).fontSize(10.5)
-    .text(`${city}${cover.district ? " " + cover.district : ""} · ${climate}`, 69, 186)
-    .text(floorDesc, 69, 204);
+    .text(`${city}${cover.district ? " " + cover.district : ""} · ${climate}`, 69, 170)
+    .text(floorDesc, 69, 188);
   
   // 痛点徽章（计算宽度避免溢出）
   const painTag = cover.painTag || '综合需求';
   const badgeW = painTag.length * 10 + 20;
-  doc.roundedRect(69, 224, Math.min(badgeW, 100), 20, 3).fill(COLORS.warn_orange);
+  doc.roundedRect(69, 208, Math.min(badgeW, 100), 20, 3).fill(COLORS.warn_orange);
   doc.fillColor("#FFFFFF").fontSize(9)
-    .text(painTag, 73, 230);
+    .text(painTag, 73, 214);
   
   // 安全标记
   if (cover.hasSafety) {
-    doc.roundedRect(69 + Math.min(badgeW, 100) + 8, 224, 96, 20, 3).fill(COLORS.risk_red);
+    doc.roundedRect(69 + Math.min(badgeW, 100) + 8, 208, 96, 20, 3).fill(COLORS.risk_red);
     doc.fillColor("#FFFFFF").fontSize(9)
-      .text("含安全专项条款", 73 + Math.min(badgeW, 100) + 8, 230);
+      .text("含安全专项条款", 73 + Math.min(badgeW, 100) + 8, 214);
   }
   
   // 白色内容区
@@ -213,19 +215,23 @@ function renderChapter1(doc, c1) {
   if (c1.noise && c1.noise.show) {
     drawSectionTitle(doc, "1.3 环境评估");
     const n = c1.noise;
-    doc.fillColor(COLORS.text_body).fontSize(10.5).text(`噪音源：${n.typeLabel}`, 55, doc.y + 2);
-    
+    doc.fillColor(COLORS.text_body).fontSize(10.5).text(`噪音源：${n.typeLabel}｜距离：${n.distLabel}`, 55, doc.y);
+
     const KEYS = ["lt20", "20to50", "gt50"];
     const LABELS = ["近(<20m)", "中(20-50m)", "远(>50m)"];
     const active = KEYS.indexOf(n.distKey);
-    
+    const barY = doc.y + 18;
+    const gutter = 10;
+    const segW = (485 - gutter * 2) / 3;
+
     for (let i = 0; i < 3; i++) {
-      const x = 165 + i * 84;
-      doc.rect(x, doc.y, 80, 14).fill(i <= active ? COLORS.warn_orange : COLORS.border);
-      doc.fillColor(i <= active ? "#FFFFFF" : COLORS.text_secondary).fontSize(9).text(LABELS[i], x + 4, doc.y + 3);
+      const x = 55 + i * (segW + gutter);
+      doc.rect(x, barY, segW, 16).fill(i <= active ? COLORS.warn_orange : COLORS.border);
+      doc.fillColor(i <= active ? "#FFFFFF" : COLORS.text_secondary).fontSize(9).text(LABELS[i], x + 8, barY + 4, { width: segW - 16, align: "center" });
     }
-    doc.fillColor(COLORS.text_secondary).fontSize(9).text(`评级：${n.levelLabel}`, 165, doc.y + 18);
-    doc.y += 35;
+
+    doc.fillColor(COLORS.text_secondary).fontSize(9).text(`评级：${n.levelLabel}`, 55, barY + 20);
+    doc.y = barY + 40;
   }
 }
 
@@ -262,27 +268,7 @@ function renderChapter2(doc, c2) {
   // 产品红线
   drawSectionTitle(doc, "2.4 产品红线");
   renderRedLines(doc, c2.redLines);
-
-  // 配置表
-  const spec = c2.budgetSpec || { label: "舒适型 B档", profile: "", glass: "", hardware: "", seal: "" };
-  drawSectionTitle(doc, `2.5 推荐配置参考（${spec.label}）`);
-  
-  const rows = [
-    ["型材", spec.profile || "断桥铝，壁厚≥1.6mm"],
-    ["玻璃", spec.glass || "5Low-E+12Ar+5 中空充氩气"],
-    ["五金", spec.hardware || "多点锁传动，铰链负载≥80kg"],
-    ["密封", spec.seal || "EPDM三元乙丙胶条，2道密封"]
-  ];
-  
-  rows.forEach(([label, value], i) => {
-    const y = doc.y + i * 22;
-    const bg = i % 2 === 0 ? COLORS.bg_card : "#FFFFFF";
-    doc.rect(55, y, 68, 22).fill(COLORS.brand_navy);
-    doc.rect(123, y, 417, 22).fill(bg);
-    doc.fillColor("#FFFFFF").fontSize(9.5).text(label, 63, y + 7);
-    doc.fillColor(COLORS.text_body).fontSize(10.5).text(value, 133, y + 6);
-  });
-  doc.y += rows.length * 22 + 20;
+  doc.y += 18;
 }
 
 function renderChapter3(doc, c3) {
@@ -356,7 +342,7 @@ function renderChapter3(doc, c3) {
   drawSectionTitle(doc, "3.3 可选升级项");
   doc.fillColor(COLORS.text_secondary).fontSize(10)
     .text("以下升级项未包含在当前标准中，如需评估哪项性价比最高，可咨询李Sir →", 55, doc.y, { width: 485 });
-  doc.y += 25;
+  doc.y += 14;
   
   const upgrades = c3.upgrades || [
     { name: "隔音升级+", desc: "Rw基础上+5dB，需三玻两腔", costHint: "+约180元/㎡", stars: 4 },
@@ -375,15 +361,13 @@ function renderChapter3(doc, c3) {
     const stars = "★".repeat(u.stars || 3) + "☆".repeat(5 - (u.stars || 3));
     doc.fillColor(COLORS.warn_orange).fontSize(9).text(stars, x + cardW - 50, doc.y + 50);
   });
-  doc.y += 78;
+  doc.y += 72;
 }
 
 function renderChapter4(doc, c4) {
   const isRisk = c4.isRisk;
-  const color = isRisk ? COLORS.risk_red : COLORS.safe_green;
-  const title = isRisk ? "风险提示与专家建议" : "验收节点与优化建议";
-  
-  drawChapterHeader(doc, "第四", title, color);
+  const color = COLORS.brand_navy;
+  drawChapterHeader(doc, "第四", "商家答题表（统一问卷）", color);
   
   if (c4.riskSection && c4.riskSection.items && c4.riskSection.items.length > 0) {
     const severity = c4.riskSection.severity || 'info';
@@ -448,7 +432,8 @@ function renderChapter4(doc, c4) {
   ];
   
   nodes.forEach(node => {
-    doc.fillColor(COLORS.brand_mid).fontSize(11).text(`【${node.stage}】`, 55, doc.y);
+    const title = node.title || (node.stage ? `【${node.stage}】` : "【验收节点】");
+    doc.fillColor(COLORS.brand_mid).fontSize(11).text(title, 55, doc.y);
     doc.y += 15;
     node.items.forEach(item => {
       doc.fillColor(COLORS.text_body).fontSize(10).text(` · ${item}`, 65, doc.y);
@@ -472,51 +457,122 @@ function renderChapter4(doc, c4) {
   doc.fillColor("#FFFFFF").fontSize(10).text("预约深度审计 →", 448, bY + 15);
   doc.y = bY + 52;
   
-  // 商家响应表
-  if (842 - doc.y < 200) doc.addPage();
-  drawSectionTitle(doc, "商家响应要求");
-  doc.fillColor(COLORS.text_body).fontSize(10)
-    .text(`${c4.deadlineText || "请于14个工作日内"}将本表填写完整后返回业主，作为正式报价响应凭证。`, 55, doc.y);
-  doc.y += 20;
-  
-  // 表格
-  const cols = [
-    { h: "品牌及系列", w: 82 }, { h: "型材壁厚(mm)", w: 60 }, { h: "玻璃配置", w: 80 },
-    { h: "检测报告编号", w: 82 }, { h: "含税报价(元)", w: 58 }, { h: "工期(天)", w: 38 },
-    { h: "质保(年)", w: 38 }, { h: "签字盖章", w: 47 }
-  ];
-  
-  const rowH = 28;
-  const tableY = doc.y;
-  
-  // 表头
-  let x = 55;
-  cols.forEach(col => {
-    doc.rect(x, tableY, col.w, 22).fill(COLORS.brand_navy);
-    doc.fillColor("#FFFFFF").fontSize(9).text(col.h, x + 5, tableY + 6, { width: col.w - 10 });
-    x += col.w;
-  });
-  
-  // 数据行（4行）
-  for (let row = 0; row < 4; row++) {
-    const y = tableY + 22 + row * rowH;
-    x = 55;
-    cols.forEach(col => {
-      const bg = row % 2 === 0 ? "#F7F9FC" : "#FFFFFF";
-      doc.rect(x, y, col.w, rowH).fill(bg).stroke(COLORS.border);
-      // 底部虚线（除签章列）
-      if (col.h !== "签字盖章") {
-        doc.moveTo(x + 5, y + rowH - 6).lineTo(x + col.w - 5, y + rowH - 6)
-          .dash(2, { space: 3 }).lineWidth(0.4).stroke("#CCCCCC");
-        doc.undash().lineWidth(1);
+  const mr = c4.merchantResponse || {};
+  if (mr.header && mr.header.title) {
+    if (842 - doc.y < 280) doc.addPage();
+
+    drawSectionTitle(doc, mr.header.title);
+    if (mr.header.subtitle) {
+      doc.fillColor(COLORS.text_secondary).fontSize(10)
+        .text(mr.header.subtitle, 55, doc.y, { width: 485 });
+      doc.y += 18;
+    }
+
+    if (mr.instructions && mr.instructions.length > 0) {
+      mr.instructions.forEach((line) => {
+        doc.fillColor(COLORS.text_body).fontSize(10).text(line, 55, doc.y, { width: 485 });
+        doc.y += 14;
+      });
+      doc.y += 6;
+    }
+
+    if (mr.basicInfo && mr.basicInfo.title) {
+      doc.fillColor(COLORS.brand_mid).fontSize(11).text(mr.basicInfo.title, 55, doc.y);
+      doc.y += 16;
+
+      const fields = Array.isArray(mr.basicInfo.fields) ? mr.basicInfo.fields : [];
+      fields.forEach((f) => {
+        doc.fillColor(COLORS.text_body).fontSize(10).text(`${f}：________________________`, 55, doc.y, { width: 485 });
+        doc.y += 14;
+      });
+      doc.y += 6;
+    }
+
+    if (mr.technicalTable && mr.technicalTable.title) {
+      if (842 - doc.y < 220) doc.addPage();
+
+      doc.fillColor(COLORS.brand_mid).fontSize(11).text(mr.technicalTable.title, 55, doc.y);
+      doc.y += 14;
+
+      if (mr.technicalTable.hint) {
+        doc.fillColor(COLORS.text_light).fontSize(9).text(mr.technicalTable.hint, 55, doc.y, { width: 485 });
+        doc.y += 12;
       }
-      x += col.w;
-    });
+      if (mr.technicalTable.note) {
+        doc.fillColor(COLORS.text_light).fontSize(9).text(mr.technicalTable.note, 55, doc.y, { width: 485 });
+        doc.y += 14;
+      }
+
+      const columns = Array.isArray(mr.technicalTable.columns) ? mr.technicalTable.columns : [];
+      const cols = [
+        { h: columns[0] || "品牌及系列", w: 86 },
+        { h: columns[1] || "型材壁厚", w: 60 },
+        { h: columns[2] || "玻璃配置", w: 82 },
+        { h: columns[3] || "检测报告编号", w: 80 },
+        { h: columns[4] || "含税报价", w: 58 },
+        { h: columns[5] || "工期", w: 38 },
+        { h: columns[6] || "质保", w: 38 },
+        { h: columns[7] || "签字", w: 43 }
+      ];
+
+      const rowH = 28;
+      const tableY = doc.y;
+
+      let x = 55;
+      cols.forEach((col) => {
+        doc.rect(x, tableY, col.w, 22).fill(COLORS.brand_navy);
+        doc.fillColor("#FFFFFF").fontSize(9).text(col.h, x + 4, tableY + 6, { width: col.w - 8, align: "center" });
+        x += col.w;
+      });
+
+      for (let row = 0; row < 4; row++) {
+        const y = tableY + 22 + row * rowH;
+        x = 55;
+        cols.forEach((col, idx) => {
+          const bg = idx === 0 ? "#F2F2F2" : (row % 2 === 0 ? "#F7F9FC" : "#FFFFFF");
+          doc.rect(x, y, col.w, rowH).fill(bg).stroke(COLORS.border);
+
+          if (idx === 0) {
+            doc.fillColor(COLORS.text_light).fontSize(9).text("请填写", x + 4, y + 9, { width: col.w - 8, align: "center" });
+          } else {
+            doc.moveTo(x + 5, y + rowH - 6).lineTo(x + col.w - 5, y + rowH - 6)
+              .dash(2, { space: 3 }).lineWidth(0.4).stroke("#CCCCCC");
+            doc.undash().lineWidth(1);
+          }
+
+          x += col.w;
+        });
+      }
+
+      doc.y = tableY + 22 + 4 * rowH + 10;
+    }
+
+    if (mr.attitudeQuestions && mr.attitudeQuestions.title) {
+      if (842 - doc.y < 150) doc.addPage();
+
+      doc.fillColor(COLORS.brand_mid).fontSize(11).text(mr.attitudeQuestions.title, 55, doc.y);
+      doc.y += 16;
+      const qs = Array.isArray(mr.attitudeQuestions.questions) ? mr.attitudeQuestions.questions : [];
+      qs.forEach((q) => {
+        doc.fillColor(COLORS.text_body).fontSize(10).text(q, 55, doc.y, { width: 485 });
+        doc.y += 26;
+      });
+      doc.y += 4;
+    }
+
+    if (mr.footer && mr.footer.title) {
+      if (842 - doc.y < 110) doc.addPage();
+
+      doc.fillColor(COLORS.brand_mid).fontSize(11).text(mr.footer.title, 55, doc.y);
+      doc.y += 16;
+      const els = Array.isArray(mr.footer.elements) ? mr.footer.elements : [];
+      els.forEach((line) => {
+        doc.fillColor(COLORS.text_body).fontSize(10).text(line, 55, doc.y, { width: 485 });
+        doc.y += 14;
+      });
+      doc.y += 6;
+    }
   }
-  
-  doc.fillColor(COLORS.text_light).fontSize(9)
-    .text("请商家填写完整后加盖公章或签字，扫描/拍照发送业主。", 55, tableY + 22 + 4 * rowH + 8);
-  doc.y += 30;
 }
 
 function renderAttachments(doc, attachments) {
