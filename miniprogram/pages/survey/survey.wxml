@@ -106,12 +106,15 @@
     </view>
   </view>
 
-  <!-- Q7: 家庭结构 -->
+  <!-- Q7: 家庭风险 -->
   <view class="step" wx:if="{{currentStep === 6}}">
-    <view class="question-title">7. 家庭结构？</view>
-    <picker mode="selector" range="{{['有老人/幼儿', '年轻夫妇', '独居', '出租']}}" bindchange="onFamilyChange">
-      <view class="picker">{{formData.familyType || '请选择家庭结构'}}</view>
-    </picker>
+    <view class="question-title">7. 家庭与窗型风险（可多选）</view>
+    <checkbox-group bindchange="onFamilyRiskChange">
+      <label wx:for="{{familyRiskOptions}}" wx:key="value" style="display:block; margin: 10px 0;">
+        <checkbox value="{{item.value}}" checked="{{formData.family_risk && formData.family_risk.indexOf(item.value) !== -1}}" />
+        <text>{{item.label}}</text>
+      </label>
+    </checkbox-group>
   </view>
 
   <!-- Q8: 预算与冲突警告 -->

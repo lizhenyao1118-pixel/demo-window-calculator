@@ -22,6 +22,13 @@ const BUDGET_OPTIONS = [
   { value: 'D', label: '定制高端 D档', hint: '2000元+/㎡（进口定制，壁厚≥2.0mm）' }
 ];
 
+const FAMILY_RISK_OPTIONS = [
+  { value: 'child', label: '有10岁以下儿童' },
+  { value: 'elder', label: '有行动不便的老人' },
+  { value: 'large_fixed', label: '有落地窗或整面玻璃墙（高≥2.1m或宽≥3m）' },
+  { value: 'wide_slider', label: '有宽推拉阳台门（单扇宽≥1.2m）' }
+];
+
 Page({
   data: {
     currentStep: 0,
@@ -42,7 +49,7 @@ Page({
       heatingType: '',
       budgetTier: '',
       priority: '',
-      familyType: '',
+      family_risk: [],
       timeline: ''
     },
     cityHint: null,
@@ -54,13 +61,15 @@ Page({
       { label: '安静/无特殊噪音', value: 'quiet' }
     ],
     noiseDistOptions: [
-      { label: '<20m / 紧邻', value: 'lt20' },
-      { label: '20-50m / 较近', value: '20to50' },
-      { label: '>50m / 较远', value: 'gt50' }
+      { value: 'lt20', label: '20米以内（几乎紧挨着）' },
+      { value: '20to50', label: '20-50米（隔一条小路）' },
+      { value: 'gt50', label: '50米以上（隔一条街）' },
+      { value: 'gt50_shielded', label: '50米以上且有高楼明显遮挡' }
     ],
     orientations: ['东', '南', '西', '北', '东南', '西南', '东北', '西北'],
     heatingTypes: ['集中供暖', '自采暖', '无供暖'],
     budgetTiers: BUDGET_OPTIONS,
+    familyRiskOptions: FAMILY_RISK_OPTIONS,
     showRatio: false,
     conflictWarning: null,
     forceContinue: false,
@@ -105,7 +114,9 @@ Page({
         westShading: false,
         heatingType: '',
         budgetTier: '',
-        priority: ''
+        priority: '',
+        family_risk: [],
+        timeline: ''
       },
       cityHint: null,
       painPoints: ['隔音降噪', '保温节能', '安全防盗', '采光视野', '省钱经济'],
@@ -116,13 +127,15 @@ Page({
         { label: '安静/无特殊噪音', value: 'quiet' }
       ],
       noiseDistOptions: [
-        { label: '<20m / 紧邻', value: 'lt20' },
-        { label: '20-50m / 较近', value: '20to50' },
-        { label: '>50m / 较远', value: 'gt50' }
+        { value: 'lt20', label: '20米以内（几乎紧挨着）' },
+        { value: '20to50', label: '20-50米（隔一条小路）' },
+        { value: 'gt50', label: '50米以上（隔一条街）' },
+        { value: 'gt50_shielded', label: '50米以上且有高楼明显遮挡' }
       ],
       orientations: ['东', '南', '西', '北', '东南', '西南', '东北', '西北'],
       heatingTypes: ['集中供暖', '自采暖', '无供暖'],
       budgetTiers: BUDGET_OPTIONS,
+      familyRiskOptions: FAMILY_RISK_OPTIONS,
       showRatio: false,
       heightRatio: 0,
       conflictWarning: null,
@@ -134,6 +147,7 @@ Page({
     // 原有草稿恢复代码（放在初始化之后）
     const draft = wx.getStorageSync('survey_draft_v1');
     if (draft && (Date.now() - draft.timestamp) < 7 * 24 * 3600 * 1000) {
+      const familyRisk = Array.isArray(draft.data.family_risk) ? draft.data.family_risk : [];
       this.setData({
         'formData.city': draft.data.city || '',
         'formData.district': draft.data.district || '',
@@ -149,6 +163,7 @@ Page({
         'formData.heatingType': draft.data.heatingType || '',
         'formData.budgetTier': draft.data.budgetTier || '',
         'formData.priority': draft.data.priority || '',
+        'formData.family_risk': familyRisk,
         currentStep: draft.step || 0
       });
       
@@ -256,7 +271,7 @@ Page({
   onNoiseDistChange(e) {
     const opt = this.data.noiseDistOptions[e.detail.value];
     const noiseDist = opt ? opt.value : 'gt50';
-    const noiseLabel = opt ? opt.label : '>50m / 较远';
+    const noiseLabel = opt ? opt.label : '50米以上（隔一条街）';
     this.setData({
       'formData.noise_dist': noiseDist,
       'formData.noise_dist_label': noiseLabel
@@ -294,15 +309,21 @@ Page({
     trackStep(6, { heating_type: heating });
   },
 
-  // Q7: 家庭结构
-  onFamilyChange(e) {
-    const types = ['有老人/幼儿', '年轻夫妇', '独居', '出租'];
-    const familyType = types[e.detail.value];
-    this.setData({ 'formData.familyType': familyType });
+  // Q7: 多选家庭风险
+  onFamilyRiskChange(e) {
+    const next = Array.isArray(e.detail.value) ? e.detail.value : [];
+    this.setData({ 'formData.family_risk': next });
     this.saveDraft();
-    
-    // 埋点：步骤完成（Q7）
-    trackStep(7, { family_type: familyType });
+    trackStep(7, { family_risk: next });
+  },
+
+  buildWindowFeatures(familyRiskArray) {
+    const arr = Array.isArray(familyRiskArray) ? familyRiskArray : [];
+    return {
+      has_large_fixed: arr.includes('large_fixed'),
+      has_wide_slider: arr.includes('wide_slider'),
+      has_family_safety: arr.some(v => v === 'child' || v === 'elder')
+    };
   },
 
   // Q8: 预算（冲突预警核心）
@@ -405,6 +426,12 @@ Page({
       wx.showToast({ title: '请选择城市', icon: 'none' });
       return false;
     }
+    if (currentStep === 1 && formData.floor && formData.totalFloors) {
+      if (parseInt(formData.floor, 10) > parseInt(formData.totalFloors, 10)) {
+        wx.showToast({ title: '所在楼层不能高于总楼层数', icon: 'none' });
+        return false;
+      }
+    }
     if (currentStep === 7 && !formData.budgetTier) {
       wx.showToast({ title: '请选择预算档位', icon: 'none' });
       return false;
@@ -432,6 +459,12 @@ Page({
     });
 
     // 最终校验
+    if (this.data.formData.floor && this.data.formData.totalFloors) {
+      if (parseInt(this.data.formData.floor, 10) > parseInt(this.data.formData.totalFloors, 10)) {
+        wx.showToast({ title: '所在楼层不能高于总楼层数', icon: 'none' });
+        return;
+      }
+    }
     if (this.data.conflictWarning && !this.data.forceContinue) {
       wx.showModal({
         title: '⚠️ 配置冲突未解决',
@@ -467,8 +500,10 @@ Page({
     });
 
     // 准备数据（脱敏+结构化）
+    const windowFeatures = this.buildWindowFeatures(this.data.formData.family_risk);
     const payload = {
       ...this.data.formData,
+      window_features: windowFeatures,
       isDisclaimer: isDisclaimer,
       timestamp: Date.now(),
       cityStandard: this.data.cityHint

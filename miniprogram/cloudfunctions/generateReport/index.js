@@ -32,13 +32,18 @@ function adaptAssessmentData(data) {
     '>50m': 'gt50',
     lt20: 'lt20',
     '20to50': '20to50',
-    gt50: 'gt50'
+    gt50: 'gt50',
+    gt50_shielded: 'gt50_shielded'
   };
   
   // 优先项映射
   const priorityMap = {
     '隔音降噪': 'sound',
+    '保温节能': 'heat',
+    '防风防水': 'wind',
+    '安全防盗': 'safety',
     '视野景观': 'view',
+    '采光视野': 'view',
     '性价比': 'price',
     '通风透气': 'vent',
     sound: 'sound',
@@ -61,7 +66,7 @@ function adaptAssessmentData(data) {
     city: data.city || '北京',
     floor: parseInt(data.floor) || 1,
     total_floors: parseInt(data.totalFloors) || 1,
-    pain_point: priorityMap[data.pain_point || data.priority] || 'sound',
+    pain_point: priorityMap[data.pain_point || data.painPoint || data.priority] || 'sound',
     noise_type:
       noiseMap[data.noise_type || data.noiseType] ||
       (typeof data.noiseType === 'string' && data.noiseType.includes('主干') ? 'main_road' : null) ||
@@ -78,7 +83,7 @@ function adaptAssessmentData(data) {
     orientation: (data.orientation || 'south').toLowerCase(),
     west_shading: data.westShading === true || data.westShading === '有遮挡',
     heating_type: heatingMap[data.heatingType] || 'none',
-    family_risk: data.familyRisk || 'none', // child/elder/none
+    family_risk: Array.isArray(data.family_risk) ? data.family_risk : [],
     budget_tier: (data.budgetTier || 'B').toUpperCase(),
     priority: priorityMap[data.priority] || 'sound',
     timeline: data.timeline || '1to3m', // lt1m/1to3m/flexible
