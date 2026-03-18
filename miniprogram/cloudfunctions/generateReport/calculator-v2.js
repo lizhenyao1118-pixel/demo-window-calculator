@@ -26,19 +26,23 @@ function calcP3(city, floor, total_floors) {
   return { value, warnings };
 }
 
-// FIX P0-2: Rw优先项加权
-function calcRw(noise_type, noise_dist, priority) {
-  const BASE = { main_road: 35, elevated: 38, rail: 40, quiet: 25 };
-  const DIST_ADJ = { lt20: 3, "20to50": 0, gt50: -3 };
-  const PRIO_ADJ = priority === "sound" ? 3 : 0;
-  
-  return (BASE[noise_type] || 25) + (DIST_ADJ[noise_dist] || 0) + PRIO_ADJ;
+function calcRw({ noise_type, noise_dist, pain_point }) {
+  const BASE = { main_road: 35, elevated: 38, rail: 40, quiet: 30 };
+  const DIST = { lt20: 3, "20to50": 0, gt50: -3, gt50_shielded: -3 };
+
+  let rw = (BASE[noise_type] || 30) + (DIST[noise_dist] || 0);
+
+  const noise_usage = pain_point === 'sound' ? 'sleep' : 'general';
+  const USAGE_ADJ = { sleep: 3, office: 2, living: 1, general: 0 };
+  rw += USAGE_ADJ[noise_usage] || 0;
+
+  return Math.min(Math.max(rw, 28), 45);
 }
 
 // FIX P0-3: SHGC西晒扣减
 function calcThermal(city, orientation, west_shading) {
   const config = CITY_MAP[city] || { climate: "hot_summer" };
-  const K_MAP = { cold: 1.8, severe_cold: 1.5, hot_summer: 2.4, hot_year: 2.8 };
+  const K_MAP = { severe_cold: 1.4, cold: 1.8, hot_summer: 2.4, hot_year: 2.8, mild: 3.0 };
   const SHGC_MAP = { hot_year: 0.30, hot_summer: 0.35, cold: 0.45, severe_cold: 0.50 };
   
   const shgc_adj = (orientation === "west" && west_shading === false) ? -0.05 : 0;
@@ -71,7 +75,10 @@ function resolveConflicts(computed, answers) {
     notes.push("预算与楼层视野需求存在冲突");
   }
 
-  if (family_risk && family_risk !== "none" && budget_tier === "A") {
+  const riskArr = Array.isArray(family_risk) ? family_risk : [];
+  const hasFamilySafety = riskArr.includes('child') || riskArr.includes('elder');
+
+  if (hasFamilySafety && budget_tier === "A") {
     risk_flags.safety_budget_conflict = true;
     notes.push("安全防护条款成本高于A档预算，建议升级至B档");
   }
@@ -82,29 +89,24 @@ function resolveConflicts(computed, answers) {
 // 安全条款生成
 function buildSafetyRedLine(family_risk) {
   const items = [];
-  if (family_risk === "child") {
+  const arr = Array.isArray(family_risk) ? family_risk : [];
+  if (arr.includes("child")) {
     items.push("窗台高度≥900mm或加装防护栏杆");
     items.push("开启扇限位器（开启角度≤100mm）");
     items.push("夹胶玻璃（防坠落碎裂）");
   }
-  if (family_risk === "elder") {
+  if (arr.includes("elder")) {
     items.push("执手操作力≤40N（适老化）");
     items.push("门槛高度≤20mm（防绊倒）");
   }
   return items;
 }
 
-// 预算档位映射
-const BUDGET_SPEC = {
-  "A": { label: "经济型", frame: "断桥铝壁厚≥1.4mm", glass: "5+12A+5", price: "300-500" },
-  "B": { label: "舒适型", frame: "断桥铝壁厚≥1.6mm", glass: "5Low-E+12Ar+5", price: "500-800" },
-  "C": { label: "品质型", frame: "断桥铝壁厚≥1.8mm", glass: "三玻两腔", price: "800-1500" },
-  "D": { label: "定制型", frame: "系统窗壁厚≥2.0mm", glass: "三玻Low-E", price: "1500+" }
-};
+const { BUDGET_SPEC } = require('../../shared/budgetSpec.js');
 
 // 主计算入口
 function calculateAll(assessment) {
-  const { city, floor, total_floors, noise_type, noise_dist, orientation, west_shading, priority, family_risk, budget_tier, timeline } = assessment;
+  const { city, floor, total_floors, noise_type, noise_dist, orientation, west_shading, priority, pain_point, family_risk, budget_tier, timeline } = assessment;
   
   const cityConfig = getCityConfig(city);
   const p3Result = calcP3(city, floor, total_floors);
@@ -113,7 +115,7 @@ function calculateAll(assessment) {
   const computed = {
     city, climate_zone: cityConfig.climate, wind_zone: cityConfig.wind_zone,
     floor, total_floors, height_ratio: floor / Math.max(total_floors, 1),
-    P3: p3Result.value, Rw: calcRw(noise_type, noise_dist, priority),
+    P3: p3Result.value, Rw: calcRw({ noise_type, noise_dist, pain_point: pain_point || priority }),
     K: thermalResult.K, SHGC: thermalResult.SHGC,
     priority, budget_tier, degraded: cityConfig.degraded,
     degraded_msg: cityConfig.degraded_msg,
@@ -122,7 +124,7 @@ function calculateAll(assessment) {
   
   const resolved = resolveConflicts(computed, assessment);
   resolved.safety_items = buildSafetyRedLine(family_risk);
-  resolved.hasSafetyClause = family_risk && family_risk !== "none";
+  resolved.hasSafetyClause = Array.isArray(family_risk) && (family_risk.includes('child') || family_risk.includes('elder'));
   resolved.budget_spec = BUDGET_SPEC[budget_tier] || BUDGET_SPEC["B"];
   
   const timelineMap = { lt1m: "7个工作日", "1to3m": "15个工作日", flexible: "30个工作日" };

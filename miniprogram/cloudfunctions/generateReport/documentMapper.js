@@ -25,6 +25,9 @@ const FIELD_MAP = {
   SHGC: 'SHGC_target'
 };
 
+const { BUDGET_SPEC } = require('../../shared/budgetSpec.js');
+const { resolveGlassConfig } = require('./arbitrator.js');
+
 const NOISE_SCENE = {
   main_road: {
     lt20: '紧邻主干道，白天车流噪声约70-75dB，夜间也难以低于55dB——相当于在卧室里持续开着电视的背景音量',
@@ -47,51 +50,6 @@ const LIFE_TARGET = {
   heat: '夏季西晒时室内温度比室外低8-10℃，空调制冷负担显著降低，窗边不再有灼热感',
   wind: '台风或强风天气窗户无哨声、无晃动，暴雨时室内绝对无渗漏，保持干燥舒适',
   safety: '儿童或老人独自在家时，窗户不会成为安全隐患，即使意外碰撞也不会发生坠落风险'
-};
-
-// Claude 确认的最终版预算档位（2026-03-14）
-const BUDGET_SPEC = {
-  A: {
-    tier: 'A',
-    label: '经济实用 A档',
-    price_range: '600–800 元/㎡',
-    price_hint: '600元以下产品建议谨慎，壁厚和五金难以保证',
-    bar_ratio: 0.35,
-    profile: '断桥铝，壁厚 ≥1.4mm，穿条式隔热条',
-    glass: '5+9A+5 普通中空（或 5Low-E+9A+5）',
-    hardware: '国产标准五金，铰链负载≥60kg',
-    seal: 'EPDM胶条，2道密封'
-  },
-  B: {
-    tier: 'B',
-    label: '舒适均衡 B档',
-    price_range: '800–1200 元/㎡',
-    bar_ratio: 0.55,
-    profile: '断桥铝，壁厚 ≥1.6mm，穿条式 ≥28mm',
-    glass: '5Low-E+12Ar+5 中空充氩气',
-    hardware: '多点锁传动，铰链负载≥80kg',
-    seal: 'EPDM三元乙丙胶条，2道密封'
-  },
-  C: {
-    tier: 'C',
-    label: '品质进阶 C档',
-    price_range: '1200–1800 元/㎡',
-    bar_ratio: 0.75,
-    profile: '注胶式断桥 ≥32mm，或入门系统门窗',
-    glass: '6Low-E+16Ar+6 三层充氩气',
-    hardware: '进口五金，铰链负载≥100kg',
-    seal: 'EPDM胶条，3道密封'
-  },
-  D: {
-    tier: 'D',
-    label: '定制高端 D档',
-    price_range: '1800+ 元/㎡',
-    bar_ratio: 1.00,
-    profile: '被动式/近被动式系统门窗，壁厚 ≥2.0mm',
-    glass: '三玻两腔+暖边间隔条+充氩气',
-    hardware: '进口隐藏合页，铰链负载≥120kg',
-    seal: '复合胶条，4道密封'
-  }
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -154,7 +112,8 @@ function getNoiseLabel(noiseType, noiseDist) {
   const dists = {
     lt20: '近距离（<20m）',
     '20to50': '中距离（20-50m）',
-    gt50: '远距离（>50m）'
+    gt50: '远距离（>50m）',
+    gt50_shielded: '远距离（>50m，有遮挡）'
   };
   return {
     typeLabel: types[noiseType] || noiseType,
@@ -187,7 +146,8 @@ function getNoiseSceneDesc(noiseType, noiseDist) {
   if (noiseType === 'quiet') return NOISE_SCENE.quiet;
   const byType = NOISE_SCENE[noiseType];
   if (!byType || typeof byType !== 'object') return '';
-  return byType[noiseDist] || byType['20to50'] || byType.lt20 || byType.gt50 || '';
+  const normalizedDist = noiseDist === 'gt50_shielded' ? 'gt50' : noiseDist;
+  return byType[normalizedDist] || byType['20to50'] || byType.lt20 || byType.gt50 || '';
 }
 
 function getHeatingDesc(heatingType) {
@@ -201,11 +161,18 @@ function getHeatingDesc(heatingType) {
 }
 
 function getFamilyDesc(familyRisk) {
-  if (!familyRisk || familyRisk === 'none') return '普通家庭';
-  if (familyRisk === 'child') return '含儿童（含安全专项条款）';
-  if (familyRisk === 'elder') return '含老人（适老化条款）';
-  if (familyRisk === 'both') return '含儿童及老人（双重安全条款）';
-  return '特殊需求家庭';
+  const arr = Array.isArray(familyRisk) ? familyRisk : [];
+  if (arr.length === 0) return '普通家庭';
+
+  const parts = [];
+  if (arr.includes('child')) parts.push('含儿童');
+  if (arr.includes('elder')) parts.push('含老人');
+  if (arr.includes('large_fixed')) parts.push('落地窗/玻璃墙');
+  if (arr.includes('wide_slider')) parts.push('宽推拉门');
+
+  const base = parts.length > 0 ? parts.join('、') : '特殊需求';
+  const hasSafety = arr.includes('child') || arr.includes('elder');
+  return hasSafety ? `${base}（含安全专项条款）` : base;
 }
 
 function getDeadlineText(timeline) {
@@ -255,6 +222,53 @@ function getBudgetSpec(tier) {
   return BUDGET_SPEC[tier] || BUDGET_SPEC.B;
 }
 
+function buildBudgetSpecView(resolved, answers) {
+  const tier = answers.budget_tier || 'B';
+  const spec = BUDGET_SPEC[tier] || BUDGET_SPEC.B;
+
+  const familyRisk = Array.isArray(answers.family_risk) ? answers.family_risk : [];
+  const window_features = {
+    has_large_fixed: familyRisk.includes('large_fixed'),
+    has_wide_slider: familyRisk.includes('wide_slider'),
+    has_family_safety: familyRisk.includes('child') || familyRisk.includes('elder')
+  };
+
+  const glass_result = resolveGlassConfig(
+    Number(getField(resolved, 'Rw')),
+    Number(getField(resolved, 'K')),
+    Number(getField(resolved, 'SHGC')),
+    window_features,
+    tier,
+    answers.priority
+  );
+
+  const config_table = {
+    profile: spec.profile,
+    glass: glass_result.glass_name + (glass_result.thermal_overlay ? ` + ${glass_result.thermal_overlay}` : ''),
+    hardware: spec.hardware,
+    seal: spec.seal
+  };
+
+  const conflict_notes = Array.isArray(resolved.conflict_notes) ? [...resolved.conflict_notes] : [];
+  if (glass_result.conflict && glass_result.conflict.message) conflict_notes.push(glass_result.conflict.message);
+  if (window_features.has_wide_slider && Number(getField(resolved, 'Rw')) >= 38) {
+    conflict_notes.push('注意：推拉门密封性不如平开窗，建议商家提供专项隔声测试数据。');
+  }
+
+  resolved.conflict_notes = conflict_notes;
+
+  return {
+    label: spec.label,
+    price_range: spec.price_range,
+    price_hint: spec.price_hint,
+    bar_ratio: spec.bar_ratio,
+    profile: `壁厚≥${spec.profile.min_wall_thickness}mm；隔热条≥${spec.profile.min_insulation_strip}mm`,
+    glass: config_table.glass,
+    hardware: `铰链负载≥${spec.hardware.min_load_kg}kg`,
+    seal: `${spec.seal.layers}道密封（${spec.seal.material}）`
+  };
+}
+
 function getForbiddenItems(tier) {
   const base = [
     '禁止使用回收铝（再生料）型材，须提供原生铝材质检报告',
@@ -264,8 +278,8 @@ function getForbiddenItems(tier) {
   
   const extra = {
     A: [
-      '型材壁厚须≥1.4mm，提供截面检测报告（A档基础要求）',
-      '隔热条宽度须≥20mm，禁止穿条式仿断桥产品'
+      '型材壁厚须≥1.5mm，提供截面检测报告（A档基础要求）',
+      '隔热条宽度须≥24mm，禁止<20mm仿断桥产品'
     ],
     B: [
       '隔热条宽度须≥28mm，禁止<24mm仿断桥产品',
@@ -288,18 +302,22 @@ function getSafetyItems(familyRisk, budgetTier) {
   const items = [];
   let budgetWarning = null;
   
-  if (familyRisk === 'child' || familyRisk === 'both') {
+  const arr = Array.isArray(familyRisk) ? familyRisk : [];
+  const hasChild = arr.includes('child');
+  const hasElder = arr.includes('elder');
+
+  if (hasChild) {
     items.push('窗台高度<900mm时，须安装儿童防坠限位器（开启角度≤100mm）');
     items.push('玻璃须使用夹胶安全玻璃（6.38mm+），破碎后不脱落');
     items.push('执手安装高度建议≥1500mm，防止儿童误开');
   }
   
-  if (familyRisk === 'elder' || familyRisk === 'both') {
+  if (hasElder) {
     items.push('执手操作力≤25N（适老标准），需厂家测试数据支持');
     items.push('门槛高度≤15mm，防绊倒；无法避免须配套防绊坡道');
   }
   
-  if ((familyRisk === 'child' || familyRisk === 'both') && budgetTier === 'A') {
+  if ((hasChild || hasElder) && budgetTier === 'A') {
     budgetWarning = '⚠️ 上述安全配件成本通常超出A档预算，建议升至B档以保障安全';
   }
   
@@ -345,7 +363,8 @@ function getRiskWarnings(answers, resolved, riskTrigger) {
   }
   
   // 风险4：儿童安全
-  if (answers.family_risk === 'child' || answers.family_risk === 'both') {
+  const riskArr = Array.isArray(answers.family_risk) ? answers.family_risk : [];
+  if (riskArr.includes('child')) {
     risks.push({
       title: '儿童安全条款需专项验收',
       desc: '限位器与夹胶玻璃需由第三方核验，不可自验',
@@ -396,7 +415,9 @@ function buildAnalysisParagraph(answers, resolved) {
   } else if (pain_point === 'wind') {
     text = `您的项目位于${city}（${resolved.wind_zone || 'W?'}风区）的第${floor}层，高度比${(band.ratio * 100).toFixed(0)}%（${band.label}），抗风压要求较高。P3≥${getField(resolved, 'P3')}kPa是本次采购的硬性门槛，商家须提供第三方检测证明。`;
   } else if (pain_point === 'safety') {
-    text = `您的项目包含${answers.family_risk === 'child' ? '儿童' : '老年'}家庭成员，本文件在常规技术指标外特别增设安全专项条款。所有安全配件（限位器/夹胶玻璃/适老五金）须在竣工验收时提供安装凭证。`;
+    const arr = Array.isArray(answers.family_risk) ? answers.family_risk : [];
+    const who = arr.includes('child') ? '儿童' : '老人';
+    text = `您的项目包含${who}家庭成员，本文件在常规技术指标外特别增设安全专项条款。所有安全配件（限位器/夹胶玻璃/适老五金）须在竣工验收时提供安装凭证。`;
   } else {
     text = `您的项目位于${city}第${floor}层（${band.label}），综合考虑了${getClimateLabel(resolved.climate_zone)}的气候区标准与建筑环境，以下技术指标基于GB/T 8478-2020计算。`;
   }
@@ -426,7 +447,7 @@ function mapToSections(resolved, answers, pdfNo) {
   
   const band = getHeightBand(answers.floor, answers.total_floors);
   const painTag = getPainTag(answers.pain_point);
-  const budgetSpec = getBudgetSpec(answers.budget_tier);
+  const budgetSpec = buildBudgetSpecView(resolved, answers);
   const safety = getSafetyItems(answers.family_risk, answers.budget_tier);
   
   // 风险触发条件：16层以上 或 高度比>50% 或 有risk_flags 或 免责声明
@@ -452,7 +473,7 @@ function mapToSections(resolved, answers, pdfNo) {
       floorDesc: `第${answers.floor}层/共${answers.total_floors}层（高度比${(band.ratio * 100).toFixed(0)}%，${band.label}）`,
       painTag: painTag.text,
       isRisk: isRisk,
-      hasSafety: answers.family_risk !== 'none',
+      hasSafety: Array.isArray(answers.family_risk) && (answers.family_risk.includes('child') || answers.family_risk.includes('elder')),
       degradedCity: resolved.degraded || false,
       degradedMsg: resolved.degraded ? `${answers.city}暂未精确覆盖，以下参数基于保守标准推算` : null,
       disclaimer: '本文件由李Sir门窗技术顾问系统基于用户填写信息自动生成，仅供参考，不构成正式法律合同。'
@@ -470,7 +491,7 @@ function mapToSections(resolved, answers, pdfNo) {
       noise: answers.noise_type !== 'quiet' ? {
         show: true,
         typeLabel: getNoiseLabel(answers.noise_type, answers.noise_dist).typeLabel,
-        distKey: answers.noise_dist,
+        distKey: answers.noise_dist === 'gt50_shielded' ? 'gt50' : answers.noise_dist,
         distLabel: getNoiseLabel(answers.noise_type, answers.noise_dist).distLabel,
         levelLabel: getNoiseLabel(answers.noise_type, answers.noise_dist).levelLabel
       } : { show: false }
@@ -493,7 +514,7 @@ function mapToSections(resolved, answers, pdfNo) {
           unit: 'dB',
           std: 'GB/T 8485-2008',
           level: (getField(resolved, 'Rw') >= 35 ? '高隔声' : '标准隔声'),
-          note: `${getNoiseLabel(answers.noise_type, answers.noise_dist).typeLabel}环境${answers.priority === 'sound' ? '，优先级加权' : ''}`,
+          note: `${getNoiseLabel(answers.noise_type, answers.noise_dist).typeLabel}环境${answers.pain_point === 'sound' ? '，睡眠场景加严' : ''}`,
           isCore: painTag.coreMetric === 'Rw'
         },
         {
