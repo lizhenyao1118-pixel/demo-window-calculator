@@ -25,7 +25,7 @@ const FIELD_MAP = {
   SHGC: 'SHGC_target'
 };
 
-const { BUDGET_SPEC } = require('../../shared/budgetSpec.js');
+const { GLASS_LEVELS, BUDGET_SPEC } = require('../../shared/budgetSpec.js');
 const { resolveGlassConfig } = require('./arbitrator.js');
 
 const NOISE_SCENE = {
@@ -222,6 +222,14 @@ function getBudgetSpec(tier) {
   return BUDGET_SPEC[tier] || BUDGET_SPEC.B;
 }
 
+function estimateCostDelta(glassKey, tier) {
+  const spec = BUDGET_SPEC[tier] || BUDGET_SPEC.B;
+  const baseKey = spec.glass_max_level;
+  const baseCost = (GLASS_LEVELS[baseKey] && GLASS_LEVELS[baseKey].base_cost) ? GLASS_LEVELS[baseKey].base_cost : 0;
+  const targetCost = (GLASS_LEVELS[glassKey] && GLASS_LEVELS[glassKey].base_cost) ? GLASS_LEVELS[glassKey].base_cost : 0;
+  return Math.max(0, Math.round(targetCost - baseCost));
+}
+
 function buildBudgetSpecView(resolved, answers) {
   const tier = answers.budget_tier || 'B';
   const spec = BUDGET_SPEC[tier] || BUDGET_SPEC.B;
@@ -251,8 +259,8 @@ function buildBudgetSpecView(resolved, answers) {
 
   const conflict_notes = Array.isArray(resolved.conflict_notes) ? [...resolved.conflict_notes] : [];
   if (glass_result.conflict && glass_result.conflict.message) conflict_notes.push(glass_result.conflict.message);
-  if (window_features.has_wide_slider && Number(getField(resolved, 'Rw')) >= 38) {
-    conflict_notes.push('注意：推拉门密封性不如平开窗，建议商家提供专项隔声测试数据。');
+  if (window_features.has_wide_slider) {
+    conflict_notes.push('注意：因含推拉门，隔声需求已提高3dB补偿密封损失（请商家提供专项隔声测试数据）。');
   }
 
   resolved.conflict_notes = conflict_notes;
@@ -265,7 +273,11 @@ function buildBudgetSpecView(resolved, answers) {
     profile: `壁厚≥${spec.profile.min_wall_thickness}mm；隔热条≥${spec.profile.min_insulation_strip}mm`,
     glass: config_table.glass,
     hardware: `铰链负载≥${spec.hardware.min_load_kg}kg`,
-    seal: `${spec.seal.layers}道密封（${spec.seal.material}）`
+    seal: `${spec.seal.layers}道密封（${spec.seal.material}）`,
+    glass_key: glass_result.glass_key,
+    conflict: glass_result.conflict,
+    cost_delta: estimateCostDelta(glass_result.glass_key, tier),
+    is_compensated: glass_result.is_compensated
   };
 }
 
@@ -553,6 +565,12 @@ function mapToSections(resolved, answers, pdfNo) {
       riskTrigger: riskTrigger, // 传递给 PDF 渲染层
       risks: isRisk ? getRiskWarnings(answers, resolved, riskTrigger) : [],
       optimizations: !isRisk ? getOptimizations() : [],
+      riskSection: {
+        title: budgetSpec.conflict ? '⚠️ 配置升级提醒' : '💡 优化建议',
+        items: resolved.conflict_notes || [],
+        severity: budgetSpec.conflict ? budgetSpec.conflict.severity : 'info',
+        cost_estimate: budgetSpec.conflict ? `预计玻璃成本增加：${budgetSpec.cost_delta}元/㎡` : null
+      },
       deadlineText: getDeadlineText(answers.timeline),
       acceptanceNodes: getAcceptanceNodes(resolved.climate_zone) // 修复：使用 climate_zone
     },

@@ -10,6 +10,7 @@ const CITY_MAP = {
   "杭州": { climate: "hot_summer", wind_zone: "W3", base_P3: 3.0 },
   "南京": { climate: "hot_summer", wind_zone: "W3", base_P3: 3.0 },
   "沈阳": { climate: "severe_cold", wind_zone: "W3", base_P3: 3.0 },
+  "哈尔滨": { climate: "severe_cold", wind_zone: "W3", base_P3: 3.0 },
 };
 
 // FIX P0-1: P3连续线性化
@@ -34,7 +35,7 @@ function calcRw({ noise_type, noise_dist, pain_point }) {
 
   const noise_usage = pain_point === 'sound' ? 'sleep' : 'general';
   const USAGE_ADJ = { sleep: 3, office: 2, living: 1, general: 0 };
-  rw += USAGE_ADJ[noise_usage] || 0;
+  rw += noise_type === 'rail' ? 0 : (USAGE_ADJ[noise_usage] || 0);
 
   return Math.min(Math.max(rw, 28), 45);
 }
