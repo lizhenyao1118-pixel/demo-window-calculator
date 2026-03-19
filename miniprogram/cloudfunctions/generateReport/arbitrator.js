@@ -55,6 +55,7 @@ function resolveGlassConfig(Rw_req, K_req, SHGC_req, window_features, budget_tie
   return {
     glass_key,
     glass_name: glass_config.name,
+    reason: `基于Rw≥${Rw_req}dB隔声目标${window_features && window_features.has_large_fixed ? '，且存在落地窗（安全强制要求夹胶构造）' : ''}`,
     rw_effective: Math.min(Rw_req, glass_config.rw_max),
     conflict,
     thermal_overlay,

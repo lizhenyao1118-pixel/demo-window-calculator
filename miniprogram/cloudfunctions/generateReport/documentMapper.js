@@ -25,7 +25,7 @@ const FIELD_MAP = {
   SHGC: 'SHGC_target'
 };
 
-const { GLASS_LEVELS, BUDGET_SPEC } = require('./shared/budgetSpec.js');
+const { GLASS_LEVELS, BUDGET_SPEC, getNextTier } = require('./shared/budgetSpec.js');
 const { getInsulationBarRequirement } = require('./shared/thermalSpec.js');
 const { resolveGlassConfig } = require('./arbitrator.js');
 
@@ -234,6 +234,7 @@ function buildChapter3ConflictAlert(budgetSpec, resolved) {
 
 function buildChapter4Data(answers, budgetSpec, resolved, riskTrigger, isRisk) {
   const deadline = getDeadlineText(answers.timeline);
+  const family_risk = Array.isArray(answers.family_risk) ? answers.family_risk : [];
 
   return {
     title: '下一步怎么用：问商家什么 & 怎么验收',
@@ -290,7 +291,7 @@ function buildChapter4Data(answers, budgetSpec, resolved, riskTrigger, isRisk) {
       action: '预约深度审计 →'
     },
     risks: { title: '4.3 风险提示', items: isRisk ? getRiskWarnings(answers, resolved, riskTrigger) : [] },
-    acceptance: { title: '4.4 验收节点', nodes: getAcceptanceNodes(resolved.climate_zone) }
+    acceptance: { title: '4.4 验收节点', nodes: buildAcceptanceNodes(family_risk) }
   };
 }
 
@@ -350,6 +351,7 @@ function buildBudgetSpecView(resolved, answers) {
     bar_ratio: spec.bar_ratio,
     profile: `壁厚≥${spec.profile.min_wall_thickness}mm；隔热条≥${bar.min_mm}mm（${bar.process}）`,
     glass: config_table.glass,
+    glass_reason: glass_result.reason || null,
     hardware: `铰链负载≥${spec.hardware.min_load_kg}kg`,
     seal: `${spec.seal.layers}道密封（${spec.seal.material}）`,
     glass_key: glass_result.glass_key,
@@ -413,12 +415,49 @@ function getSafetyItems(familyRisk, budgetTier) {
   return { items, budgetWarning };
 }
 
+function buildSafetyUpgradeDesc(family_risk) {
+  const arr = Array.isArray(family_risk) ? family_risk : [];
+  const parts = [];
+  if (arr.includes('large_fixed')) parts.push('夹胶安全玻璃（落地窗法规强制要求）');
+  if (arr.includes('child')) parts.push('儿童防坠限位器、执手高度≥1500mm');
+  if (arr.includes('elder')) parts.push('低操作力执手（≤25N）、门槛≤15mm防绊倒');
+  if (arr.includes('wide_slider')) parts.push('推拉门毛条+胶条复合密封升级');
+  return parts.join(' + ') || '安全配件全套升级';
+}
+
+function buildNode13(family_risk) {
+  const arr = Array.isArray(family_risk) ? family_risk : [];
+  const items = [];
+  if (arr.includes('child')) items.push('儿童安全配件：限位器开启角度≤100mm、执手高度≥1500mm');
+  if (arr.includes('elder')) items.push('适老配件：执手操作力≤25N、门槛高度≤15mm');
+  if (arr.includes('large_fixed')) items.push('大面积安全玻璃：确认夹胶玻璃安装，碰撞后无脱落');
+  if (arr.includes('wide_slider')) items.push('推拉门密封：毛条+胶条完整，配合烟雾笔测试无明显气流');
+  return items.length > 0 ? items.join('；') : null;
+}
+
+function buildAcceptanceNodes(family_risk) {
+  const base = getAcceptanceNodes();
+  const node13 = buildNode13(family_risk);
+  if (!node13) return base;
+
+  const final = base[2];
+  const items = Array.isArray(final.items) ? [...final.items] : [];
+  const idx = items.findIndex(x => typeof x === 'string' && x.startsWith('⑬'));
+  if (idx >= 0) items[idx] = `⑬ ${node13}`;
+  else items.push(`⑬ ${node13}`);
+
+  return [base[0], base[1], { ...final, items }];
+}
+
 // 更新后的风险提示（含新价格区间和档位区分）
 function getRiskWarnings(answers, resolved, riskTrigger) {
   const risks = [];
   const { floor, total_floors, budget_tier } = answers;
   const band = getHeightBand(floor, total_floors);
   const spec = BUDGET_SPEC[budget_tier];
+  const nextTier = getNextTier(budget_tier);
+  const nextSpec = nextTier ? BUDGET_SPEC[nextTier] : null;
+  const upgradeHint = nextSpec ? `建议升至${nextSpec.label}（${nextSpec.price_range}）` : null;
   
   // 风险1：高层风险（16层以上）
   if (riskTrigger.highFloor) {
@@ -426,7 +465,7 @@ function getRiskWarnings(answers, resolved, riskTrigger) {
       title: '高层建筑风压风险',
       desc: `您的项目位于第${floor}层（超过16层），风压要求显著高于普通住宅。P3≥${getField(resolved, 'P3')}kPa 需要高强度型材支撑。`,
       suggest: budget_tier === 'A' 
-        ? 'A档（600-800元/㎡）在高层可能存在型材强度不足风险，建议升至B档（800-1200元/㎡）或预约李Sir审核'
+        ? (upgradeHint ? `${upgradeHint}或预约李Sir审核` : '建议升级预算档位或预约李Sir审核')
         : '建议选用壁厚≥1.8mm的系统窗，或预约李Sir审核型材截面'
     });
   }
@@ -437,7 +476,7 @@ function getRiskWarnings(answers, resolved, riskTrigger) {
       title: '高区位置风压风险', 
       desc: `您的楼层高度比为${(band.ratio * 100).toFixed(0)}%（超过50%），属于${band.label}，风荷载较大。`,
       suggest: budget_tier === 'A'
-        ? 'A档配置在超高区可能不足，建议升级至B档或增加型材壁厚'
+        ? (upgradeHint ? `${upgradeHint}或增加型材壁厚` : '建议升级预算档位或增加型材壁厚')
         : '建议增加型材壁厚，或选择抗风压等级更高的产品系列'
     });
   }
@@ -446,8 +485,8 @@ function getRiskWarnings(answers, resolved, riskTrigger) {
   if (riskTrigger.budgetConflict) {
     risks.push({
       title: '预算与楼层匹配建议',
-      desc: `您选择A档（600-800元/㎡）用于第${floor}层（${band.label}），虽然A档已较旧版提升，但高层风压要求下仍建议考虑升级`,
-      suggest: '建议升至B档（800-1200元/㎡）获得更高安全余量，或请李Sir筛选A档中高性价比的加厚型材方案'
+      desc: `您选择${spec.label}（${spec.price_range}）用于第${floor}层（${band.label}），在高层风压要求下仍建议考虑升级以获得更高安全余量`,
+      suggest: upgradeHint ? `${upgradeHint}，或请李Sir筛选当前档位中高性价比的加厚型材方案` : '建议升级预算档位，或请李Sir筛选当前档位中高性价比的加厚型材方案'
     });
   }
   
@@ -480,11 +519,11 @@ function getOptimizations() {
   ];
 }
 
-function getUpgrades() {
+function getUpgrades(family_risk) {
   return [
     { name: '隔音升级+', desc: 'Rw基础上+5dB，需三玻两腔', costHint: '+约180元/㎡', stars: 4 },
     { name: '热工升级+', desc: 'K值降0.3，需注胶式断桥', costHint: '+约120元/㎡', stars: 3 },
-    { name: '安全升级+', desc: '夹胶玻璃+儿童限位器', costHint: '+约80元/㎡', stars: 5 }
+    { name: '安全升级+', desc: buildSafetyUpgradeDesc(family_risk), costHint: '+约80元/㎡', stars: 5 }
   ];
 }
 
@@ -626,8 +665,7 @@ function mapToSections(resolved, answers, pdfNo) {
       redLines: {
         forbidden: getForbiddenItems(answers.budget_tier, getField(resolved, 'K'), window_features, getField(resolved, 'Rw')),
         safetyItems: safety.items,
-        safetyBudgetWarning: safety.budgetWarning,
-        conflictNotes: resolved.conflict_notes || []
+        safetyBudgetWarning: safety.budgetWarning
       }
     },
     
@@ -646,7 +684,7 @@ function mapToSections(resolved, answers, pdfNo) {
       conflictAlert: buildChapter3ConflictAlert(budgetSpec, resolved),
       upgradeOptions: {
         title: '3.4 可选升级项',
-        items: getUpgrades(),
+        items: getUpgrades(answers.family_risk),
         l2_entry: {
           text: '以下升级项未包含在当前标准中。如需评估哪项性价比最高、或商家能否在报价中实现，可咨询李Sir',
           action: '预约咨询 →',
