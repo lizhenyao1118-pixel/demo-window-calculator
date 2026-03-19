@@ -54,69 +54,31 @@ const LIFE_TARGET = {
 
 const ACCEPTANCE_NODES = {
   entry: {
-    title: '【进场验收】',
+    title: '【进场验收】（4条）',
     items: [
-      '对照合同核查品牌、型号、颜色、开启方式',
-      '玻璃3C标志（本体印刷，非贴纸）；中空玻璃无雾气',
-      '核对玻璃边部标签与合同约定一致，不能仅凭外观判断膜层',
-      '索取壁厚检测报告，如有条件要求商家现场演示拆一处压线核查'
+      '① 对照合同核查品牌、型号、颜色、开启方式',
+      '② 玻璃3C标志（本体印刷，非贴纸）；中空玻璃无雾气',
+      '③ 核对玻璃边部标签与合同约定一致，不能仅凭外观判断膜层',
+      '④ 索取壁厚检测报告，如有条件要求商家现场演示拆一处压线核查'
     ]
   },
   installation: {
-    title: '【安装验收】',
+    title: '【安装验收】（4条）',
     items: [
-      '随机查看固定螺丝：打在实体结构上，间距约40-60cm',
-      '发泡剂全周饱满均匀，外露部分平整',
-      '密封胶一圈连续、平整无裂缝，施工条件符合说明书要求',
-      '排水孔未被胶封死，窗台外侧有向外坡度'
+      '⑤ 随机查看固定螺丝：打在实体结构上，间距约40-60cm',
+      '⑥ 发泡剂全周饱满均匀，外露部分平整',
+      '⑦ 密封胶一圈连续、平整无裂缝，施工条件符合说明书要求',
+      '⑧ 排水孔未被胶封死，窗台外侧有向外坡度'
     ]
   },
   final: {
-    title: '【竣工验收】',
+    title: '【竣工验收】（5条）',
     items: [
-      '打火机火焰靠近扇框交接处，无明显偏吹（简易气密自检）',
-      '花洒淋水3分钟，室内无渗水（物业允许时）',
-      '每扇窗反复开合5-10次，胶条压实，无异响卡阻',
-      '外开窗确认防坠绳/限位器安装（高层必查）',
-      '执手操作力正常，儿童安全相关配件（限位器高度、夹胶玻璃）按合同核查'
-    ]
-  }
-};
-
-const MERCHANT_RESPONSE_SECTION = {
-  header: {
-    title: '商家答题表（统一问卷）',
-    subtitle: '请将本表发给3-5家商家，对方如实填写后回传，便于横向对比'
-  },
-  instructions: [
-    '① 同时发给3-5家，要求3-5工作日内回复',
-    '② 优先选择填写完整、回答具体的商家',
-    '③ 对比同一格（壁厚/玻璃/质保），不对比总价'
-  ],
-  basicInfo: {
-    title: '── 第一段：商家基本信息 ─────────────────────────',
-    fields: ['公司名称', '品牌', '是否授权', '施工年限']
-  },
-  technicalTable: {
-    title: '── 第二段：技术答题表 ────────────────────────────',
-    hint: '（第一列加浅灰底色提示文字）',
-    note: '请写不出来就空着，业主会看得很清楚',
-    columns: ['品牌及系列', '型材壁厚', '玻璃配置', '检测报告编号', '含税报价', '工期', '质保', '签字']
-  },
-  attitudeQuestions: {
-    title: '── 第三段：施工态度问答 ─────────────────────────',
-    questions: [
-      '1. 窗洞偏差处理：如遇窗洞不规整（误差>1cm），贵司通常如何处理？',
-      '2. 质保响应：质保期内出现漏水/五金故障，响应时效和解决方案是？',
-      '3. 看不见的施工细节：发泡剂填充、螺丝固定等隐蔽环节，如何确保质量？'
-    ]
-  },
-  footer: {
-    title: '── 落款区 ────────────────────────────────────────',
-    elements: [
-      '商家签名（无需公章）：_________  日期：_________',
-      '回传方式：扫描/拍照发送至业主微信',
-      '签名代表对上述填写内容的确认；如进入签约，请将关键指标写入合同'
+      '⑨ 打火机火焰靠近扇框交接处，无明显偏吹（简易气密自检）',
+      '⑩ 花洒淋水3分钟，室内无渗水（物业允许时）',
+      '⑪ 每扇窗反复开合5-10次，胶条压实，无异响卡阻',
+      '⑫ 外开窗确认防坠绳/限位器安装（高层必查）',
+      '⑬ 执手操作力正常，儿童安全相关配件（限位器高度、夹胶玻璃）按合同核查'
     ]
   }
 };
@@ -255,6 +217,80 @@ function getDeadlineText(timeline) {
 
 function getAcceptanceNodes(climateZone) {
   return [ACCEPTANCE_NODES.entry, ACCEPTANCE_NODES.installation, ACCEPTANCE_NODES.final];
+}
+
+function buildChapter3ConflictAlert(budgetSpec, resolved) {
+  const notes = Array.isArray(resolved.conflict_notes) ? resolved.conflict_notes : [];
+  if (!budgetSpec || !budgetSpec.conflict || notes.length === 0) return null;
+
+  return {
+    title: '配置升级提醒',
+    items: notes,
+    severity: budgetSpec.conflict.severity || 'warning',
+    cost_estimate: `预计玻璃成本增加：${budgetSpec.cost_delta}元/㎡`
+  };
+}
+
+function buildChapter4Data(answers, budgetSpec, resolved, riskTrigger, isRisk) {
+  const deadline = getDeadlineText(answers.timeline);
+
+  return {
+    title: '下一步怎么用：问商家什么 & 怎么验收',
+    subtitle: '把这份文件变成面试商家、比较报价、验收施工的行动工具',
+    intro: {
+      title: '使用说明',
+      items: [
+        '① 建议同时将本答题表发送给 3-5 家商家，要求 3-5 个工作日内回复——回复速度本身也是态度的一部分',
+        '② 优先选择填写完整、回答具体的商家；对关键项含糊其辞者建议直接排除',
+        '③ 对比同一格的内容（壁厚/玻璃配置/质保年限），而不是只对比总价，可以大幅降低被偷工减料的风险'
+      ]
+    },
+    merchantNotice: {
+      title: '4.1 给商家的说明',
+      content: '本文件前两章为本次采购的技术标准，第三章为预算参考档位。请贵司按照第二章的技术指标和第三章的配置基准，在下表中如实填写贵司方案，便于业主横向对比。',
+      deadline: `${deadline}将填写完整的表格拍照回传至业主`
+    },
+    merchantQuestionnaire: {
+      title: '4.2 商家答题表（统一问卷）',
+      subtitle: '请将本表发给 3-5 家商家，对方如实填写后回传，便于横向对比',
+      section1: {
+        title: '── 第一段：商家基本信息 ─────────────────────────',
+        fields: [
+          { label: '公司名称', placeholder: '全称' },
+          { label: '品牌', placeholder: '品牌及系列' },
+          { label: '是否授权', type: 'checkbox', options: ['是（请附授权证明）', '否'] },
+          { label: '施工年限', placeholder: '年' },
+          { label: '近一年完成住宅户数', placeholder: '约__户' }
+        ]
+      },
+      section2: {
+        title: '── 第二段：技术答题表 ────────────────────────────',
+        hint: '请填写完整；写不出来就空着，业主会看得很清楚',
+        columns: ['品牌及系列', '型材壁厚(mm)', '玻璃配置', '检测报告编号', '含税报价(元/㎡)', '工期(天)', '质保(年)', '签名确认'],
+        note: '若贵司认为在当前预算档位内难以满足某项关键指标，请在"配置建议与说明"栏中提出具体升级方案及差价估算，而非省略或模糊填写。'
+      },
+      section3: {
+        title: '── 第三段：施工态度问答 ─────────────────────────',
+        questions: [
+          '① 如现场发现墙体不方正/窗洞偏差，贵司的标准处理方式是什么？',
+          '② 如果玻璃或五金在质保期内出现问题，贵司的响应时间与处理流程是怎样的？',
+          '③ 请列出 2-3 项贵司坚持但"看不见"的施工细节（例如打胶、排水孔、发泡剂处理方式）。'
+        ]
+      },
+      signature: {
+        text: '签名代表对上述填写内容的确认；如进入签约，请将关键指标写入合同',
+        fields: ['商家签名（无需公章）', '日期', '回传方式：扫描/拍照发送至业主微信']
+      }
+    },
+    l2_entry: {
+      variant: 'strong',
+      risk_text: '商家能否真正满足以上标准，仅凭回答无法判断——商家很会说，不一定做得到。如需李Sir帮您评审商家的填写内容是否合理、是否有漏洞 →',
+      normal_text: '您的方案已达到基本标准。如需李Sir帮您进一步优化性价比、或核实商家配置是否物有所值 →',
+      action: '预约深度审计 →'
+    },
+    risks: { title: '4.3 风险提示', items: isRisk ? getRiskWarnings(answers, resolved, riskTrigger) : [] },
+    acceptance: { title: '4.4 验收节点', nodes: getAcceptanceNodes(resolved.climate_zone) }
+  };
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -592,31 +628,33 @@ function mapToSections(resolved, answers, pdfNo) {
     },
     
     chapter3: {
-      currentTier: answers.budget_tier,
-      budgetSpec: budgetSpec, // 传递给第三章使用
-      tiers: [
-        { key: 'A', label: BUDGET_SPEC.A.label, priceRange: BUDGET_SPEC.A.price_range, barRatio: BUDGET_SPEC.A.bar_ratio },
-        { key: 'B', label: BUDGET_SPEC.B.label, priceRange: BUDGET_SPEC.B.price_range, barRatio: BUDGET_SPEC.B.bar_ratio },
-        { key: 'C', label: BUDGET_SPEC.C.label, priceRange: BUDGET_SPEC.C.price_range, barRatio: BUDGET_SPEC.C.bar_ratio },
-        { key: 'D', label: BUDGET_SPEC.D.label, priceRange: BUDGET_SPEC.D.price_range, barRatio: BUDGET_SPEC.D.bar_ratio }
-      ],
-      upgrades: getUpgrades()
+      recommendedConfig: { title: '3.1 推荐配置方案', spec: budgetSpec },
+      budgetComparison: {
+        title: '3.2 预算档位对比',
+        currentTier: answers.budget_tier,
+        tiers: [
+          { key: 'A', label: BUDGET_SPEC.A.label, priceRange: BUDGET_SPEC.A.price_range, barRatio: BUDGET_SPEC.A.bar_ratio },
+          { key: 'B', label: BUDGET_SPEC.B.label, priceRange: BUDGET_SPEC.B.price_range, barRatio: BUDGET_SPEC.B.bar_ratio },
+          { key: 'C', label: BUDGET_SPEC.C.label, priceRange: BUDGET_SPEC.C.price_range, barRatio: BUDGET_SPEC.C.bar_ratio },
+          { key: 'D', label: BUDGET_SPEC.D.label, priceRange: BUDGET_SPEC.D.price_range, barRatio: BUDGET_SPEC.D.bar_ratio }
+        ]
+      },
+      conflictAlert: buildChapter3ConflictAlert(budgetSpec, resolved),
+      upgradeOptions: {
+        title: '3.4 可选升级项',
+        items: getUpgrades(),
+        l2_entry: {
+          text: '以下升级项未包含在当前标准中。如需评估哪项性价比最高、或商家能否在报价中实现，可咨询李Sir',
+          action: '预约咨询 →',
+          variant: 'outlined'
+        }
+      }
     },
     
     chapter4: {
+      ...buildChapter4Data(answers, budgetSpec, resolved, riskTrigger, isRisk),
       isRisk: isRisk,
-      riskTrigger: riskTrigger, // 传递给 PDF 渲染层
-      risks: isRisk ? getRiskWarnings(answers, resolved, riskTrigger) : [],
-      optimizations: !isRisk ? getOptimizations() : [],
-      riskSection: {
-        title: budgetSpec.conflict ? '⚠️ 配置升级提醒' : '💡 优化建议',
-        items: resolved.conflict_notes || [],
-        severity: budgetSpec.conflict ? budgetSpec.conflict.severity : 'info',
-        cost_estimate: budgetSpec.conflict ? `预计玻璃成本增加：${budgetSpec.cost_delta}元/㎡` : null
-      },
-      deadlineText: getDeadlineText(answers.timeline),
-      acceptanceNodes: getAcceptanceNodes(resolved.climate_zone),
-      merchantResponse: MERCHANT_RESPONSE_SECTION
+      riskTrigger: riskTrigger
     },
     
     attachments: {
