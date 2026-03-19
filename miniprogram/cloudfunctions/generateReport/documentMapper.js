@@ -79,7 +79,7 @@ const ACCEPTANCE_NODES = {
       '⑩ 花洒淋水3分钟，室内无渗水（物业允许时）',
       '⑪ 每扇窗反复开合5-10次，胶条压实，无异响卡阻',
       '⑫ 外开窗确认防坠绳/限位器安装（高层必查）',
-      '⑬ 执手操作力正常，儿童安全相关配件（限位器高度、夹胶玻璃）按合同核查'
+      '⑬ 执手操作力正常，关键安全配件按合同核查'
     ]
   }
 };
@@ -115,7 +115,7 @@ function getClimateLabel(climateZone) {
 
 function getHeightBand(floor, total) {
   const r = total > 0 ? floor / total : 0;
-  if (r > 0.75) return { label: '超高区', ratio: r, warn: '建议专业风压复核' };
+  if (r > 0.75) return { label: '高区', ratio: r, warn: '建议专业风压复核' };
   if (r > 0.50) return { label: '高区', ratio: r, warn: '' };
   if (r > 0.25) return { label: '中区', ratio: r, warn: '' };
   return { label: '低区', ratio: r, warn: '' };
@@ -420,7 +420,7 @@ function buildSafetyUpgradeDesc(family_risk) {
   const parts = [];
   if (arr.includes('large_fixed')) parts.push('夹胶安全玻璃（落地窗法规强制要求）');
   if (arr.includes('child')) parts.push('儿童防坠限位器、执手高度≥1500mm');
-  if (arr.includes('elder')) parts.push('低操作力执手（≤25N）、门槛≤15mm防绊倒');
+  if (arr.includes('elder')) parts.push('适老配件：低操作力执手（≤25N）、门槛≤15mm防绊倒');
   if (arr.includes('wide_slider')) parts.push('推拉门毛条+胶条复合密封升级');
   return parts.join(' + ') || '安全配件全套升级';
 }
