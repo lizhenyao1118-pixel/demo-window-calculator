@@ -278,21 +278,23 @@ function renderChapter3(doc, c3) {
   drawSectionTitle(doc, `3.1 推荐配置方案（${spec.label}）`);
   
   // 配置表（复用第二章数据）
+  const glassValue = (spec.glass || "5Low-E+12Ar+5") + (spec.glass_reason ? `\n（来源：${spec.glass_reason}）` : "");
   const rows = [
-    ["型材", spec.profile || "断桥铝，壁厚≥1.6mm"],
-    ["玻璃", spec.glass || "5Low-E+12Ar+5"],
-    ["五金", spec.hardware || "多点锁传动"],
-    ["密封", spec.seal || "EPDM胶条，2道密封"]
+    { label: "型材", value: spec.profile || "断桥铝，壁厚≥1.6mm", h: 22 },
+    { label: "玻璃", value: glassValue, h: spec.glass_reason ? 44 : 22 },
+    { label: "五金", value: spec.hardware || "多点锁传动", h: 22 },
+    { label: "密封", value: spec.seal || "EPDM胶条，2道密封", h: 22 }
   ];
-  
-  rows.forEach(([label, value], i) => {
-    const y = doc.y + i * 22;
-    doc.rect(55, y, 68, 22).fill(COLORS.brand_navy);
-    doc.rect(123, y, 417, 22).fill(i % 2 === 0 ? COLORS.bg_card : "#FFFFFF");
-    doc.fillColor("#FFFFFF").fontSize(9.5).text(label, 63, y + 7);
-    doc.fillColor(COLORS.text_body).fontSize(10.5).text(value, 133, y + 6);
+
+  let yRow = doc.y;
+  rows.forEach((row, i) => {
+    doc.rect(55, yRow, 68, row.h).fill(COLORS.brand_navy);
+    doc.rect(123, yRow, 417, row.h).fill(i % 2 === 0 ? COLORS.bg_card : "#FFFFFF");
+    doc.fillColor("#FFFFFF").fontSize(9.5).text(row.label, 63, yRow + 7);
+    doc.fillColor(COLORS.text_body).fontSize(10.5).text(row.value, 133, yRow + 6, { width: 400 });
+    yRow += row.h;
   });
-  doc.y += rows.length * 22 + 25;
+  doc.y = yRow + 25;
 
   // 价格横条图
   drawSectionTitle(doc, "3.2 预算档位对比");
