@@ -466,7 +466,8 @@ function getRiskWarnings(answers, resolved, riskTrigger) {
       desc: `您的项目位于第${floor}层（超过16层），风压要求显著高于普通住宅。P3≥${getField(resolved, 'P3')}kPa 需要高强度型材支撑。`,
       suggest: budget_tier === 'A' 
         ? (upgradeHint ? `${upgradeHint}或预约李Sir审核` : '建议升级预算档位或预约李Sir审核')
-        : '建议选用壁厚≥1.8mm的系统窗，或预约李Sir审核型材截面'
+        : '建议选用壁厚≥1.8mm的系统窗，或预约李Sir审核型材截面',
+      question: '请提供：① P3检测报告编号；② 型材截面图/壁厚检测报告；③ 固定方式与螺丝间距方案。'
     });
   }
   
@@ -477,7 +478,8 @@ function getRiskWarnings(answers, resolved, riskTrigger) {
       desc: `您的楼层高度比为${(band.ratio * 100).toFixed(0)}%（超过50%），属于${band.label}，风荷载较大。`,
       suggest: budget_tier === 'A'
         ? (upgradeHint ? `${upgradeHint}或增加型材壁厚` : '建议升级预算档位或增加型材壁厚')
-        : '建议增加型材壁厚，或选择抗风压等级更高的产品系列'
+        : '建议增加型材壁厚，或选择抗风压等级更高的产品系列',
+      question: '请明确：① 主受力壁厚承诺值与检测方式；② 角码/注胶工艺；③ 防水排水结构与等压腔方案。'
     });
   }
   
@@ -486,7 +488,8 @@ function getRiskWarnings(answers, resolved, riskTrigger) {
     risks.push({
       title: '预算与楼层匹配建议',
       desc: `您选择${spec.label}（${spec.price_range}）用于第${floor}层（${band.label}），在高层风压要求下仍建议考虑升级以获得更高安全余量`,
-      suggest: upgradeHint ? `${upgradeHint}，或请李Sir筛选当前档位中高性价比的加厚型材方案` : '建议升级预算档位，或请李Sir筛选当前档位中高性价比的加厚型材方案'
+      suggest: upgradeHint ? `${upgradeHint}，或请李Sir筛选当前档位中高性价比的加厚型材方案` : '建议升级预算档位，或请李Sir筛选当前档位中高性价比的加厚型材方案',
+      question: '如果不升级预算，哪些指标可以做到、哪些必须写入合同红线？对应差价如何计算？'
     });
   }
   
@@ -496,7 +499,8 @@ function getRiskWarnings(answers, resolved, riskTrigger) {
     risks.push({
       title: '儿童安全条款需专项验收',
       desc: '限位器与夹胶玻璃需由第三方核验，不可自验',
-      suggest: '建议预约李Sir到场监督竣工验收'
+      suggest: '建议预约李Sir到场监督竣工验收',
+      question: '限位器开启角度≤100mm、执手高度≥1500mm如何验收？夹胶玻璃型号与3C标识如何核对？'
     });
   }
   
@@ -505,10 +509,15 @@ function getRiskWarnings(answers, resolved, riskTrigger) {
     risks.push({
       title: '西晒热工负荷高',
       desc: '无遮阳西晒窗夏季空调负荷显著增加，现有配置可能不足',
-      suggest: '考虑热工升级+或增加外遮阳措施'
+      suggest: '考虑热工升级+或增加外遮阳措施',
+      question: '请提供：① K值与SHGC检测报告；② Low-E膜层位置与玻璃配置；③ 是否配套外遮阳建议。'
     });
   }
-  
+
+  risks.forEach((r) => {
+    if (r && r.question) r.fullText = `${r.title}\n${r.desc}\n→ 要问商家的问题：${r.question}`;
+  });
+
   return risks;
 }
 
@@ -537,6 +546,26 @@ function buildAnalysisParagraph(answers, resolved) {
     const sceneDesc = getNoiseSceneDesc(noise_type, noise_dist);
     const lifeTarget = LIFE_TARGET.sound;
     text = `您所在项目位于${city}第${floor}层（${band.label}），${sceneDesc}。本次采购的核心目标是：${lifeTarget}。要实现这一目标，窗户隔声量需达到Rw≥${getField(resolved, 'Rw')}dB。这是本次招标的技术红线，商家提案低于此值不予考虑。`;
+
+    const Rw_required = Number(getField(resolved, 'Rw'));
+    const costLevel = Rw_required <= 33 ? '轻' : Rw_required <= 38 ? '中' : '重';
+    const familyRisk = Array.isArray(answers.family_risk) ? answers.family_risk : [];
+    const window_features = {
+      has_large_fixed: familyRisk.includes('large_fixed'),
+      has_wide_slider: familyRisk.includes('wide_slider'),
+      has_family_safety: familyRisk.includes('child') || familyRisk.includes('elder')
+    };
+    const tier = (answers.budget_tier || 'B').toUpperCase();
+    const glass = resolveGlassConfig(
+      Rw_required,
+      Number(getField(resolved, 'K')),
+      Number(getField(resolved, 'SHGC')),
+      window_features,
+      tier,
+      answers.priority
+    );
+    const glass_summary = glass && glass.glass_name ? glass.glass_name : '更高等级隔声玻璃配置';
+    text += `\n要实现这一目标，通常需要采用${glass_summary}，对配置会有${costLevel}程度的额外成本。`;
   } else if (pain_point === 'heat') {
     const westDesc = (west_shading === false && orientation === 'west') ? '西晒无遮阳，热辐射压力较高，' : '';
     text = `您的项目位于${city}${getClimateLabel(resolved.climate_zone)}的第${floor}层。${westDesc}以下标准以热工性能为核心，SHGC≤${getField(resolved, 'SHGC')}是夏季隔热的关键指标，请商家提供Low-E玻璃配置方案及检测报告。`;
@@ -627,7 +656,28 @@ function mapToSections(resolved, answers, pdfNo) {
         typeLabel: getNoiseLabel(answers.noise_type, answers.noise_dist).typeLabel,
         distKey: answers.noise_dist === 'gt50_shielded' ? 'gt50' : answers.noise_dist,
         distLabel: getNoiseLabel(answers.noise_type, answers.noise_dist).distLabel,
-        levelLabel: getNoiseLabel(answers.noise_type, answers.noise_dist).levelLabel
+        levelLabel: getNoiseLabel(answers.noise_type, answers.noise_dist).levelLabel,
+        blocks: (() => {
+          const climateZone = getClimateLabel(resolved.climate_zone);
+          const westShavingNote = (answers.orientation === 'west' && answers.west_shading === false)
+            ? (resolved.shgc_note || '西晒无遮阳，SHGC已下调')
+            : '非西晒主风险位';
+
+          const Rw_required = Number(getField(resolved, 'Rw'));
+          const costLevel = Rw_required <= 33 ? '轻' : Rw_required <= 38 ? '中' : '重';
+          const targetDesc = answers.pain_point === 'heat' ? '隔热舒适' : answers.pain_point === 'wind' ? '抗风防水' : '隔声目标';
+          const glassDirection = Rw_required <= 33 ? '可在档内用常规中空配置实现' : Rw_required <= 38 ? '需要夹胶/更高隔声玻璃构造' : '往往需要三玻两腔等高阶隔声构造';
+
+          return [
+            { type: 'climate_note', text: `${answers.city}属于${climateZone}，${westShavingNote}` },
+            {
+              type: 'safety_alert',
+              condition: window_features.has_large_fixed,
+              text: '您的房间存在落地窗/整面玻璃墙，属于高安全等级场景，玻璃配置需符合 GB 15763.3-2009 对大面积玻璃的强制要求。'
+            },
+            { type: 'cost_reveal', text: `在当前环境和预算组合下，要改善${targetDesc}，通常${glassDirection}，对配置会有${costLevel}程度的额外成本。` }
+          ];
+        })()
       } : { show: false }
     },
     

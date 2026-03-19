@@ -232,38 +232,52 @@ function renderChapter1(doc, c1) {
 
     doc.fillColor(COLORS.text_secondary).fontSize(9).text(`评级：${n.levelLabel}`, 55, barY + 20);
     doc.y = barY + 40;
+
+    if (Array.isArray(n.blocks) && n.blocks.length > 0) {
+      n.blocks.forEach((b) => {
+        if (!b || !b.text) return;
+        if (b.type === 'safety_alert' && b.condition !== true) return;
+
+        const isAlert = b.type === 'safety_alert';
+        const color = isAlert ? COLORS.risk_red : COLORS.text_secondary;
+        doc.fillColor(color).fontSize(10).text(b.text, 55, doc.y, { width: 485 });
+        doc.y += isAlert ? 28 : 18;
+      });
+    }
   }
 }
 
 function renderChapter2(doc, c2) {
   drawChapterHeader(doc, "第二", "技术参数与性能指标", COLORS.brand_navy);
   
-  drawSectionTitle(doc, "2.1-2.3 性能指标（三项硬性门槛）");
-  const cardW = (485 - 20) / 3;
-  const cardH = 88;
-  const startY = doc.y;
   const metrics = c2.metrics || [];
-  
-  metrics.forEach((m, i) => {
-    const x = 55 + i * (cardW + 10);
-    const bg = m.isCore ? COLORS.warn_orange_bg : COLORS.bg_card;
-    doc.roundedRect(x, startY, cardW, cardH, 5).fill(bg);
-    
-    if (m.isCore) {
-      doc.rect(x, startY, 4, cardH).fill(COLORS.warn_orange);
-      doc.fillColor(COLORS.warn_orange).fontSize(9).text("★ 核心指标", x + 8, startY + 5);
-    }
-    
-    const tx = x + (m.isCore ? 8 : 10);
-    const ty = m.isCore ? startY + 20 : startY + 10;
-    
-    doc.fillColor(COLORS.text_secondary).fontSize(9).text(m.name, tx, ty);
-    doc.fillColor(COLORS.brand_navy).fontSize(22).text(m.value, tx, ty + 13);
-    doc.fillColor(COLORS.text_secondary).fontSize(11).text(m.unit, x + cardW - 35, ty + 15);
-    doc.fillColor(COLORS.text_secondary).fontSize(9).text(m.level, tx, ty + 44);
-    doc.fillColor(COLORS.text_light).fontSize(8).text(m.std, tx, ty + 58);
-  });
-  doc.y = startY + cardH + 25;
+  const mP3 = metrics[0];
+  const mCore = metrics[1];
+  const mThermal = metrics[2];
+
+  const renderMetricBlock = (m, y0) => {
+    if (!m) return y0;
+    doc.roundedRect(55, y0, 485, 78, 6).fill(COLORS.bg_card);
+    doc.fillColor(COLORS.text_secondary).fontSize(10).text(m.std || "", 69, y0 + 14);
+    doc.fillColor(COLORS.brand_navy).fontSize(24).text(m.value || "", 69, y0 + 30);
+    doc.fillColor(COLORS.text_secondary).fontSize(11).text(m.unit || "", 210, y0 + 38);
+    if (m.level) doc.fillColor(COLORS.text_secondary).fontSize(10).text(m.level, 69, y0 + 56);
+    if (m.note) doc.fillColor(COLORS.text_light).fontSize(9).text(m.note, 280, y0 + 56, { width: 250 });
+    return y0 + 92;
+  };
+
+  drawSectionTitle(doc, "2.1 抗风压性能");
+  doc.y = renderMetricBlock(mP3, doc.y);
+
+  drawSectionTitle(doc, "2.2 核心指标");
+  doc.fillColor("#E67E22").fontSize(9).text("★ 基于您选择的隔声优先目标，这是商家方案必须重点回应的指标", 55, doc.y, { width: 485 });
+  doc.y += 16;
+  doc.y = renderMetricBlock(mCore, doc.y);
+
+  drawSectionTitle(doc, "2.3 热工性能");
+  doc.fillColor(COLORS.text_secondary).fontSize(9).text("K值（传热系数）越低越保温；SHGC（太阳得热系数）越低越隔热，夏季尤为重要。", 55, doc.y, { width: 485 });
+  doc.y += 16;
+  doc.y = renderMetricBlock(mThermal, doc.y);
 
   // 产品红线
   drawSectionTitle(doc, "2.4 产品红线");
@@ -308,6 +322,13 @@ function renderChapter3(doc, c3) {
   
   const barMaxW = 280;
   let y = doc.y;
+
+  const tierDesc = {
+    A: '基本满足常规隔声；热工中等',
+    B: '较好满足主干道隔声；Low-E 热工',
+    C: '舒适满足高架/轨道隔声；系统窗热工',
+    D: '从容满足各类指标；被动式水准'
+  };
   
   tiers.forEach(tier => {
     const isCur = tier.key === currentTier;
@@ -332,8 +353,11 @@ function renderChapter3(doc, c3) {
     // 价格
     doc.fillColor(isCur ? COLORS.brand_navy : COLORS.text_secondary).fontSize(9)
       .text(tier.priceRange, 425, y + 4);
+    if (tierDesc[tier.key]) {
+      doc.fillColor(COLORS.text_light).fontSize(8).text(tierDesc[tier.key], 425, y + 16, { width: 120 });
+    }
     
-    y += 24;
+    y += 32;
   });
   
   doc.fillColor(COLORS.text_light).fontSize(9)
@@ -570,12 +594,13 @@ function renderChapter4(doc, c4) {
   if (c4.risks && c4.risks.items && c4.risks.items.length > 0) {
     drawSectionTitle(doc, c4.risks.title || "4.3 风险提示");
     c4.risks.items.forEach((risk) => {
-      const boxH = 65;
+      const boxH = risk.question ? 86 : 65;
       doc.rect(55, doc.y, 5, boxH).fill(COLORS.risk_red);
       doc.rect(60, doc.y, 480, boxH).fill(COLORS.risk_red_bg);
       doc.fillColor(COLORS.risk_red).fontSize(12).text(`⚠️ ${risk.title}`, 70, doc.y + 8);
       doc.fillColor(COLORS.text_body).fontSize(10).text(risk.desc, 70, doc.y + 26, { width: 460 });
-      doc.fillColor(COLORS.brand_mid).fontSize(10).text(`→ ${risk.suggest}`, 70, doc.y + 44, { width: 460 });
+      const suggestLine = `→ ${risk.suggest}` + (risk.question ? `\n→ 要问商家的问题：${risk.question}` : "");
+      doc.fillColor(COLORS.brand_mid).fontSize(10).text(suggestLine, 70, doc.y + 44, { width: 460 });
       doc.y += boxH + 10;
     });
   }
