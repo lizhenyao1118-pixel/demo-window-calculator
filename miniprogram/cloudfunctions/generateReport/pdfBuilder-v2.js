@@ -368,8 +368,8 @@ function renderChapter3(doc, c3) {
     drawSectionTitle(doc, `3.3 ${c3.conflictAlert.title || "配置升级提醒"}`);
 
     const severity = c3.conflictAlert.severity || 'warning';
-    const leftColor = severity === 'error' ? COLORS.risk_red : severity === 'warning' ? COLORS.warn_orange : COLORS.safe_green;
-    const bgColor = severity === 'error' ? COLORS.risk_red_bg : severity === 'warning' ? COLORS.warn_orange_bg : COLORS.safe_green_bg;
+    const leftColor = severity === 'error' ? COLORS.risk_red : severity === 'warning' ? "#E67E22" : COLORS.safe_green;
+    const bgColor = severity === 'error' ? COLORS.risk_red_bg : severity === 'warning' ? "#FEF9E7" : COLORS.safe_green_bg;
 
     const itemLines = (c3.conflictAlert.items || []).length;
     const extraH = c3.conflictAlert.cost_estimate ? 16 : 0;
@@ -379,7 +379,8 @@ function renderChapter3(doc, c3) {
     doc.rect(60, doc.y, 480, boxH).fill(bgColor);
 
     let yy = doc.y + 10;
-    doc.fillColor(leftColor).fontSize(12).text(c3.conflictAlert.title || "配置升级提醒", 70, yy);
+    const alertTitle = severity === 'warning' ? `⚠️ ${c3.conflictAlert.title || "配置升级提醒"}` : (c3.conflictAlert.title || "配置升级提醒");
+    doc.fillColor(leftColor).fontSize(12).text(alertTitle, 70, yy);
     yy += 18;
 
     (c3.conflictAlert.items || []).forEach((item) => {
@@ -398,15 +399,7 @@ function renderChapter3(doc, c3) {
 
   // 可选升级项
   drawSectionTitle(doc, "3.4 可选升级项");
-  if (c3.upgradeOptions && c3.upgradeOptions.l2_entry && c3.upgradeOptions.l2_entry.text) {
-    doc.fillColor(COLORS.text_secondary).fontSize(10)
-      .text(c3.upgradeOptions.l2_entry.text, 55, doc.y, { width: 485 });
-    doc.y += 14;
-  } else {
-    doc.fillColor(COLORS.text_secondary).fontSize(10)
-      .text("以下升级项未包含在当前标准中，如需评估哪项性价比最高，可咨询李Sir →", 55, doc.y, { width: 485 });
-    doc.y += 14;
-  }
+  doc.y += 6;
   
   const upgrades = (c3.upgradeOptions && c3.upgradeOptions.items) || [
     { name: "隔音升级+", desc: "Rw基础上+5dB，需三玻两腔", costHint: "+约180元/㎡", stars: 4 },
