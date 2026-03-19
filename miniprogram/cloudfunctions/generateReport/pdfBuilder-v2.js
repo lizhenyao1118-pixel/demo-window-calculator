@@ -274,7 +274,7 @@ function renderChapter2(doc, c2) {
 function renderChapter3(doc, c3) {
   drawChapterHeader(doc, "第三", "产品配置与预算方案", COLORS.brand_navy);
   
-  const spec = c3.budgetSpec || { label: "舒适型 B档" };
+  const spec = (c3.recommendedConfig && c3.recommendedConfig.spec) || { label: "舒适型 B档" };
   drawSectionTitle(doc, `3.1 推荐配置方案（${spec.label}）`);
   
   // 配置表（复用第二章数据）
@@ -296,13 +296,13 @@ function renderChapter3(doc, c3) {
 
   // 价格横条图
   drawSectionTitle(doc, "3.2 预算档位对比");
-  const tiers = c3.tiers || [
+  const tiers = (c3.budgetComparison && c3.budgetComparison.tiers) || [
     { key: "A", label: "经济实用 A档", priceRange: "600-800元/㎡", barRatio: 0.35 },
     { key: "B", label: "舒适均衡 B档", priceRange: "800-1200元/㎡", barRatio: 0.55 },
     { key: "C", label: "品质进阶 C档", priceRange: "1200-1800元/㎡", barRatio: 0.75 },
     { key: "D", label: "定制高端 D档", priceRange: "1800+元/㎡", barRatio: 1.0 }
   ];
-  const currentTier = c3.currentTier || "B";
+  const currentTier = (c3.budgetComparison && c3.budgetComparison.currentTier) || "B";
   
   const barMaxW = 280;
   let y = doc.y;
@@ -338,13 +338,51 @@ function renderChapter3(doc, c3) {
     .text("* 价格为市场参考值（元/㎡），差异>30%时谨慎选择最低价", 55, y + 5);
   doc.y = y + 25;
 
+  if (c3.conflictAlert && c3.conflictAlert.items && c3.conflictAlert.items.length > 0) {
+    drawSectionTitle(doc, `3.3 ${c3.conflictAlert.title || "配置升级提醒"}`);
+
+    const severity = c3.conflictAlert.severity || 'warning';
+    const leftColor = severity === 'error' ? COLORS.risk_red : severity === 'warning' ? COLORS.warn_orange : COLORS.safe_green;
+    const bgColor = severity === 'error' ? COLORS.risk_red_bg : severity === 'warning' ? COLORS.warn_orange_bg : COLORS.safe_green_bg;
+
+    const itemLines = (c3.conflictAlert.items || []).length;
+    const extraH = c3.conflictAlert.cost_estimate ? 16 : 0;
+    const boxH = 18 + itemLines * 14 + extraH + 12;
+
+    doc.rect(55, doc.y, 5, boxH).fill(leftColor);
+    doc.rect(60, doc.y, 480, boxH).fill(bgColor);
+
+    let yy = doc.y + 10;
+    doc.fillColor(leftColor).fontSize(12).text(c3.conflictAlert.title || "配置升级提醒", 70, yy);
+    yy += 18;
+
+    (c3.conflictAlert.items || []).forEach((item) => {
+      doc.fillColor(COLORS.text_body).fontSize(10).text(`· ${item}`, 70, yy, { width: 460 });
+      yy += 14;
+    });
+
+    if (c3.conflictAlert.cost_estimate) {
+      yy += 2;
+      doc.fillColor(leftColor).fontSize(10).text(c3.conflictAlert.cost_estimate, 70, yy, { width: 460 });
+      yy += 14;
+    }
+
+    doc.y = doc.y + boxH + 12;
+  }
+
   // 可选升级项
-  drawSectionTitle(doc, "3.3 可选升级项");
-  doc.fillColor(COLORS.text_secondary).fontSize(10)
-    .text("以下升级项未包含在当前标准中，如需评估哪项性价比最高，可咨询李Sir →", 55, doc.y, { width: 485 });
-  doc.y += 14;
+  drawSectionTitle(doc, "3.4 可选升级项");
+  if (c3.upgradeOptions && c3.upgradeOptions.l2_entry && c3.upgradeOptions.l2_entry.text) {
+    doc.fillColor(COLORS.text_secondary).fontSize(10)
+      .text(c3.upgradeOptions.l2_entry.text, 55, doc.y, { width: 485 });
+    doc.y += 14;
+  } else {
+    doc.fillColor(COLORS.text_secondary).fontSize(10)
+      .text("以下升级项未包含在当前标准中，如需评估哪项性价比最高，可咨询李Sir →", 55, doc.y, { width: 485 });
+    doc.y += 14;
+  }
   
-  const upgrades = c3.upgrades || [
+  const upgrades = (c3.upgradeOptions && c3.upgradeOptions.items) || [
     { name: "隔音升级+", desc: "Rw基础上+5dB，需三玻两腔", costHint: "+约180元/㎡", stars: 4 },
     { name: "热工升级+", desc: "K值降0.3，需注胶式断桥", costHint: "+约120元/㎡", stars: 3 },
     { name: "安全升级+", desc: "夹胶玻璃+儿童限位器", costHint: "+约80元/㎡", stars: 5 }
@@ -362,157 +400,94 @@ function renderChapter3(doc, c3) {
     doc.fillColor(COLORS.warn_orange).fontSize(9).text(stars, x + cardW - 50, doc.y + 50);
   });
   doc.y += 72;
+
+  if (c3.upgradeOptions && c3.upgradeOptions.l2_entry && c3.upgradeOptions.l2_entry.action) {
+    const bg = COLORS.bg_card;
+    const fg = COLORS.brand_blue;
+    const bY = doc.y;
+    doc.rect(55, bY, 485, 42).fill(bg);
+    doc.fillColor(fg).fontSize(10).text(c3.upgradeOptions.l2_entry.text || "", 67, bY + 10, { width: 360 });
+    doc.roundedRect(442, bY + 9, 86, 24, 4).stroke(fg);
+    doc.fillColor(fg).fontSize(10).text(c3.upgradeOptions.l2_entry.action, 460, bY + 15);
+    doc.y = bY + 52;
+  }
 }
 
 function renderChapter4(doc, c4) {
-  const isRisk = c4.isRisk;
+  const isRisk = !!c4.isRisk;
+  const title = c4.title || "下一步怎么用：问商家什么 & 怎么验收";
   const color = COLORS.brand_navy;
-  drawChapterHeader(doc, "第四", "商家答题表（统一问卷）", color);
-  
-  if (c4.riskSection && c4.riskSection.items && c4.riskSection.items.length > 0) {
-    const severity = c4.riskSection.severity || 'info';
-    const leftColor = severity === 'error' ? COLORS.risk_red : severity === 'warning' ? COLORS.warn_orange : COLORS.safe_green;
-    const bgColor = severity === 'error' ? COLORS.risk_red_bg : severity === 'warning' ? COLORS.warn_orange_bg : COLORS.safe_green_bg;
+  drawChapterHeader(doc, "第四", title, color);
 
-    drawSectionTitle(doc, c4.riskSection.title || "配置提示");
+  if (c4.subtitle) {
+    doc.fillColor(COLORS.text_secondary).fontSize(10).text(c4.subtitle, 55, doc.y, { width: 485 });
+    doc.y += 18;
+  }
 
-    const itemLines = (c4.riskSection.items || []).length;
-    const extraH = c4.riskSection.cost_estimate ? 16 : 0;
-    const boxH = 18 + itemLines * 14 + extraH + 12;
-
-    doc.rect(55, doc.y, 5, boxH).fill(leftColor);
-    doc.rect(60, doc.y, 480, boxH).fill(bgColor);
-
-    let y = doc.y + 10;
-    doc.fillColor(leftColor).fontSize(12).text(c4.riskSection.title || "配置提示", 70, y);
-    y += 18;
-
-    (c4.riskSection.items || []).forEach((item) => {
-      doc.fillColor(COLORS.text_body).fontSize(10).text(`· ${item}`, 70, y, { width: 460 });
-      y += 14;
+  if (c4.intro && c4.intro.items && c4.intro.items.length > 0) {
+    drawSectionTitle(doc, c4.intro.title || "使用说明");
+    c4.intro.items.forEach((line) => {
+      doc.fillColor(COLORS.text_body).fontSize(10).text(line, 55, doc.y, { width: 485 });
+      doc.y += 14;
     });
+    doc.y += 6;
+  }
 
-    if (c4.riskSection.cost_estimate) {
-      y += 2;
-      doc.fillColor(leftColor).fontSize(10).text(c4.riskSection.cost_estimate, 70, y, { width: 460 });
-      y += 14;
+  if (c4.merchantNotice) {
+    drawSectionTitle(doc, c4.merchantNotice.title || "4.1 给商家的说明");
+    if (c4.merchantNotice.content) {
+      doc.fillColor(COLORS.text_body).fontSize(10).text(c4.merchantNotice.content, 55, doc.y, { width: 485 });
+      doc.y += 30;
     }
-
-    doc.y = doc.y + boxH + 12;
+    if (c4.merchantNotice.deadline) {
+      doc.fillColor(COLORS.text_secondary).fontSize(10).text(c4.merchantNotice.deadline, 55, doc.y, { width: 485 });
+      doc.y += 18;
+    }
   }
 
-  // 风险提示或优化建议
-  if (isRisk && c4.risks && c4.risks.length > 0) {
-    drawSectionTitle(doc, "风险提示（须重点关注）");
-    c4.risks.forEach(risk => {
-      const boxH = 65;
-      doc.rect(55, doc.y, 5, boxH).fill(COLORS.risk_red);
-      doc.rect(60, doc.y, 480, boxH).fill(COLORS.risk_red_bg);
-      
-      doc.fillColor(COLORS.risk_red).fontSize(12).text(`⚠️ ${risk.title}`, 70, doc.y + 8);
-      doc.fillColor(COLORS.text_body).fontSize(10).text(risk.desc, 70, doc.y + 26, { width: 460 });
-      doc.fillColor(COLORS.brand_mid).fontSize(10).text(`→ ${risk.suggest}`, 70, doc.y + 44, { width: 460 });
-      doc.y += boxH + 10;
-    });
-  } else if (c4.optimizations && c4.optimizations.length > 0) {
-    drawSectionTitle(doc, "优化建议");
-    c4.optimizations.forEach(opt => {
-      doc.fillColor(COLORS.safe_green).fontSize(11).text(`💡 ${opt.title}`, 55, doc.y);
-      doc.fillColor(COLORS.text_body).fontSize(10).text(opt.desc, 55, doc.y + 15, { width: 485 });
-      doc.y += 35;
-    });
-  }
-  
-  // 验收节点
-  drawSectionTitle(doc, "验收节点");
-  const nodes = c4.acceptanceNodes || [
-    { stage: "进场验收", items: ["核查铭牌型号", "索取检测报告", "核查玻璃配置"] },
-    { stage: "安装验收", items: ["发泡剂填充", "打胶宽度≥8mm"] },
-    { stage: "竣工验收", items: ["烟雾笔气密检测", "淋水测试3分钟"] }
-  ];
-  
-  nodes.forEach(node => {
-    const title = node.title || (node.stage ? `【${node.stage}】` : "【验收节点】");
-    doc.fillColor(COLORS.brand_mid).fontSize(11).text(title, 55, doc.y);
-    doc.y += 15;
-    node.items.forEach(item => {
-      doc.fillColor(COLORS.text_body).fontSize(10).text(` · ${item}`, 65, doc.y);
-      doc.y += 12;
-    });
-    doc.y += 5;
-  });
-  
-  // L2 转化植入
-  const bg = isRisk ? COLORS.risk_red_lt : COLORS.safe_green_bg;
-  const fg = isRisk ? COLORS.risk_red : COLORS.safe_green;
-  const bY = doc.y;
-  doc.rect(55, bY, 485, 42).fill(bg);
-  
-  const mainText = isRisk 
-    ? "如需李Sir评审商家响应方案是否真正满足以上标准（商家很会说，不一定能做到）→"
-    : "您的方案已达基本标准，如需李Sir优化方案性价比 →";
-  
-  doc.fillColor(fg).fontSize(10).text(mainText, 67, bY + 10, { width: 380 });
-  doc.roundedRect(442, bY + 9, 86, 24, 4).fill(fg);
-  doc.fillColor("#FFFFFF").fontSize(10).text("预约深度审计 →", 448, bY + 15);
-  doc.y = bY + 52;
-  
-  const mr = c4.merchantResponse || {};
-  if (mr.header && mr.header.title) {
-    if (842 - doc.y < 280) doc.addPage();
-
-    drawSectionTitle(doc, mr.header.title);
-    if (mr.header.subtitle) {
-      doc.fillColor(COLORS.text_secondary).fontSize(10)
-        .text(mr.header.subtitle, 55, doc.y, { width: 485 });
+  const mq = c4.merchantQuestionnaire || {};
+  if (mq.title) {
+    drawSectionTitle(doc, mq.title);
+    if (mq.subtitle) {
+      doc.fillColor(COLORS.text_secondary).fontSize(10).text(mq.subtitle, 55, doc.y, { width: 485 });
       doc.y += 18;
     }
 
-    if (mr.instructions && mr.instructions.length > 0) {
-      mr.instructions.forEach((line) => {
-        doc.fillColor(COLORS.text_body).fontSize(10).text(line, 55, doc.y, { width: 485 });
-        doc.y += 14;
-      });
-      doc.y += 6;
-    }
-
-    if (mr.basicInfo && mr.basicInfo.title) {
-      doc.fillColor(COLORS.brand_mid).fontSize(11).text(mr.basicInfo.title, 55, doc.y);
+    if (mq.section1 && mq.section1.title) {
+      doc.fillColor(COLORS.brand_mid).fontSize(11).text(mq.section1.title, 55, doc.y);
       doc.y += 16;
-
-      const fields = Array.isArray(mr.basicInfo.fields) ? mr.basicInfo.fields : [];
+      const fields = Array.isArray(mq.section1.fields) ? mq.section1.fields : [];
       fields.forEach((f) => {
-        doc.fillColor(COLORS.text_body).fontSize(10).text(`${f}：________________________`, 55, doc.y, { width: 485 });
+        if (f.type === 'checkbox') {
+          const opts = Array.isArray(f.options) ? f.options.join(' / ') : '';
+          doc.fillColor(COLORS.text_body).fontSize(10).text(`${f.label}：□ ${opts}`, 55, doc.y, { width: 485 });
+        } else {
+          doc.fillColor(COLORS.text_body).fontSize(10).text(`${f.label}（${f.placeholder || ""}）：________________________`, 55, doc.y, { width: 485 });
+        }
         doc.y += 14;
       });
       doc.y += 6;
     }
 
-    if (mr.technicalTable && mr.technicalTable.title) {
+    if (mq.section2 && mq.section2.title) {
       if (842 - doc.y < 220) doc.addPage();
-
-      doc.fillColor(COLORS.brand_mid).fontSize(11).text(mr.technicalTable.title, 55, doc.y);
+      doc.fillColor(COLORS.brand_mid).fontSize(11).text(mq.section2.title, 55, doc.y);
       doc.y += 14;
-
-      if (mr.technicalTable.hint) {
-        doc.fillColor(COLORS.text_light).fontSize(9).text(mr.technicalTable.hint, 55, doc.y, { width: 485 });
-        doc.y += 12;
-      }
-      if (mr.technicalTable.note) {
-        doc.fillColor(COLORS.text_light).fontSize(9).text(mr.technicalTable.note, 55, doc.y, { width: 485 });
+      if (mq.section2.hint) {
+        doc.fillColor(COLORS.text_secondary).fontSize(10).text(mq.section2.hint, 55, doc.y, { width: 485 });
         doc.y += 14;
       }
 
-      const columns = Array.isArray(mr.technicalTable.columns) ? mr.technicalTable.columns : [];
+      const columns = Array.isArray(mq.section2.columns) ? mq.section2.columns : [];
       const cols = [
         { h: columns[0] || "品牌及系列", w: 86 },
-        { h: columns[1] || "型材壁厚", w: 60 },
+        { h: columns[1] || "型材壁厚(mm)", w: 60 },
         { h: columns[2] || "玻璃配置", w: 82 },
         { h: columns[3] || "检测报告编号", w: 80 },
-        { h: columns[4] || "含税报价", w: 58 },
-        { h: columns[5] || "工期", w: 38 },
-        { h: columns[6] || "质保", w: 38 },
-        { h: columns[7] || "签字", w: 43 }
+        { h: columns[4] || "含税报价(元/㎡)", w: 58 },
+        { h: columns[5] || "工期(天)", w: 38 },
+        { h: columns[6] || "质保(年)", w: 38 },
+        { h: columns[7] || "签名确认", w: 43 }
       ];
 
       const rowH = 28;
@@ -544,34 +519,78 @@ function renderChapter4(doc, c4) {
         });
       }
 
-      doc.y = tableY + 22 + 4 * rowH + 10;
+      doc.y = tableY + 22 + 4 * rowH + 8;
+      if (mq.section2.note) {
+        doc.fillColor(COLORS.text_light).fontSize(9).text(mq.section2.note, 55, doc.y, { width: 485 });
+        doc.y += 16;
+      } else {
+        doc.y += 6;
+      }
     }
 
-    if (mr.attitudeQuestions && mr.attitudeQuestions.title) {
-      if (842 - doc.y < 150) doc.addPage();
-
-      doc.fillColor(COLORS.brand_mid).fontSize(11).text(mr.attitudeQuestions.title, 55, doc.y);
+    if (mq.section3 && mq.section3.title) {
+      if (842 - doc.y < 140) doc.addPage();
+      doc.fillColor(COLORS.brand_mid).fontSize(11).text(mq.section3.title, 55, doc.y);
       doc.y += 16;
-      const qs = Array.isArray(mr.attitudeQuestions.questions) ? mr.attitudeQuestions.questions : [];
+      const qs = Array.isArray(mq.section3.questions) ? mq.section3.questions : [];
       qs.forEach((q) => {
         doc.fillColor(COLORS.text_body).fontSize(10).text(q, 55, doc.y, { width: 485 });
-        doc.y += 26;
-      });
-      doc.y += 4;
-    }
-
-    if (mr.footer && mr.footer.title) {
-      if (842 - doc.y < 110) doc.addPage();
-
-      doc.fillColor(COLORS.brand_mid).fontSize(11).text(mr.footer.title, 55, doc.y);
-      doc.y += 16;
-      const els = Array.isArray(mr.footer.elements) ? mr.footer.elements : [];
-      els.forEach((line) => {
-        doc.fillColor(COLORS.text_body).fontSize(10).text(line, 55, doc.y, { width: 485 });
-        doc.y += 14;
+        doc.y += 24;
       });
       doc.y += 6;
     }
+
+    if (mq.signature && mq.signature.text) {
+      doc.fillColor(COLORS.text_secondary).fontSize(10).text(mq.signature.text, 55, doc.y, { width: 485 });
+      doc.y += 16;
+      const fields = Array.isArray(mq.signature.fields) ? mq.signature.fields : [];
+      fields.forEach((f) => {
+        doc.fillColor(COLORS.text_body).fontSize(10).text(`${f}：________________________`, 55, doc.y, { width: 485 });
+        doc.y += 14;
+      });
+      doc.y += 8;
+    }
+  }
+
+  if (c4.l2_entry && c4.l2_entry.action) {
+    const bg = isRisk ? COLORS.risk_red_lt : COLORS.safe_green_bg;
+    const fg = isRisk ? COLORS.risk_red : COLORS.safe_green;
+    const bY = doc.y;
+    doc.rect(55, bY, 485, 42).fill(bg);
+
+    const mainText = isRisk ? c4.l2_entry.risk_text : c4.l2_entry.normal_text;
+    doc.fillColor(fg).fontSize(10).text(mainText, 67, bY + 10, { width: 380 });
+    doc.roundedRect(442, bY + 9, 86, 24, 4).fill(fg);
+    doc.fillColor("#FFFFFF").fontSize(10).text(c4.l2_entry.action, 448, bY + 15);
+    doc.y = bY + 52;
+  }
+
+  if (c4.risks && c4.risks.items && c4.risks.items.length > 0) {
+    drawSectionTitle(doc, c4.risks.title || "4.3 风险提示");
+    c4.risks.items.forEach((risk) => {
+      const boxH = 65;
+      doc.rect(55, doc.y, 5, boxH).fill(COLORS.risk_red);
+      doc.rect(60, doc.y, 480, boxH).fill(COLORS.risk_red_bg);
+      doc.fillColor(COLORS.risk_red).fontSize(12).text(`⚠️ ${risk.title}`, 70, doc.y + 8);
+      doc.fillColor(COLORS.text_body).fontSize(10).text(risk.desc, 70, doc.y + 26, { width: 460 });
+      doc.fillColor(COLORS.brand_mid).fontSize(10).text(`→ ${risk.suggest}`, 70, doc.y + 44, { width: 460 });
+      doc.y += boxH + 10;
+    });
+  }
+
+  if (c4.acceptance && c4.acceptance.nodes && c4.acceptance.nodes.length > 0) {
+    drawSectionTitle(doc, c4.acceptance.title || "4.4 验收节点");
+    const nodes = c4.acceptance.nodes;
+    nodes.forEach((node) => {
+      const nodeTitle = node.title || (node.stage ? `【${node.stage}】` : "【验收节点】");
+      doc.fillColor(COLORS.brand_mid).fontSize(11).text(nodeTitle, 55, doc.y);
+      doc.y += 15;
+      (node.items || []).forEach((item) => {
+        doc.fillColor(COLORS.text_body).fontSize(10).text(` · ${item}`, 65, doc.y, { width: 475 });
+        doc.y += 12;
+      });
+      doc.y += 5;
+    });
   }
 }
 
