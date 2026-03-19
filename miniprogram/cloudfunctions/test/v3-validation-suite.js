@@ -118,7 +118,7 @@ const TEST_CASES = [
     },
     expect: {
       rw_required: 43,
-      is_compensated: true
+      is_compensated: false
     }
   }
 ];

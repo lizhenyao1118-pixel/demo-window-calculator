@@ -17,7 +17,7 @@ const BUDGET_SPEC = {
     bar_ratio: 0.35,
     glass_max_level: 'laminated_hollow',
     glass_rw_max: 42,
-    profile: { min_wall_thickness: 1.5, min_insulation_strip: 24, brand_tier: 'domestic_standard' },
+    profile: { min_wall_thickness: 1.5, brand_tier: 'domestic_standard' },
     hardware: { min_load_kg: 60, brand: 'domestic_budget' },
     seal: { layers: 2, material: 'EPDM_rubber' }
   },
@@ -27,7 +27,7 @@ const BUDGET_SPEC = {
     bar_ratio: 0.55,
     glass_max_level: 'laminated_hollow',
     glass_rw_max: 42,
-    profile: { min_wall_thickness: 1.6, min_insulation_strip: 28, brand_tier: 'system_domestic' },
+    profile: { min_wall_thickness: 1.6, brand_tier: 'system_domestic' },
     hardware: { min_load_kg: 80, brand: 'domestic_premium' },
     seal: { layers: 3, material: 'EPDM_rubber' }
   },
@@ -37,7 +37,7 @@ const BUDGET_SPEC = {
     bar_ratio: 0.75,
     glass_max_level: 'triple_pane',
     glass_rw_max: 43,
-    profile: { min_wall_thickness: 1.8, min_insulation_strip: 32, brand_tier: 'imported_entry' },
+    profile: { min_wall_thickness: 1.8, brand_tier: 'imported_entry' },
     hardware: { min_load_kg: 100, brand: 'imported' },
     seal: { layers: 3, material: 'premium_epdm' }
   },
@@ -47,7 +47,7 @@ const BUDGET_SPEC = {
     bar_ratio: 1.0,
     glass_max_level: 'triple_pane',
     glass_rw_max: 45,
-    profile: { min_wall_thickness: 2.0, min_insulation_strip: 40, brand_tier: 'custom_imported' },
+    profile: { min_wall_thickness: 2.0, brand_tier: 'custom_imported' },
     hardware: { min_load_kg: 150, brand: 'premium_imported' },
     seal: { layers: 4, material: 'silicone_epdm_hybrid' }
   }

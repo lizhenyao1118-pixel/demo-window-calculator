@@ -26,6 +26,7 @@ const FIELD_MAP = {
 };
 
 const { GLASS_LEVELS, BUDGET_SPEC } = require('./shared/budgetSpec.js');
+const { getInsulationBarRequirement } = require('./shared/thermalSpec.js');
 const { resolveGlassConfig } = require('./arbitrator.js');
 
 const NOISE_SCENE = {
@@ -312,6 +313,7 @@ function estimateCostDelta(glassKey, tier) {
 function buildBudgetSpecView(resolved, answers) {
   const tier = answers.budget_tier || 'B';
   const spec = BUDGET_SPEC[tier] || BUDGET_SPEC.B;
+  const bar = getInsulationBarRequirement(Number(getField(resolved, 'K')));
 
   const familyRisk = Array.isArray(answers.family_risk) ? answers.family_risk : [];
   const window_features = {
@@ -338,9 +340,6 @@ function buildBudgetSpecView(resolved, answers) {
 
   const conflict_notes = Array.isArray(resolved.conflict_notes) ? [...resolved.conflict_notes] : [];
   if (glass_result.conflict && glass_result.conflict.message) conflict_notes.push(glass_result.conflict.message);
-  if (window_features.has_wide_slider) {
-    conflict_notes.push('注意：因含推拉门，隔声需求已提高3dB补偿密封损失（请商家提供专项隔声测试数据）。');
-  }
 
   resolved.conflict_notes = conflict_notes;
 
@@ -349,7 +348,7 @@ function buildBudgetSpecView(resolved, answers) {
     price_range: spec.price_range,
     price_hint: spec.price_hint,
     bar_ratio: spec.bar_ratio,
-    profile: `壁厚≥${spec.profile.min_wall_thickness}mm；隔热条≥${spec.profile.min_insulation_strip}mm`,
+    profile: `壁厚≥${spec.profile.min_wall_thickness}mm；隔热条≥${bar.min_mm}mm（${bar.process}）`,
     glass: config_table.glass,
     hardware: `铰链负载≥${spec.hardware.min_load_kg}kg`,
     seal: `${spec.seal.layers}道密封（${spec.seal.material}）`,
@@ -360,33 +359,32 @@ function buildBudgetSpecView(resolved, answers) {
   };
 }
 
-function getForbiddenItems(tier) {
+function getForbiddenItems(budget_tier, K_target, window_features, Rw_required) {
+  const bar = getInsulationBarRequirement(Number(K_target));
+
   const base = [
-    '禁止使用回收铝（再生料）型材，须提供原生铝材质检报告',
+    '禁止使用回收铝型材，须提供原生铝材质检报告',
     '禁止单玻或无Low-E膜的普通中空玻璃',
-    '禁止以普通密封胶代替结构胶（须使用中性硅酮结构胶）'
+    '禁止以普通密封胶代替结构胶（须使用中性硅酮结构胶）',
+    `断桥铝隔热条宽度须≥${bar.min_mm}mm（${bar.process}），禁止使用宽度不足的仿断桥产品` + (bar.note ? `（依据：本项目K≤${K_target}W/m²·K${bar.note}）` : '')
   ];
-  
-  const extra = {
-    A: [
-      '型材壁厚须≥1.5mm，提供截面检测报告（A档基础要求）',
-      '隔热条宽度须≥24mm，禁止<20mm仿断桥产品'
-    ],
-    B: [
-      '隔热条宽度须≥28mm，禁止<24mm仿断桥产品',
-      '玻璃须充氩气，提供气体填充检测报告'
-    ],
-    C: [
-      '须为正规系统门窗品牌，提供系统厂商授权书',
-      '型材须为注胶式或等压腔设计，提供结构计算书'
-    ],
-    D: [
-      '须提供欧标（CE/Passivhaus）或国内第三方认证报告',
-      '须为被动式或近被动式系统门窗，提供K值检测报告'
-    ]
+
+  if (window_features && window_features.has_wide_slider) {
+    base.push(
+      '推拉门产品须提供整窗隔声测试报告（GB/T 8485 整窗实测），' +
+      `整窗Rw实测值须≥${Rw_required}dB，不得以玻璃检测报告替代`
+    );
+    base.push('推拉门须采用毛条+胶条复合密封，搭接处连续无断点，竣工时须配合烟雾测试');
+  }
+
+  const TIER_WALL = {
+    A: '型材主受力壁厚须≥1.5mm，提供截面检测报告',
+    B: '型材主受力壁厚须≥1.6mm，提供截面检测报告',
+    C: '型材主受力壁厚须≥1.8mm，须为系统门窗品牌，提供厂商授权书',
+    D: '型材主受力壁厚须≥2.0mm，须提供欧标或国内第三方认证报告'
   };
-  
-  return [...base, ...(extra[tier] || [])];
+
+  return [...base, TIER_WALL[budget_tier] || TIER_WALL.A];
 }
 
 function getSafetyItems(familyRisk, budgetTier) {
@@ -539,6 +537,12 @@ function mapToSections(resolved, answers, pdfNo) {
   const band = getHeightBand(answers.floor, answers.total_floors);
   const painTag = getPainTag(answers.pain_point);
   const budgetSpec = buildBudgetSpecView(resolved, answers);
+  const familyRisk = Array.isArray(answers.family_risk) ? answers.family_risk : [];
+  const window_features = {
+    has_large_fixed: familyRisk.includes('large_fixed'),
+    has_wide_slider: familyRisk.includes('wide_slider'),
+    has_family_safety: familyRisk.includes('child') || familyRisk.includes('elder')
+  };
   const safety = getSafetyItems(answers.family_risk, answers.budget_tier);
   
   // 风险触发条件：16层以上 或 高度比>50% 或 有risk_flags 或 免责声明
@@ -620,7 +624,7 @@ function mapToSections(resolved, answers, pdfNo) {
       ],
       budgetSpec: budgetSpec,
       redLines: {
-        forbidden: getForbiddenItems(answers.budget_tier),
+        forbidden: getForbiddenItems(answers.budget_tier, getField(resolved, 'K'), window_features, getField(resolved, 'Rw')),
         safetyItems: safety.items,
         safetyBudgetWarning: safety.budgetWarning,
         conflictNotes: resolved.conflict_notes || []

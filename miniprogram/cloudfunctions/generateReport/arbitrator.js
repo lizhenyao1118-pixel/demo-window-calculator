@@ -22,8 +22,7 @@ function resolveGlassConfig(Rw_req, K_req, SHGC_req, window_features, budget_tie
 
   const safety_level = window_features && window_features.has_large_fixed ? 4 : 1;
 
-  const rw_compensated = Rw_req + (window_features && window_features.has_wide_slider ? 3 : 0);
-  const final_rw_level = minLevelForRw(rw_compensated);
+  const final_rw_level = minLevelForRw(Rw_req);
 
   const perf_level = Math.max(final_rw_level, thermal_level, shgc_level, safety_level);
 
@@ -59,7 +58,7 @@ function resolveGlassConfig(Rw_req, K_req, SHGC_req, window_features, budget_tie
     rw_effective: Math.min(Rw_req, glass_config.rw_max),
     conflict,
     thermal_overlay,
-    is_compensated: !!(window_features && window_features.has_wide_slider)
+    is_compensated: false
   };
 }
 
