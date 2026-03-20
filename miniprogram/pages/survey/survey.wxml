@@ -56,14 +56,14 @@
     <view class="question-title required">3. 当前窗户最困扰您的问题？（可多选）</view>
     <checkbox-group bindchange="onPainPointChange">
       <view
-        class="checkbox-item {{(formData.painPoint || []).indexOf(item.value) !== -1 ? 'selected' : 'unselected'}}"
+        class="checkbox-item {{painPointSelectedMap[item.value] ? 'selected' : 'unselected'}}"
         wx:for="{{painPoints}}"
         wx:for-item="item"
         wx:key="value"
       >
         <checkbox
           value="{{item.value}}"
-          checked="{{(formData.painPoint || []).indexOf(item.value) !== -1}}"
+          checked="{{painPointSelectedMap[item.value]}}"
           color="#07c160"
         />
         <text class="checkbox-text">{{item.label}}</text>
@@ -143,14 +143,14 @@
     <view class="question-title required">8. 家庭与窗型风险（可多选）</view>
     <checkbox-group bindchange="onFamilyRiskChange">
       <view
-        class="risk-option {{(formData.family_risk || []).indexOf(item.value) !== -1 ? 'selected' : 'unselected'}}"
+        class="risk-option {{familyRiskSelectedMap[item.value] ? 'selected' : 'unselected'}}"
         wx:for="{{riskOptions}}"
         wx:for-item="item"
         wx:key="value"
       >
         <checkbox 
           value="{{item.value}}" 
-          checked="{{(formData.family_risk || []).indexOf(item.value) !== -1}}" 
+          checked="{{familyRiskSelectedMap[item.value]}}" 
           color="#07c160" 
         />
         <text class="option-text">{{item.label}}</text>

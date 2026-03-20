@@ -60,6 +60,7 @@ Page({
       { value: 'view', label: '采光视野' },
       { value: 'economy', label: '省钱经济' }
     ],
+    painPointSelectedMap: {},
     noiseTypeOptions: [
       { label: '主干道/马路', value: 'main_road' },
       { label: '高架桥', value: 'elevated' },
@@ -84,6 +85,7 @@ Page({
     budgetTiers: BUDGET_OPTIONS,
     familyRiskOptions: FAMILY_RISK_OPTIONS,
     riskOptions: FAMILY_RISK_OPTIONS,
+    familyRiskSelectedMap: {},
     showRatio: false,
     showHeightRatio: false,
     showConflictWarning: false,
@@ -105,7 +107,9 @@ Page({
     this.setData({
       'formData.painPoint': [],
       'formData.family_risk': [],
-      family_risk: []
+      family_risk: [],
+      painPointSelectedMap: {},
+      familyRiskSelectedMap: {}
     });
 
     // 记录开始时间（用于流失分析）
@@ -149,6 +153,7 @@ Page({
         { value: 'view', label: '采光视野' },
         { value: 'economy', label: '省钱经济' }
       ],
+      painPointSelectedMap: {},
       noiseTypeOptions: [
         { label: '主干道/马路', value: 'main_road' },
         { label: '高架桥', value: 'elevated' },
@@ -173,6 +178,7 @@ Page({
       budgetTiers: BUDGET_OPTIONS,
       familyRiskOptions: FAMILY_RISK_OPTIONS,
       riskOptions: FAMILY_RISK_OPTIONS,
+      familyRiskSelectedMap: {},
       showRatio: false,
       heightRatio: 0,
       showHeightRatio: false,
@@ -301,7 +307,9 @@ Page({
   // Q3: 困扰问题（多选）
   onPainPointChange(e) {
     const values = (e && e.detail && Array.isArray(e.detail.value)) ? e.detail.value : [];
-    this.setData({ 'formData.painPoint': values });
+    const map = {};
+    values.forEach((v) => { map[v] = true; });
+    this.setData({ 'formData.painPoint': values, painPointSelectedMap: map });
     this.saveDraft();
     trackStep(3, { pain_point: values });
   },
@@ -373,9 +381,12 @@ Page({
   // Q8: 多选家庭风险
   onFamilyRiskChange(e) {
     const values = (e && e.detail && Array.isArray(e.detail.value)) ? e.detail.value : [];
+    const map = {};
+    values.forEach((v) => { map[v] = true; });
     this.setData({ 
       family_risk: values,
-      'formData.family_risk': values
+      'formData.family_risk': values,
+      familyRiskSelectedMap: map
     });
     this.saveDraft();
     trackStep(8, { family_risk: values });
