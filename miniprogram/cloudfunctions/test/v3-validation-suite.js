@@ -13,7 +13,6 @@ const TEST_CASES = [
       noise_dist: 'gt50',
       pain_point: 'heat',
       budget_tier: 'A',
-      priority: 'price',
       orientation: 'south',
       west_shading: true,
       window_features: { has_large_fixed: false, has_wide_slider: false, has_family_safety: false }
@@ -32,7 +31,6 @@ const TEST_CASES = [
       noise_dist: 'lt20',
       pain_point: 'sound',
       budget_tier: 'A',
-      priority: 'sound',
       orientation: 'south',
       west_shading: true,
       window_features: { has_large_fixed: false, has_wide_slider: false, has_family_safety: false }
@@ -51,7 +49,6 @@ const TEST_CASES = [
       noise_dist: '20to50',
       pain_point: 'sound',
       budget_tier: 'B',
-      priority: 'sound',
       orientation: 'south',
       west_shading: true,
       window_features: { has_large_fixed: false, has_wide_slider: false, has_family_safety: false }
@@ -71,7 +68,6 @@ const TEST_CASES = [
       noise_dist: 'gt50',
       pain_point: 'heat',
       budget_tier: 'C',
-      priority: 'price',
       orientation: 'west',
       west_shading: false,
       window_features: { has_large_fixed: false, has_wide_slider: false, has_family_safety: false }
@@ -90,7 +86,6 @@ const TEST_CASES = [
       noise_dist: '20to50',
       pain_point: 'safety',
       budget_tier: 'D',
-      priority: 'view',
       orientation: 'south',
       west_shading: true,
       window_features: { has_large_fixed: true, has_wide_slider: false, has_family_safety: true }
@@ -109,7 +104,6 @@ const TEST_CASES = [
       noise_dist: 'lt20',
       pain_point: 'sound',
       budget_tier: 'B',
-      priority: 'sound',
       orientation: 'south',
       west_shading: true,
       window_features: { has_large_fixed: false, has_wide_slider: true, has_family_safety: false },
@@ -134,11 +128,10 @@ function runCase(tc) {
     noise_dist: tc.input.noise_dist,
     orientation: tc.input.orientation,
     west_shading: tc.input.west_shading,
-    priority: tc.input.priority,
     pain_point: tc.input.pain_point,
+    heating_type: 'central',
     family_risk: [],
-    budget_tier: tc.input.budget_tier,
-    timeline: '1to3m'
+    budget_tier: tc.input.budget_tier
   });
 
   const result = resolveGlassConfig(
@@ -147,7 +140,7 @@ function runCase(tc) {
     computed.SHGC,
     tc.input.window_features,
     tc.input.budget_tier,
-    tc.input.priority
+    tc.input.pain_point
   );
 
   const failures = [];

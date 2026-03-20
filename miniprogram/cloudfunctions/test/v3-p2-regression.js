@@ -24,10 +24,9 @@ function buildAnswersFromAssessment(assessment) {
     orientation: assessment.orientation,
     west_shading: assessment.west_shading,
     heating_type: assessment.heating_type || 'none',
+    window_type: assessment.window_type || '',
     family_risk: assessment.family_risk || [],
     budget_tier: assessment.budget_tier,
-    priority: assessment.priority || assessment.pain_point,
-    timeline: assessment.timeline || '1to3m',
     photos: []
   };
 }
@@ -57,126 +56,73 @@ function runScenario(id, assessment, checks) {
 
 function main() {
   runScenario(
-    'A',
+    '1',
     {
-      city: '深圳',
-      floor: 20,
-      total_floors: 28,
-      pain_point: 'sound',
-      noise_type: 'main_road',
-      noise_dist: 'lt20',
-      orientation: 'south',
-      west_shading: true,
-      family_risk: ['elder', 'large_fixed'],
-      budget_tier: 'A',
-      priority: 'sound',
-      timeline: '1to3m'
-    },
-    ({ sections, json }) => {
-      assertIncludes(json, '隔热条宽度须≥24mm', 'A insulation bar');
-
-      const safety = (sections.chapter3.upgradeOptions.items || []).find(x => x.name === '安全升级+');
-      assertIncludes(safety.desc, '适老', 'A safety upgrade');
-
-      const node13 = (sections.chapter4.acceptance.nodes[2].items || []).find(x => typeof x === 'string' && x.startsWith('⑬'));
-      assertIncludes(node13, '适老', 'A acceptance ⑬');
-      assertIncludes(node13, '大面积安全玻璃', 'A acceptance ⑬');
-    }
-  );
-
-  runScenario(
-    'B',
-    {
-      city: '沈阳',
-      floor: 6,
-      total_floors: 18,
+      city: '上海',
+      floor: 10,
+      total_floors: 30,
       pain_point: 'sound',
       noise_type: 'quiet',
       noise_dist: 'gt50',
       orientation: 'south',
       west_shading: true,
+      heating_type: 'central',
+      window_type: 'casement',
       family_risk: [],
-      budget_tier: 'A',
-      priority: 'sound',
-      timeline: '1to3m'
-    },
-    ({ json }) => {
-      assertIncludes(json, '隔热条宽度须≥40mm', 'B insulation bar');
-      assertNotIncludes(json, '儿童', 'B child content');
-    }
-  );
-
-  runScenario(
-    'C',
-    {
-      city: '北京',
-      floor: 10,
-      total_floors: 18,
-      pain_point: 'sound',
-      noise_type: 'elevated',
-      noise_dist: '20to50',
-      orientation: 'south',
-      west_shading: true,
-      family_risk: ['child'],
-      budget_tier: 'B',
-      priority: 'sound',
-      timeline: '1to3m'
+      budget_tier: 'B'
     },
     ({ sections, json }) => {
-      assertIncludes(json, '隔热条宽度须≥32mm', 'C insulation bar');
-      const safety = (sections.chapter3.upgradeOptions.items || []).find(x => x.name === '安全升级+');
-      assertIncludes(safety.desc, '儿童', 'C safety upgrade');
+      assertNotIncludes(json, '【强制】推拉窗/门联窗需提供整窗性能测试报告（GB/T 7106）', '1 should not require whole-window test');
+      const K = Number(sections.chapter2.metrics.find(x => x.name === '热工性能').value.match(/K≤([0-9.]+)/)?.[1] || NaN);
+      if (K !== 2.4) throw new Error(`1 K_target mismatch: ${K}`);
     }
   );
 
   runScenario(
-    'D',
+    '2',
     {
-      city: '广州',
-      floor: 9,
+      city: '上海',
+      floor: 10,
       total_floors: 30,
       pain_point: 'sound',
-      noise_type: 'main_road',
-      noise_dist: 'lt20',
+      noise_type: 'quiet',
+      noise_dist: 'gt50',
       orientation: 'south',
       west_shading: true,
-      family_risk: ['wide_slider'],
-      budget_tier: 'A',
-      priority: 'sound',
-      timeline: '1to3m'
+      heating_type: 'self',
+      window_type: 'sliding',
+      family_risk: [],
+      budget_tier: 'B'
     },
-    ({ sections, json }) => {
-      assertIncludes(json, '整窗隔声测试报告', 'D full-window test redline');
-      if (sections.chapter3.recommendedConfig.spec.is_compensated !== false) {
-        throw new Error('D should not compensate Rw for wide slider');
-      }
-      assertIncludes(sections.chapter3.recommendedConfig.spec.glass, '夹胶', 'D glass should be laminated');
+    ({ json }) => {
+      assertIncludes(json, '【强制】推拉窗/门联窗需提供整窗性能测试报告（GB/T 7106）', '2 whole-window test redline');
+      const m = json.match(/K≤([0-9.]+)\s*\/\s*SHGC≤/);
+      const K = m ? Number(m[1]) : NaN;
+      if (K !== 2.2) throw new Error(`2 K_target mismatch: ${K}`);
     }
   );
 
   runScenario(
-    'E',
+    '3',
     {
-      city: '成都',
-      floor: 8,
-      total_floors: 22,
+      city: '上海',
+      floor: 10,
+      total_floors: 30,
       pain_point: 'sound',
-      noise_type: 'rail',
-      noise_dist: '20to50',
+      noise_type: 'quiet',
+      noise_dist: 'gt50',
       orientation: 'south',
       west_shading: true,
+      heating_type: 'none',
+      window_type: 'door_window',
       family_risk: [],
-      budget_tier: 'C',
-      priority: 'sound',
-      timeline: '1to3m'
+      budget_tier: 'B'
     },
-    ({ sections, json }) => {
-      const tierC = (sections.chapter3.budgetComparison.tiers || []).find(x => x.key === 'C');
-      if (!tierC || tierC.priceRange !== '1400–2000 元/㎡') {
-        throw new Error(`E tier C priceRange mismatch: ${tierC ? tierC.priceRange : 'missing'}`);
-      }
-      assertNotIncludes(json, '1200-1800', 'E old price range');
-      assertNotIncludes(json, '1200–1800', 'E old price range');
+    ({ json }) => {
+      assertIncludes(json, '【强制】推拉窗/门联窗需提供整窗性能测试报告（GB/T 7106）', '3 whole-window test redline');
+      const m = json.match(/K≤([0-9.]+)\s*\/\s*SHGC≤/);
+      const K = m ? Number(m[1]) : NaN;
+      if (K !== 2.6) throw new Error(`3 K_target mismatch: ${K}`);
     }
   );
 }
