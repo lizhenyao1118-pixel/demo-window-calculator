@@ -250,6 +250,11 @@
   transition: all 0.2s;
 }
 
+.checkbox-item.unselected {
+  background: #fff;
+  border-color: #e0e0e0;
+}
+
 .checkbox-item.selected {
   border-color: #07c160;
   background: #f0fff4;
@@ -272,6 +277,11 @@
   background: #fff;
   border: 1px solid #e0e0e0;
   border-radius: 8px;
+}
+
+.risk-option.unselected {
+  background: #fff;
+  border-color: #e0e0e0;
 }
 
 .risk-option.selected {

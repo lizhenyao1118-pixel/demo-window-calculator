@@ -102,6 +102,12 @@ Page({
   },
 
   onLoad() {
+    this.setData({
+      'formData.painPoint': [],
+      'formData.family_risk': [],
+      family_risk: []
+    });
+
     // 记录开始时间（用于流失分析）
     this.startTime = Date.now();
     
@@ -181,27 +187,9 @@ Page({
     // 原有草稿恢复代码（放在初始化之后）
     const draft = wx.getStorageSync('survey_draft_v1');
     if (draft && (Date.now() - draft.timestamp) < 7 * 24 * 3600 * 1000) {
-      const familyRisk = Array.isArray(draft.data.family_risk) ? draft.data.family_risk : [];
-      const painPointRaw = draft.data && draft.data.painPoint;
-      const legacyPainPointMap = {
-        '隔音降噪': 'sound',
-        '保温节能': 'thermal',
-        '安全防盗': 'security',
-        '采光视野': 'view',
-        '省钱经济': 'economy',
-        sound: 'sound',
-        thermal: 'thermal',
-        security: 'security',
-        view: 'view',
-        economy: 'economy'
-      };
-      const painPoint = Array.isArray(painPointRaw)
-        ? painPointRaw
-        : (typeof painPointRaw === 'string' && painPointRaw ? [legacyPainPointMap[painPointRaw] || painPointRaw] : []);
       this.setData({
         'formData.city': draft.data.city || '',
         'formData.district': draft.data.district || '',
-        'formData.painPoint': painPoint,
         'formData.floor': draft.data.floor || null,
         'formData.totalFloors': draft.data.totalFloors || null,
         'formData.noise_type': draft.data.noise_type || '',
@@ -213,8 +201,6 @@ Page({
         'formData.heatingType': draft.data.heatingType || '',
         'formData.window_type': draft.data.window_type || '',
         'formData.budgetTier': draft.data.budgetTier || '',
-        'formData.family_risk': familyRisk,
-        family_risk: familyRisk,
         currentStep: draft.step || 0
       });
       
