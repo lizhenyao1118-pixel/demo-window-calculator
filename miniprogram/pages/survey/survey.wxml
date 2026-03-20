@@ -110,10 +110,14 @@
   <view class="step" wx:if="{{currentStep === 6}}">
     <view class="question-title">7. 家庭与窗型风险（可多选）</view>
     <checkbox-group bindchange="onFamilyRiskChange">
-      <label wx:for="{{familyRiskOptions}}" wx:key="value" style="display:block; margin: 10px 0;">
-        <checkbox value="{{item.value}}" checked="{{formData.family_risk && formData.family_risk.indexOf(item.value) !== -1}}" />
+      <label class="risk-option" wx:for="{{riskOptions}}" wx:key="value">
+        <checkbox 
+          value="{{item.value}}" 
+          checked="{{family_risk.includes(item.value)}}" 
+          color="#07c160" 
+        />
         <text>{{item.label}}</text>
-      </label>
+      </label> 
     </checkbox-group>
   </view>
 
@@ -127,31 +131,28 @@
     
     <!-- 已选档位提示 -->
     <view class="hint" wx:if="{{formData.budgetTier}}">已选择：{{formData.budgetTier}}档</view>
-    
-    <!-- 完整警告信息（含3条建议） -->
-    <view class="conflict-warning" wx:if="{{conflictWarning}}" style="line-height: 1.6;">
-      <view style="font-weight: bold; font-size: 16px; margin-bottom: 8px;">❌ 配置不兼容</view>
-      <view>28层 + A档预算无法达到抗风压标准（GB/T 7106要求≥3.5kPa）</view>
-      <view style="margin-top: 10px; font-size: 14px; border-top: 1px solid #ffccc7; padding-top: 8px;">
-        建议：
-        <view style="margin-left: 8px; margin-top: 4px;">① 升级至B档（推荐）</view>
-        <view style="margin-left: 8px; margin-top: 4px;">② 降至16层以下</view>
-        <view style="margin-left: 8px; margin-top: 4px; color: #999;">③ 强制生成风险版（不推荐）</view>
-      </view>
-    </view>
 
-    <!-- 双按钮：[上一题] 和 [强制生成风险版] -->
-    <view wx:if="{{conflictWarning}}" style="display: flex; gap: 10px; margin-top: 30px;">
-      <button class="btn-prev" bindtap="prevStep" style="flex: 1;">上一题</button>
-      <button class="btn-danger" bindtap="forceNextStep" style="flex: 2; background: #ff4d4f; color: white;">
-        [强制生成风险版]
-      </button>
-    </view>
-    
-    <!-- 无冲突时：正常下一题 -->
-    <button wx:if="{{!conflictWarning}}" class="btn-next" bindtap="nextStep" style="margin-top: 30px; width: 100%;">
-      下一题
-    </button>
+    <view wx:if="{{showConflictWarning}}" class="conflict-card"> 
+      <view class="conflict-header"> 
+        <icon type="warn" size="20" color="#fa5151"/> 
+        <text class="conflict-title">配置不兼容</text> 
+      </view> 
+      <text class="conflict-desc">{{conflictMessage}}</text> 
+      <text class="conflict-std">GB/T 7106要求≥3.5kPa</text> 
+      
+      <view class="suggestion-list"> 
+        <view class="suggestion-item" bindtap="upgradeToTierB"> 
+          <text>① 升级至B档（推荐）</text> 
+        </view> 
+        <view class="suggestion-item" bindtap="adjustFloor"> 
+          <text>② 修改楼层数据</text> 
+        </view> 
+      </view> 
+      
+      <button class="btn-risk" bindtap="forceRisk">强制生成风险版</button> 
+    </view> 
+   
+    <button wx:else class="btn-primary" bindtap="nextQuestion">下一题</button> 
   </view>
 
   <!-- Q9: 优先级 -->
