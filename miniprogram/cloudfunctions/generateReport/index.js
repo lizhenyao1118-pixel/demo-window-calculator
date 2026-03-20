@@ -13,6 +13,11 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 
 // 数据字段映射适配（前端数据 -> calculator-v2格式）
 function adaptAssessmentData(data) {
+  let { family_risk } = data || {};
+  if (!Array.isArray(family_risk)) {
+    family_risk = (typeof family_risk === 'string') ? (family_risk ? [family_risk] : []) : [];
+  }
+
   // 噪音类型映射
   const noiseMap = {
     '主干道': 'main_road',
@@ -83,7 +88,7 @@ function adaptAssessmentData(data) {
     orientation: (data.orientation || 'south').toLowerCase(),
     west_shading: data.westShading === true || data.westShading === '有遮挡',
     heating_type: heatingMap[data.heatingType] || 'none',
-    family_risk: Array.isArray(data.family_risk) ? data.family_risk : [],
+    family_risk: family_risk,
     budget_tier: (data.budgetTier || 'B').toUpperCase(),
     priority: priorityMap[data.priority] || 'sound',
     timeline: data.timeline || '1to3m', // lt1m/1to3m/flexible

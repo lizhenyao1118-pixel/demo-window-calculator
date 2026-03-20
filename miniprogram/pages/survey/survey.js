@@ -34,6 +34,7 @@ Page({
     currentStep: 0,
     totalSteps: 10,
     cityList: ['北京', '上海', '广州', '深圳', '成都', '武汉', '西安', '杭州', '南京', '沈阳'],
+    family_risk: [],
     formData: {
       city: '',
       district: '',
@@ -70,8 +71,11 @@ Page({
     heatingTypes: ['集中供暖', '自采暖', '无供暖'],
     budgetTiers: BUDGET_OPTIONS,
     familyRiskOptions: FAMILY_RISK_OPTIONS,
+    riskOptions: FAMILY_RISK_OPTIONS,
     showRatio: false,
-    conflictWarning: null,
+    showConflictWarning: false,
+    conflictType: '',
+    conflictMessage: '',
     forceContinue: false,
     hasSubmitted: false  // 新增：标记是否已提交
   },
@@ -99,6 +103,7 @@ Page({
       currentStep: 0,
       totalSteps: 10,
       hasSubmitted: false,  // 重置提交标记
+      family_risk: [],
       cityList: ['北京', '上海', '广州', '深圳', '成都', '武汉', '西安', '杭州', '南京', '沈阳'],
       formData: {
         city: '',
@@ -136,9 +141,12 @@ Page({
       heatingTypes: ['集中供暖', '自采暖', '无供暖'],
       budgetTiers: BUDGET_OPTIONS,
       familyRiskOptions: FAMILY_RISK_OPTIONS,
+      riskOptions: FAMILY_RISK_OPTIONS,
       showRatio: false,
       heightRatio: 0,
-      conflictWarning: null,
+      showConflictWarning: false,
+      conflictType: '',
+      conflictMessage: '',
       forceContinue: false
     });
     
@@ -164,6 +172,7 @@ Page({
         'formData.budgetTier': draft.data.budgetTier || '',
         'formData.priority': draft.data.priority || '',
         'formData.family_risk': familyRisk,
+        family_risk: familyRisk,
         currentStep: draft.step || 0
       });
       
@@ -219,6 +228,8 @@ Page({
     this.setData({ 
       'formData.floor': floor,
       showRatio: floor > 0 && total > 0
+    }, () => {
+      this.checkBudgetConflict();
     });
     this.saveDraft();
     
@@ -234,6 +245,8 @@ Page({
     this.setData({ 
       'formData.totalFloors': total,
       showRatio: floor > 0 && total > 0
+    }, () => {
+      this.checkBudgetConflict();
     });
     this.saveDraft();
     
@@ -312,7 +325,10 @@ Page({
   // Q7: 多选家庭风险
   onFamilyRiskChange(e) {
     const next = Array.isArray(e.detail.value) ? e.detail.value : [];
-    this.setData({ 'formData.family_risk': next });
+    this.setData({ 
+      family_risk: next,
+      'formData.family_risk': next
+    });
     this.saveDraft();
     trackStep(7, { family_risk: next });
   },
@@ -330,39 +346,79 @@ Page({
   onBudgetChange(e) {
     const index = e.detail.value;
     const budget = this.data.budgetTiers[index].value;
-    const { floor, totalFloors } = this.data.formData;
-    
-    let warning = null;
-    if (budget === 'A' && floor && totalFloors) {
-      const ratio = floor / totalFloors;
-      if (ratio > 0.5 || floor > 16) {
-        warning = '❌ 配置不兼容：' + floor + '层+A档预算无法达到GB/T 7106抗风压标准（≥3.5kPa）';
-      }
-    }
-    
     this.setData({ 
       'formData.budgetTier': budget,
-      conflictWarning: warning,
       forceContinue: false
     });
+    this.checkBudgetConflict();
     this.saveDraft();
     
     // 埋点：步骤完成（Q8）
-    trackStep(8, { budget_tier: budget, has_conflict: !!warning });
+    trackStep(8, { budget_tier: budget, has_conflict: !!this.data.showConflictWarning });
   },
 
-  // 强制进入Q9
-  forceNextStep() {
-    this.setData({ 
+  checkBudgetConflict() {
+    const { floor, totalFloors, budgetTier } = this.data.formData;
+    if (!floor || !totalFloors) return;
+
+    const f = parseInt(floor, 10);
+    const t = parseInt(totalFloors, 10);
+    if (!f || !t) return;
+    const ratio = f / t;
+
+    const isHighFloor = f >= 16;
+    const isHighRatio = ratio >= 0.8;
+
+    if (budgetTier === 'A' && (isHighFloor || isHighRatio)) {
+      this.setData({
+        showConflictWarning: true,
+        conflictType: isHighFloor ? 'high_floor' : 'high_ratio',
+        conflictMessage: isHighFloor
+          ? `您所在的${f}层属于高层建筑，A档预算难以满足抗风压≥3.5kPa标准`
+          : `您位于建筑顶部区域（${(ratio * 100).toFixed(0)}%），风荷载风险较高`
+      });
+    } else {
+      this.setData({ showConflictWarning: false, conflictType: '', conflictMessage: '' });
+    }
+  },
+
+  upgradeToTierB() {
+    this.setData({
+      'formData.budgetTier': 'B',
+      showConflictWarning: false,
+      conflictType: '',
+      conflictMessage: '',
+      forceContinue: false
+    });
+    this.saveDraft();
+  },
+
+  adjustFloor() {
+    this.setData({
+      currentStep: 1,
+      showConflictWarning: false,
+      conflictType: '',
+      conflictMessage: '',
+      forceContinue: false
+    });
+    this.saveDraft();
+  },
+
+  forceRisk() {
+    this.setData({
       forceContinue: true,
       currentStep: 8
     });
     this.saveDraft();
   },
 
+  nextQuestion() {
+    this.nextStep();
+  },
+
   // Q8 专用：软阻断检查
   nextStepWithCheck() {
-    if (this.data.currentStep === 7 && this.data.conflictWarning) {
+    if (this.data.currentStep === 7 && this.data.showConflictWarning) {
       wx.showModal({
         title: '⚠️ 配置不兼容',
         content: this.data.formData.floor + '层 + A档预算无法达到抗风压标准（GB/T 7106要求≥3.5kPa）\n\n建议：\n① 升级至B档（推荐）\n② 降至16层以下\n③ 强制生成风险版（不推荐）',
@@ -452,8 +508,8 @@ Page({
       has_photos: false, // 当前版本无照片
       city: this.data.formData.city,
       budget_tier: this.data.formData.budgetTier,
-      is_risk: !!(this.data.conflictWarning && this.data.forceContinue),
-      has_conflict: !!this.data.conflictWarning,
+      is_risk: !!(this.data.showConflictWarning && this.data.forceContinue),
+      has_conflict: !!this.data.showConflictWarning,
       floor: this.data.formData.floor,
       total_floors: this.data.formData.totalFloors
     });
@@ -465,7 +521,7 @@ Page({
         return;
       }
     }
-    if (this.data.conflictWarning && !this.data.forceContinue) {
+    if (this.data.showConflictWarning && !this.data.forceContinue) {
       wx.showModal({
         title: '⚠️ 配置冲突未解决',
         content: '您尚未处理预算与楼层的配置冲突，建议返回修改。仍要生成风险版？',
@@ -500,9 +556,10 @@ Page({
     });
 
     // 准备数据（脱敏+结构化）
-    const windowFeatures = this.buildWindowFeatures(this.data.formData.family_risk);
+    const windowFeatures = this.buildWindowFeatures(this.data.family_risk);
     const payload = {
       ...this.data.formData,
+      family_risk: this.data.family_risk || [],
       window_features: windowFeatures,
       isDisclaimer: isDisclaimer,
       timestamp: Date.now(),
