@@ -214,3 +214,71 @@
   align-items: center;
   gap: 6px;
 }
+
+.height-ratio-display {
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.ratio-value {
+  color: #07c160;
+  font-weight: 600;
+  margin: 0 4px;
+}
+
+.ratio-hint {
+  color: #fa5151;
+  font-size: 12px;
+}
+
+.checkbox-item {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  margin-bottom: 8px;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.checkbox-item.selected {
+  border-color: #07c160;
+  background: #f0fff4;
+}
+
+.checkbox-item checkbox {
+  margin-right: 8px;
+}
+
+.checkbox-text {
+  font-size: 15px;
+  color: #333;
+}
+
+.risk-option {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  margin-bottom: 8px;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+}
+
+.risk-option.selected {
+  border-color: #07c160;
+  background: #f0fff4;
+}
+
+.risk-option checkbox {
+  margin-right: 8px;
+}
+
+.option-text {
+  font-size: 15px;
+  color: #333;
+}

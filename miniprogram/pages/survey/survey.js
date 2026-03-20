@@ -38,7 +38,7 @@ Page({
     formData: {
       city: '',
       district: '',
-      painPoint: '',
+      painPoint: [],
       floor: null,
       totalFloors: null,
       noise_type: '',
@@ -53,7 +53,13 @@ Page({
       family_risk: [],
     },
     cityHint: null,
-    painPoints: ['隔音降噪', '保温节能', '安全防盗', '采光视野', '省钱经济'],
+    painPoints: [
+      { value: 'sound', label: '隔音降噪' },
+      { value: 'thermal', label: '保温节能' },
+      { value: 'security', label: '安全防盗' },
+      { value: 'view', label: '采光视野' },
+      { value: 'economy', label: '省钱经济' }
+    ],
     noiseTypeOptions: [
       { label: '主干道/马路', value: 'main_road' },
       { label: '高架桥', value: 'elevated' },
@@ -79,6 +85,7 @@ Page({
     familyRiskOptions: FAMILY_RISK_OPTIONS,
     riskOptions: FAMILY_RISK_OPTIONS,
     showRatio: false,
+    showHeightRatio: false,
     showConflictWarning: false,
     conflictType: '',
     conflictMessage: '',
@@ -114,7 +121,7 @@ Page({
       formData: {
         city: '',
         district: '',
-        painPoint: '',
+        painPoint: [],
         floor: null,
         totalFloors: null,
         noise_type: '',
@@ -129,7 +136,13 @@ Page({
         family_risk: [],
       },
       cityHint: null,
-      painPoints: ['隔音降噪', '保温节能', '安全防盗', '采光视野', '省钱经济'],
+      painPoints: [
+        { value: 'sound', label: '隔音降噪' },
+        { value: 'thermal', label: '保温节能' },
+        { value: 'security', label: '安全防盗' },
+        { value: 'view', label: '采光视野' },
+        { value: 'economy', label: '省钱经济' }
+      ],
       noiseTypeOptions: [
         { label: '主干道/马路', value: 'main_road' },
         { label: '高架桥', value: 'elevated' },
@@ -156,6 +169,7 @@ Page({
       riskOptions: FAMILY_RISK_OPTIONS,
       showRatio: false,
       heightRatio: 0,
+      showHeightRatio: false,
       showConflictWarning: false,
       conflictType: '',
       conflictMessage: '',
@@ -168,10 +182,26 @@ Page({
     const draft = wx.getStorageSync('survey_draft_v1');
     if (draft && (Date.now() - draft.timestamp) < 7 * 24 * 3600 * 1000) {
       const familyRisk = Array.isArray(draft.data.family_risk) ? draft.data.family_risk : [];
+      const painPointRaw = draft.data && draft.data.painPoint;
+      const legacyPainPointMap = {
+        '隔音降噪': 'sound',
+        '保温节能': 'thermal',
+        '安全防盗': 'security',
+        '采光视野': 'view',
+        '省钱经济': 'economy',
+        sound: 'sound',
+        thermal: 'thermal',
+        security: 'security',
+        view: 'view',
+        economy: 'economy'
+      };
+      const painPoint = Array.isArray(painPointRaw)
+        ? painPointRaw
+        : (typeof painPointRaw === 'string' && painPointRaw ? [legacyPainPointMap[painPointRaw] || painPointRaw] : []);
       this.setData({
         'formData.city': draft.data.city || '',
         'formData.district': draft.data.district || '',
-        'formData.painPoint': draft.data.painPoint || '',
+        'formData.painPoint': painPoint,
         'formData.floor': draft.data.floor || null,
         'formData.totalFloors': draft.data.totalFloors || null,
         'formData.noise_type': draft.data.noise_type || '',
@@ -193,7 +223,7 @@ Page({
       }
       if (draft.data.floor && draft.data.totalFloors) {
         const ratio = Math.round((draft.data.floor / draft.data.totalFloors) * 100);
-        this.setData({ showRatio: true, heightRatio: ratio });
+        this.setData({ showRatio: true, showHeightRatio: true, heightRatio: ratio });
       }
     }
   },
@@ -241,6 +271,7 @@ Page({
       'formData.floor': floor,
       showRatio: floor > 0 && total > 0
     }, () => {
+      this.calculateHeightRatio();
       this.checkBudgetConflict();
     });
     this.saveDraft();
@@ -258,6 +289,7 @@ Page({
       'formData.totalFloors': total,
       showRatio: floor > 0 && total > 0
     }, () => {
+      this.calculateHeightRatio();
       this.checkBudgetConflict();
     });
     this.saveDraft();
@@ -268,14 +300,24 @@ Page({
     }
   },
 
-  // Q3: 痛点
-  onPainPointSelect(e) {
-    const point = e.currentTarget.dataset.value;
-    this.setData({ 'formData.painPoint': point });
+  calculateHeightRatio() {
+    const { floor, totalFloors } = this.data.formData;
+    const f = parseInt(floor, 10);
+    const t = parseInt(totalFloors, 10);
+    if (f > 0 && t > 0) {
+      const ratio = Math.round((f / t) * 100);
+      this.setData({ heightRatio: ratio, showHeightRatio: true, showRatio: true });
+    } else {
+      this.setData({ showHeightRatio: false, showRatio: false });
+    }
+  },
+
+  // Q3: 困扰问题（多选）
+  onPainPointChange(e) {
+    const next = Array.isArray(e.detail.value) ? e.detail.value : [];
+    this.setData({ 'formData.painPoint': next });
     this.saveDraft();
-    
-    // 埋点：步骤完成（Q3）
-    trackStep(3, { pain_point: point });
+    trackStep(3, { pain_point: next });
   },
 
   // Q4: 噪音
@@ -360,6 +402,14 @@ Page({
       has_wide_slider: arr.includes('wide_slider'),
       has_family_safety: arr.some(v => v === 'child' || v === 'elder')
     };
+  },
+
+  getPrimaryPainPoint(painPointArray) {
+    const arr = Array.isArray(painPointArray) ? painPointArray : [];
+    const order = ['sound', 'thermal', 'security', 'view', 'economy'];
+    const key = order.find(x => arr.includes(x)) || arr[0] || 'sound';
+    const map = { sound: 'sound', thermal: 'heat', security: 'safety', view: 'view', economy: 'price' };
+    return map[key] || 'sound';
   },
 
   // Q9: 预算（冲突预警核心）
@@ -476,25 +526,53 @@ Page({
 
   validateCurrentStep() {
     const { currentStep, formData } = this.data;
-    if (currentStep === 0 && !formData.city) {
-      wx.showToast({ title: '请选择城市', icon: 'none' });
-      return false;
+    let isValid = true;
+    let message = '';
+
+    switch (currentStep) {
+      case 0:
+        if (!formData.city) { isValid = false; message = '请选择所在城市'; }
+        break;
+      case 1:
+        if (!formData.floor || !formData.totalFloors) {
+          isValid = false; message = '请完善楼层信息';
+        } else if (parseInt(formData.floor, 10) > parseInt(formData.totalFloors, 10)) {
+          isValid = false; message = '所在楼层不能大于总楼层';
+        }
+        break;
+      case 2:
+        if (!Array.isArray(formData.painPoint) || formData.painPoint.length === 0) {
+          isValid = false; message = '请至少选择一项困扰问题';
+        }
+        break;
+      case 3:
+        if (!formData.noise_type || !formData.noise_dist) {
+          isValid = false; message = '请完善噪声环境信息';
+        }
+        break;
+      case 4:
+        if (!formData.orientation) { isValid = false; message = '请选择房屋朝向'; }
+        break;
+      case 5:
+        if (!formData.heatingType) { isValid = false; message = '请选择供暖方式'; }
+        break;
+      case 6:
+        if (!formData.window_type) { isValid = false; message = '请选择窗型'; }
+        break;
+      case 7:
+        if (!Array.isArray(formData.family_risk) || formData.family_risk.length === 0) {
+          isValid = false; message = '请至少选择一项家庭风险特征';
+        }
+        break;
+      case 8:
+        if (!formData.budgetTier) { isValid = false; message = '请选择预算档位'; }
+        break;
     }
-    if (currentStep === 1 && formData.floor && formData.totalFloors) {
-      if (parseInt(formData.floor, 10) > parseInt(formData.totalFloors, 10)) {
-        wx.showToast({ title: '所在楼层不能高于总楼层数', icon: 'none' });
-        return false;
-      }
+
+    if (!isValid) {
+      wx.showToast({ title: message, icon: 'none', duration: 2000 });
     }
-    if (currentStep === 6 && !formData.window_type) {
-      wx.showToast({ title: '请选择窗型', icon: 'none' });
-      return false;
-    }
-    if (currentStep === 8 && !formData.budgetTier) {
-      wx.showToast({ title: '请选择预算档位', icon: 'none' });
-      return false;
-    }
-    return true;
+    return isValid;
   },
 
   // 提交入口（统一分发）
@@ -559,8 +637,10 @@ Page({
 
     // 准备数据（脱敏+结构化）
     const windowFeatures = this.buildWindowFeatures(this.data.family_risk);
+    const primaryPainPoint = this.getPrimaryPainPoint(this.data.formData.painPoint);
     const payload = {
       ...this.data.formData,
+      painPoint: primaryPainPoint,
       family_risk: this.data.family_risk || [],
       window_features: windowFeatures,
       isDisclaimer: isDisclaimer,

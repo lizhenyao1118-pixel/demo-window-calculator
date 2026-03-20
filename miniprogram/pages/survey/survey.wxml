@@ -44,21 +44,30 @@
       <text>总楼层：</text>
       <input type="number" class="input short" value="{{formData.totalFloors}}" bindinput="onTotalFloorsChange" />
     </view>
-    <view class="hint" wx:if="{{showRatio}}">高度比：{{heightRatio}}%</view>
+    <view wx:if="{{showHeightRatio}}" class="height-ratio-display">
+      <text class="ratio-label">当前位置占比：</text>
+      <text class="ratio-value">{{heightRatio}}%</text>
+      <text wx:if="{{heightRatio >= 80}}" class="ratio-hint">（顶楼区域）</text>
+    </view>
   </view>
 
   <!-- Q3: 痛点 -->
   <view class="step" wx:if="{{currentStep === 2}}">
-    <view class="question-title">3. 当前窗户最困扰您的问题？</view>
-    <view class="pain-points">
-      <view class="pain-point-item {{formData.painPoint === item ? 'selected' : ''}}" 
-            wx:for="{{painPoints}}" 
-            wx:key="*this"
-            data-value="{{item}}"
-            bindtap="onPainPointSelect">
-        {{item}}
-      </view>
-    </view>
+    <view class="question-title required">3. 当前窗户最困扰您的问题？（可多选）</view>
+    <checkbox-group bindchange="onPainPointChange">
+      <label
+        class="checkbox-item {{formData.painPoint.includes(item.value) ? 'selected' : ''}}"
+        wx:for="{{painPoints}}"
+        wx:key="value"
+      >
+        <checkbox
+          value="{{item.value}}"
+          checked="{{formData.painPoint.includes(item.value)}}"
+          color="#07c160"
+        />
+        <text class="checkbox-text">{{item.label}}</text>
+      </label>
+    </checkbox-group>
   </view>
 
   <!-- Q4: 噪音 -->
@@ -130,15 +139,19 @@
 
   <!-- Q8: 家庭风险 -->
   <view class="step" wx:if="{{currentStep === 7}}">
-    <view class="question-title">8. 家庭与窗型风险（可多选）</view>
+    <view class="question-title required">8. 家庭与窗型风险（可多选）</view>
     <checkbox-group bindchange="onFamilyRiskChange">
-      <label class="risk-option" wx:for="{{riskOptions}}" wx:key="value">
+      <label
+        class="risk-option {{formData.family_risk.includes(item.value) ? 'selected' : ''}}"
+        wx:for="{{riskOptions}}"
+        wx:key="value"
+      >
         <checkbox 
           value="{{item.value}}" 
-          checked="{{family_risk.includes(item.value)}}" 
+          checked="{{formData.family_risk.includes(item.value)}}" 
           color="#07c160" 
         />
-        <text>{{item.label}}</text>
+        <text class="option-text">{{item.label}}</text>
       </label> 
     </checkbox-group>
   </view>
