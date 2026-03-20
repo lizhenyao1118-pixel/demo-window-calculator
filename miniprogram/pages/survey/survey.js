@@ -314,10 +314,10 @@ Page({
 
   // Q3: 困扰问题（多选）
   onPainPointChange(e) {
-    const next = Array.isArray(e.detail.value) ? e.detail.value : [];
-    this.setData({ 'formData.painPoint': next });
+    const values = (e && e.detail && Array.isArray(e.detail.value)) ? e.detail.value : [];
+    this.setData({ 'formData.painPoint': values });
     this.saveDraft();
-    trackStep(3, { pain_point: next });
+    trackStep(3, { pain_point: values });
   },
 
   // Q4: 噪音
@@ -386,13 +386,13 @@ Page({
 
   // Q8: 多选家庭风险
   onFamilyRiskChange(e) {
-    const next = Array.isArray(e.detail.value) ? e.detail.value : [];
+    const values = (e && e.detail && Array.isArray(e.detail.value)) ? e.detail.value : [];
     this.setData({ 
-      family_risk: next,
-      'formData.family_risk': next
+      family_risk: values,
+      'formData.family_risk': values
     });
     this.saveDraft();
-    trackStep(8, { family_risk: next });
+    trackStep(8, { family_risk: values });
   },
 
   buildWindowFeatures(familyRiskArray) {
@@ -577,6 +577,8 @@ Page({
 
   // 提交入口（统一分发）
   submit() {
+    if (!this.validateCurrentStep()) return;
+
     // 标记已提交（防止onUnload记录流失）
     this.setData({ hasSubmitted: true });
     
@@ -623,6 +625,16 @@ Page({
 
   // 统一调用云函数
   callGenerateReport(isDisclaimer) {
+    const { formData } = this.data;
+    if (!formData || !formData.budgetTier) {
+      wx.showToast({ title: '请选择预算档位（Q9）', icon: 'none' });
+      return;
+    }
+    if (!Array.isArray(formData.family_risk) || formData.family_risk.length === 0) {
+      wx.showToast({ title: '请选择家庭风险特征（Q8）', icon: 'none' });
+      return;
+    }
+
     wx.showLoading({ 
       title: isDisclaimer ? '生成风险版文件...' : '生成招标文件...',
       mask: true

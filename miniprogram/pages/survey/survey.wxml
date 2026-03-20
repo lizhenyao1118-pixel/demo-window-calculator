@@ -55,18 +55,19 @@
   <view class="step" wx:if="{{currentStep === 2}}">
     <view class="question-title required">3. 当前窗户最困扰您的问题？（可多选）</view>
     <checkbox-group bindchange="onPainPointChange">
-      <label
-        class="checkbox-item {{formData.painPoint.includes(item.value) ? 'selected' : ''}}"
+      <view
+        class="checkbox-item {{formData.painPoint.indexOf(item.value) !== -1 ? 'selected' : ''}}"
         wx:for="{{painPoints}}"
+        wx:for-item="item"
         wx:key="value"
       >
         <checkbox
           value="{{item.value}}"
-          checked="{{formData.painPoint.includes(item.value)}}"
+          checked="{{formData.painPoint.indexOf(item.value) !== -1}}"
           color="#07c160"
         />
         <text class="checkbox-text">{{item.label}}</text>
-      </label>
+      </view>
     </checkbox-group>
   </view>
 
@@ -141,18 +142,19 @@
   <view class="step" wx:if="{{currentStep === 7}}">
     <view class="question-title required">8. 家庭与窗型风险（可多选）</view>
     <checkbox-group bindchange="onFamilyRiskChange">
-      <label
-        class="risk-option {{formData.family_risk.includes(item.value) ? 'selected' : ''}}"
+      <view
+        class="risk-option {{formData.family_risk.indexOf(item.value) !== -1 ? 'selected' : ''}}"
         wx:for="{{riskOptions}}"
+        wx:for-item="item"
         wx:key="value"
       >
         <checkbox 
           value="{{item.value}}" 
-          checked="{{formData.family_risk.includes(item.value)}}" 
+          checked="{{formData.family_risk.indexOf(item.value) !== -1}}" 
           color="#07c160" 
         />
         <text class="option-text">{{item.label}}</text>
-      </label> 
+      </view> 
     </checkbox-group>
   </view>
 
@@ -187,7 +189,12 @@
       <button class="btn-risk" bindtap="forceRisk">强制生成风险版</button> 
     </view> 
    
-    <button wx:else class="btn-primary" bindtap="submit">生成招标文件</button> 
+    <button
+      wx:else
+      class="btn-primary {{!formData.budgetTier ? 'disabled' : ''}}"
+      bindtap="submit"
+      disabled="{{!formData.budgetTier}}"
+    >生成招标文件</button>
   </view>
 
   <!-- 通用导航（Q9 除外，Q9 在内部有自己的按钮组） -->

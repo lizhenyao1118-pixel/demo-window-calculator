@@ -177,6 +177,11 @@
   width: 100%;
 }
 
+.btn-primary.disabled {
+  background: #ccc !important;
+  color: #fff !important;
+}
+
 .conflict-card { background:#fff5f5; border:2rpx solid #ffcece; border-radius:16rpx; padding:32rpx; margin-top:32rpx; }
 .conflict-header { display:flex; align-items:center; margin-bottom:16rpx; }
 .conflict-title { color:#fa5151; font-size:32rpx; font-weight:600; margin-left:12rpx; }
