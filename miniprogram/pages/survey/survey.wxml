@@ -106,9 +106,31 @@
     </view>
   </view>
 
-  <!-- Q7: 家庭风险 -->
-  <view class="step" wx:if="{{currentStep === 6}}">
-    <view class="question-title">7. 家庭与窗型风险（可多选）</view>
+  <!-- Q7: 窗型（新增） --> 
+  <view class="step" wx:if="{{currentStep === 6}}"> 
+    <view class="question-title required">7. 窗型类型?</view> 
+    <view class="options-list"> 
+      <view 
+        class="option {{formData.window_type === item.value ? 'selected' : ''}}" 
+        wx:for="{{windowTypes}}" 
+        wx:key="value" 
+        bindtap="selectWindowType" 
+        data-value="{{item.value}}" 
+      > 
+        <text>{{item.label}}</text> 
+        <icon wx:if="{{formData.window_type === item.value}}" type="success" size="20" color="#07c160"/> 
+      </view> 
+    </view> 
+    
+    <view wx:if="{{formData.window_type === 'sliding' || formData.window_type === 'door_window'}}" class="warning-hint"> 
+      <icon type="warn" size="16" color="#fa5151"/> 
+      <text>推拉窗/门联窗需提供整窗测试报告（GB/T 7106）</text> 
+    </view> 
+  </view>
+
+  <!-- Q8: 家庭风险 -->
+  <view class="step" wx:if="{{currentStep === 7}}">
+    <view class="question-title">8. 家庭与窗型风险（可多选）</view>
     <checkbox-group bindchange="onFamilyRiskChange">
       <label class="risk-option" wx:for="{{riskOptions}}" wx:key="value">
         <checkbox 
@@ -121,9 +143,9 @@
     </checkbox-group>
   </view>
 
-  <!-- Q8: 预算与冲突警告 -->
-  <view class="step" wx:if="{{currentStep === 7}}">
-    <view class="question-title">8. 预算档位？</view>
+  <!-- Q9: 预算与冲突警告 -->
+  <view class="step" wx:if="{{currentStep === 8}}">
+    <view class="question-title">9. 预算档位？</view>
     
     <picker mode="selector" range="{{budgetTiers}}" range-key="label" bindchange="onBudgetChange">
       <view class="picker">{{formData.budgetTier ? formData.budgetTier + '档已选择' : '请选择预算'}}</view>
@@ -152,27 +174,11 @@
       <button class="btn-risk" bindtap="forceRisk">强制生成风险版</button> 
     </view> 
    
-    <button wx:else class="btn-primary" bindtap="nextQuestion">下一题</button> 
+    <button wx:else class="btn-primary" bindtap="submit">生成招标文件</button> 
   </view>
 
-  <!-- Q9: 优先级 -->
-  <view class="step" wx:if="{{currentStep === 8}}">
-    <view class="question-title">9. 最优先考虑？</view>
-    <picker mode="selector" range="{{['隔音降噪', '保温节能', '采光视野', '控制预算']}}" bindchange="onPriorityChange">
-      <view class="picker">{{formData.priority || '请选择优先项'}}</view>
-    </picker>
-  </view>
-
-  <!-- Q10: 工期 -->
-  <view class="step" wx:if="{{currentStep === 9}}">
-    <view class="question-title">10. 计划工期？</view>
-    <picker mode="selector" range="{{['1个月内', '1-3个月', '3个月以上', '不着急']}}" bindchange="onTimelineChange">
-      <view class="picker">{{formData.timeline || '请选择工期'}}</view>
-    </picker>
-  </view>
-
-  <!-- 通用导航（Q8 除外，Q8 在内部有自己的按钮组） -->
-  <view class="nav-buttons" wx:if="{{currentStep !== 7}}">
+  <!-- 通用导航（Q9 除外，Q9 在内部有自己的按钮组） -->
+  <view class="nav-buttons" wx:if="{{currentStep !== 8}}">
     <button class="btn-prev" bindtap="prevStep" wx:if="{{currentStep > 0}}">上一题</button>
     <button class="btn-next" bindtap="nextStep" wx:if="{{currentStep < totalSteps-1}}">下一题</button>
     <button class="btn-submit" bindtap="submit" wx:if="{{currentStep === totalSteps-1}}">生成招标文件</button>

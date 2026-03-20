@@ -16,10 +16,9 @@ async function main() {
     orientation: 'west',
     west_shading: false,
     heating_type: 'central',
+    window_type: 'sliding',
     family_risk: ['child', 'wide_slider'],
-    budget_tier: 'A',
-    priority: 'sound',
-    timeline: '1to3m'
+    budget_tier: 'A'
   };
 
   const resolved0 = calculateAll(assessment);
@@ -42,10 +41,9 @@ async function main() {
     orientation: assessment.orientation,
     west_shading: assessment.west_shading,
     heating_type: assessment.heating_type,
+    window_type: assessment.window_type,
     family_risk: assessment.family_risk,
     budget_tier: assessment.budget_tier,
-    priority: assessment.priority,
-    timeline: assessment.timeline,
     photos: []
   };
 

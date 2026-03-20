@@ -32,7 +32,7 @@ const FAMILY_RISK_OPTIONS = [
 Page({
   data: {
     currentStep: 0,
-    totalSteps: 10,
+    totalSteps: 9,
     cityList: ['北京', '上海', '广州', '深圳', '成都', '武汉', '西安', '杭州', '南京', '沈阳'],
     family_risk: [],
     formData: {
@@ -48,10 +48,9 @@ Page({
       orientation: '',
       westShading: false,
       heatingType: '',
+      window_type: '',
       budgetTier: '',
-      priority: '',
       family_risk: [],
-      timeline: ''
     },
     cityHint: null,
     painPoints: ['隔音降噪', '保温节能', '安全防盗', '采光视野', '省钱经济'],
@@ -69,6 +68,13 @@ Page({
     ],
     orientations: ['东', '南', '西', '北', '东南', '西南', '东北', '西北'],
     heatingTypes: ['集中供暖', '自采暖', '无供暖'],
+    windowTypes: [
+      { value: 'casement', label: '平开窗' },
+      { value: 'sliding', label: '推拉窗/门' },
+      { value: 'fixed', label: '固定窗' },
+      { value: 'tilt_turn', label: '内开内倒' },
+      { value: 'door_window', label: '门联窗' }
+    ],
     budgetTiers: BUDGET_OPTIONS,
     familyRiskOptions: FAMILY_RISK_OPTIONS,
     riskOptions: FAMILY_RISK_OPTIONS,
@@ -101,7 +107,7 @@ Page({
     // 强制初始化关键数据（防止被意外覆盖）
     this.setData({
       currentStep: 0,
-      totalSteps: 10,
+      totalSteps: 9,
       hasSubmitted: false,  // 重置提交标记
       family_risk: [],
       cityList: ['北京', '上海', '广州', '深圳', '成都', '武汉', '西安', '杭州', '南京', '沈阳'],
@@ -118,10 +124,9 @@ Page({
         orientation: '',
         westShading: false,
         heatingType: '',
+        window_type: '',
         budgetTier: '',
-        priority: '',
         family_risk: [],
-        timeline: ''
       },
       cityHint: null,
       painPoints: ['隔音降噪', '保温节能', '安全防盗', '采光视野', '省钱经济'],
@@ -139,6 +144,13 @@ Page({
       ],
       orientations: ['东', '南', '西', '北', '东南', '西南', '东北', '西北'],
       heatingTypes: ['集中供暖', '自采暖', '无供暖'],
+      windowTypes: [
+        { value: 'casement', label: '平开窗' },
+        { value: 'sliding', label: '推拉窗/门' },
+        { value: 'fixed', label: '固定窗' },
+        { value: 'tilt_turn', label: '内开内倒' },
+        { value: 'door_window', label: '门联窗' }
+      ],
       budgetTiers: BUDGET_OPTIONS,
       familyRiskOptions: FAMILY_RISK_OPTIONS,
       riskOptions: FAMILY_RISK_OPTIONS,
@@ -169,8 +181,8 @@ Page({
         'formData.orientation': draft.data.orientation || '',
         'formData.westShading': draft.data.westShading || false,
         'formData.heatingType': draft.data.heatingType || '',
+        'formData.window_type': draft.data.window_type || '',
         'formData.budgetTier': draft.data.budgetTier || '',
-        'formData.priority': draft.data.priority || '',
         'formData.family_risk': familyRisk,
         family_risk: familyRisk,
         currentStep: draft.step || 0
@@ -322,7 +334,15 @@ Page({
     trackStep(6, { heating_type: heating });
   },
 
-  // Q7: 多选家庭风险
+  // Q7: 窗型类型
+  selectWindowType(e) {
+    const value = e.currentTarget.dataset.value;
+    this.setData({ 'formData.window_type': value });
+    this.saveDraft();
+    trackStep(7, { window_type: value });
+  },
+
+  // Q8: 多选家庭风险
   onFamilyRiskChange(e) {
     const next = Array.isArray(e.detail.value) ? e.detail.value : [];
     this.setData({ 
@@ -330,7 +350,7 @@ Page({
       'formData.family_risk': next
     });
     this.saveDraft();
-    trackStep(7, { family_risk: next });
+    trackStep(8, { family_risk: next });
   },
 
   buildWindowFeatures(familyRiskArray) {
@@ -342,7 +362,7 @@ Page({
     };
   },
 
-  // Q8: 预算（冲突预警核心）
+  // Q9: 预算（冲突预警核心）
   onBudgetChange(e) {
     const index = e.detail.value;
     const budget = this.data.budgetTiers[index].value;
@@ -353,8 +373,8 @@ Page({
     this.checkBudgetConflict();
     this.saveDraft();
     
-    // 埋点：步骤完成（Q8）
-    trackStep(8, { budget_tier: budget, has_conflict: !!this.data.showConflictWarning });
+    // 埋点：步骤完成（Q9）
+    trackStep(9, { budget_tier: budget, has_conflict: !!this.data.showConflictWarning });
   },
 
   checkBudgetConflict() {
@@ -406,19 +426,19 @@ Page({
 
   forceRisk() {
     this.setData({
-      forceContinue: true,
-      currentStep: 8
+      forceContinue: true
     });
     this.saveDraft();
+    this.submit();
   },
 
   nextQuestion() {
     this.nextStep();
   },
 
-  // Q8 专用：软阻断检查
+  // Q9 专用：软阻断检查
   nextStepWithCheck() {
-    if (this.data.currentStep === 7 && this.data.showConflictWarning) {
+    if (this.data.currentStep === 8 && this.data.showConflictWarning) {
       wx.showModal({
         title: '⚠️ 配置不兼容',
         content: this.data.formData.floor + '层 + A档预算无法达到抗风压标准（GB/T 7106要求≥3.5kPa）\n\n建议：\n① 升级至B档（推荐）\n② 降至16层以下\n③ 强制生成风险版（不推荐）',
@@ -429,38 +449,16 @@ Page({
         success: (res) => {
           if (res.confirm) {
             this.setData({ 
-              forceContinue: true,
-              currentStep: 8
+              forceContinue: true
             });
             this.saveDraft();
+            this.submit();
           }
         }
       });
     } else {
       this.nextStep();
     }
-  },
-
-  // Q9: 优先项
-  onPriorityChange(e) {
-    const priorities = ['隔音降噪', '保温节能', '采光视野', '控制预算'];
-    const priority = priorities[e.detail.value];
-    this.setData({ 'formData.priority': priority });
-    this.saveDraft();
-    
-    // 埋点：步骤完成（Q9）
-    trackStep(9, { priority: priority });
-  },
-
-  // Q10: 工期
-  onTimelineChange(e) {
-    const timelines = ['1个月内', '1-3个月', '3个月以上', '不着急'];
-    const timeline = timelines[e.detail.value];
-    this.setData({ 'formData.timeline': timeline });
-    this.saveDraft();
-    
-    // 埋点：步骤完成（Q10）
-    trackStep(10, { timeline: timeline });
   },
 
   // 通用导航
@@ -488,7 +486,11 @@ Page({
         return false;
       }
     }
-    if (currentStep === 7 && !formData.budgetTier) {
+    if (currentStep === 6 && !formData.window_type) {
+      wx.showToast({ title: '请选择窗型', icon: 'none' });
+      return false;
+    }
+    if (currentStep === 8 && !formData.budgetTier) {
       wx.showToast({ title: '请选择预算档位', icon: 'none' });
       return false;
     }

@@ -40,6 +40,16 @@ function calcRw({ noise_type, noise_dist, pain_point }) {
   return Math.min(Math.max(rw, 28), 45);
 }
 
+function adjustKTargetByHeating(baseK, heatingType) {
+  if (heatingType === 'self') {
+    return Math.max(0.8, parseFloat((baseK - 0.2).toFixed(1)));
+  }
+  if (heatingType === 'none') {
+    return parseFloat((baseK + 0.2).toFixed(1));
+  }
+  return baseK;
+}
+
 // FIX P0-3: SHGC西晒扣减
 function calcThermal(city, orientation, west_shading) {
   const config = CITY_MAP[city] || { climate: "hot_summer" };
@@ -66,12 +76,12 @@ function getCityConfig(city) {
 
 // FIX P0-4: 冲突消解（新增safety_budget_conflict）
 function resolveConflicts(computed, answers) {
-  const { budget_tier, priority, family_risk, floor, total_floors } = answers;
+  const { budget_tier, pain_point, family_risk, floor, total_floors } = answers;
   const risk_flags = {};
   const notes = [];
   const ratio = floor / Math.max(total_floors, 1);
 
-  if (priority === "view" && ratio > 0.6 && budget_tier === "A") {
+  if (pain_point === "view" && ratio > 0.6 && budget_tier === "A") {
     risk_flags.budget_conflict = true;
     notes.push("预算与楼层视野需求存在冲突");
   }
@@ -107,18 +117,19 @@ const { BUDGET_SPEC } = require('./shared/budgetSpec.js');
 
 // 主计算入口
 function calculateAll(assessment) {
-  const { city, floor, total_floors, noise_type, noise_dist, orientation, west_shading, priority, pain_point, family_risk, budget_tier, timeline } = assessment;
+  const { city, floor, total_floors, noise_type, noise_dist, orientation, west_shading, pain_point, heating_type, family_risk, budget_tier } = assessment;
   
   const cityConfig = getCityConfig(city);
   const p3Result = calcP3(city, floor, total_floors);
   const thermalResult = calcThermal(city, orientation, west_shading);
+  const finalK = adjustKTargetByHeating(thermalResult.K, heating_type);
   
   const computed = {
     city, climate_zone: cityConfig.climate, wind_zone: cityConfig.wind_zone,
     floor, total_floors, height_ratio: floor / Math.max(total_floors, 1),
-    P3: p3Result.value, Rw: calcRw({ noise_type, noise_dist, pain_point: pain_point || priority }),
-    K: thermalResult.K, SHGC: thermalResult.SHGC,
-    priority, budget_tier, degraded: cityConfig.degraded,
+    P3: p3Result.value, Rw: calcRw({ noise_type, noise_dist, pain_point }),
+    K: finalK, SHGC: thermalResult.SHGC,
+    budget_tier, degraded: cityConfig.degraded,
     degraded_msg: cityConfig.degraded_msg,
     shgc_note: thermalResult.shgc_note
   };
@@ -127,9 +138,6 @@ function calculateAll(assessment) {
   resolved.safety_items = buildSafetyRedLine(family_risk);
   resolved.hasSafetyClause = Array.isArray(family_risk) && (family_risk.includes('child') || family_risk.includes('elder'));
   resolved.budget_spec = BUDGET_SPEC[budget_tier] || BUDGET_SPEC["B"];
-  
-  const timelineMap = { lt1m: "7个工作日", "1to3m": "15个工作日", flexible: "30个工作日" };
-  resolved.deadline_text = timelineMap[timeline] || "15个工作日";
   
   return resolved;
 }

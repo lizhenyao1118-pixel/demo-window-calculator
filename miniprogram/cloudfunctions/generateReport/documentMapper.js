@@ -207,15 +207,6 @@ function getFamilyDesc(familyRisk) {
   return hasSafety ? `${base}（含安全专项条款）` : base;
 }
 
-function getDeadlineText(timeline) {
-  const map = {
-    lt1m: '请于7个工作日内',
-    '1to3m': '请于14个工作日内',
-    flexible: '请于30个工作日内'
-  };
-  return map[timeline] || '请于14个工作日内';
-}
-
 function getAcceptanceNodes(climateZone) {
   return [ACCEPTANCE_NODES.entry, ACCEPTANCE_NODES.installation, ACCEPTANCE_NODES.final];
 }
@@ -233,7 +224,7 @@ function buildChapter3ConflictAlert(budgetSpec, resolved) {
 }
 
 function buildChapter4Data(answers, budgetSpec, resolved, riskTrigger, isRisk) {
-  const deadline = getDeadlineText(answers.timeline);
+  const deadline = '请于14个工作日内';
   const family_risk = Array.isArray(answers.family_risk) ? answers.family_risk : [];
 
   return {
@@ -329,7 +320,7 @@ function buildBudgetSpecView(resolved, answers) {
     Number(getField(resolved, 'SHGC')),
     window_features,
     tier,
-    answers.priority
+    answers.pain_point
   );
 
   const config_table = {
@@ -371,12 +362,8 @@ function getForbiddenItems(budget_tier, K_target, window_features, Rw_required) 
     `断桥铝隔热条宽度须≥${bar.min_mm}mm（${bar.process}），禁止使用宽度不足的仿断桥产品` + (bar.note ? `（依据：本项目K≤${K_target}W/m²·K${bar.note}）` : '')
   ];
 
-  if (window_features && window_features.has_wide_slider) {
-    base.push(
-      '推拉门产品须提供整窗隔声测试报告（GB/T 8485 整窗实测），' +
-      `整窗Rw实测值须≥${Rw_required}dB，不得以玻璃检测报告替代`
-    );
-    base.push('推拉门须采用毛条+胶条复合密封，搭接处连续无断点，竣工时须配合烟雾测试');
+  if (window_features && window_features.needs_whole_window_test) {
+    base.push('【强制】推拉窗/门联窗需提供整窗性能测试报告（GB/T 7106）');
   }
 
   const TIER_WALL = {
@@ -562,7 +549,7 @@ function buildAnalysisParagraph(answers, resolved) {
       Number(getField(resolved, 'SHGC')),
       window_features,
       tier,
-      answers.priority
+      answers.pain_point
     );
     const glass_summary = glass && glass.glass_name ? glass.glass_name : '更高等级隔声玻璃配置';
     text += `\n要实现这一目标，通常需要采用${glass_summary}，对配置会有${costLevel}程度的额外成本。`;
@@ -590,7 +577,7 @@ function mapToSections(resolved, answers, pdfNo) {
   assertResolved(resolved);
 
   try {
-    const painPoint = answers.pain_point || answers.priority;
+    const painPoint = answers.pain_point;
     const currentRw = Number(getField(resolved, 'Rw'));
     const rw = getRwRequired(answers.noise_type, answers.noise_dist, painPoint, answers.floor);
     if (Number.isFinite(rw) && (!Number.isFinite(currentRw) || rw > currentRw)) {
@@ -609,6 +596,7 @@ function mapToSections(resolved, answers, pdfNo) {
   const window_features = {
     has_large_fixed: familyRisk.includes('large_fixed'),
     has_wide_slider: familyRisk.includes('wide_slider'),
+    needs_whole_window_test: ['sliding', 'door_window'].includes(answers.window_type),
     has_family_safety: familyRisk.includes('child') || familyRisk.includes('elder')
   };
   const safety = getSafetyItems(answers.family_risk, answers.budget_tier);

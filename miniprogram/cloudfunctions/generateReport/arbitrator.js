@@ -1,7 +1,7 @@
 // arbitrator.js — V3 统一玻璃仲裁器（解决双轨制冲突）
 const { GLASS_LEVELS, BUDGET_SPEC, getNextTier } = require('./shared/budgetSpec.js');
 
-function resolveGlassConfig(Rw_req, K_req, SHGC_req, window_features, budget_tier, priority) {
+function resolveGlassConfig(Rw_req, K_req, SHGC_req, window_features, budget_tier, pain_point) {
   const maxAvailableLevel = Math.max(...Object.keys(GLASS_LEVELS).map(k => GLASS_LEVELS[k].level));
 
   const byLevelAsc = Object.keys(GLASS_LEVELS)
@@ -39,7 +39,7 @@ function resolveGlassConfig(Rw_req, K_req, SHGC_req, window_features, budget_tie
     const next_tier = getNextTier(budget_tier);
     conflict = {
       type: 'glass_upgrade',
-      severity: priority === 'sound' ? 'error' : 'warning',
+      severity: pain_point === 'sound' ? 'error' : 'warning',
       message: `${budget_spec.label}内最高可实现 Rw≤${budget_spec.glass_rw_max}dB，您的环境需要更高配置。${next_tier ? `建议升级至${BUDGET_SPEC[next_tier].label}。` : ''}`
     };
   }
