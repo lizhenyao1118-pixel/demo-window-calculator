@@ -103,29 +103,44 @@ Page({
     console.log('cityList:', this.data.cityList);
   },
 
-  onLoad() {
-    this.setData({
-      'formData.painPoint': [],
-      'formData.family_risk': [],
-      family_risk: [],
-      painPointSelectedMap: {},
-      familyRiskSelectedMap: {}
-    });
-
-    // 记录开始时间（用于流失分析）
+  onLoad(options) {
     this.startTime = Date.now();
-    
-    // ===== 埋点：页面进入 =====
     track('survey_enter', { 
       has_draft: !!wx.getStorageSync('survey_draft_v1'),
       timestamp: this.startTime
     });
 
-    // 强制初始化关键数据（防止被意外覆盖）
+    this.initSurvey();
+
+    const draft = wx.getStorageSync('survey_draft_v1');
+    if (draft && draft.data && (Date.now() - draft.timestamp) < 7 * 24 * 3600 * 1000) {
+      wx.showModal({
+        title: '发现未完成测评',
+        content: '是否继续上次进度？',
+        confirmText: '继续',
+        cancelText: '重新开始',
+        success: (res) => {
+          if (res.confirm) {
+            this.restoreDraft(draft);
+          } else {
+            this.restartSurvey();
+          }
+        }
+      });
+      return;
+    }
+  },
+
+  restartSurvey() {
+    wx.removeStorageSync('survey_draft_v1');
+    this.initSurvey();
+  },
+
+  initSurvey() {
     this.setData({
       currentStep: 0,
       totalSteps: 9,
-      hasSubmitted: false,  // 重置提交标记
+      hasSubmitted: false,
       family_risk: [],
       cityList: ['北京', '上海', '广州', '深圳', '成都', '武汉', '西安', '杭州', '南京', '沈阳'],
       formData: {
@@ -154,6 +169,7 @@ Page({
         { value: 'economy', label: '省钱经济' }
       ],
       painPointSelectedMap: {},
+      familyRiskSelectedMap: {},
       noiseTypeOptions: [
         { label: '主干道/马路', value: 'main_road' },
         { label: '高架桥', value: 'elevated' },
@@ -178,7 +194,6 @@ Page({
       budgetTiers: BUDGET_OPTIONS,
       familyRiskOptions: FAMILY_RISK_OPTIONS,
       riskOptions: FAMILY_RISK_OPTIONS,
-      familyRiskSelectedMap: {},
       showRatio: false,
       heightRatio: 0,
       showHeightRatio: false,
@@ -187,37 +202,45 @@ Page({
       conflictMessage: '',
       forceContinue: false
     });
-    
-    console.log('[Survey] 数据初始化完成，cityList:', this.data.cityList);
-    
-    // 原有草稿恢复代码（放在初始化之后）
-    const draft = wx.getStorageSync('survey_draft_v1');
-    if (draft && (Date.now() - draft.timestamp) < 7 * 24 * 3600 * 1000) {
-      this.setData({
-        'formData.city': draft.data.city || '',
-        'formData.district': draft.data.district || '',
-        'formData.floor': draft.data.floor || null,
-        'formData.totalFloors': draft.data.totalFloors || null,
-        'formData.noise_type': draft.data.noise_type || '',
-        'formData.noise_dist': draft.data.noise_dist || '',
-        'formData.noise_type_label': draft.data.noise_type_label || '',
-        'formData.noise_dist_label': draft.data.noise_dist_label || '',
-        'formData.orientation': draft.data.orientation || '',
-        'formData.westShading': draft.data.westShading || false,
-        'formData.heatingType': draft.data.heatingType || '',
-        'formData.window_type': draft.data.window_type || '',
-        'formData.budgetTier': draft.data.budgetTier || '',
-        currentStep: draft.step || 0
-      });
-      
-      if (draft.data.city) {
-        this.setCityHint(draft.data.city);
-      }
-      if (draft.data.floor && draft.data.totalFloors) {
-        const ratio = Math.round((draft.data.floor / draft.data.totalFloors) * 100);
-        this.setData({ showRatio: true, showHeightRatio: true, heightRatio: ratio });
-      }
-    }
+  },
+
+  restoreDraft(draft) {
+    const raw = draft && draft.data ? draft.data : {};
+    const familyRisk = Array.isArray(raw.family_risk) ? raw.family_risk : [];
+    const painPoint = Array.isArray(raw.painPoint) ? raw.painPoint : [];
+
+    this.setData({
+      formData: {
+        ...this.data.formData,
+        ...raw,
+        painPoint: painPoint,
+        family_risk: familyRisk
+      },
+      family_risk: familyRisk,
+      currentStep: Number.isFinite(draft.step) ? draft.step : (draft.step || 0)
+    }, () => {
+      if (raw.city) this.setCityHint(raw.city);
+      this.updateSelectedMaps();
+      this.calculateHeightRatio();
+      this.checkBudgetConflict();
+    });
+  },
+
+  updateSelectedMaps() {
+    const formData = this.data.formData || {};
+    const painPoint = Array.isArray(formData.painPoint) ? formData.painPoint : [];
+    const family_risk = Array.isArray(formData.family_risk) ? formData.family_risk : [];
+
+    const painPointMap = {};
+    painPoint.forEach((v) => { painPointMap[v] = true; });
+
+    const familyRiskMap = {};
+    family_risk.forEach((v) => { familyRiskMap[v] = true; });
+
+    this.setData({
+      painPointSelectedMap: painPointMap,
+      familyRiskSelectedMap: familyRiskMap
+    });
   },
 
   // 页面卸载时记录流失（如果未提交）
@@ -628,7 +651,15 @@ Page({
       return;
     }
     if (!Array.isArray(formData.family_risk) || formData.family_risk.length === 0) {
-      wx.showToast({ title: '请选择家庭风险特征（Q8）', icon: 'none' });
+      wx.showModal({
+        title: '数据不完整',
+        content: 'Q8家庭风险未选择，是否返回补充？',
+        confirmText: '返回Q8',
+        showCancel: true,
+        success: (res) => {
+          if (res.confirm) this.setData({ currentStep: 7 });
+        }
+      });
       return;
     }
 
