@@ -17,6 +17,39 @@ const CLIMATE_MAP = {
   mild: '温和地区（5类）'
 };
 
+const STANDARDS_MAP = {
+  wind_pressure: {
+    code: 'GB/T 7106-2019',
+    short: 'GB/T 7106',
+    name: '建筑外门窗气密、水密、抗风压性能检测方法'
+  },
+  sound_insulation: {
+    code: 'GB/T 8485-2008',
+    short: 'GB/T 8485',
+    name: '建筑门窗空气声隔声性能分级及检测方法'
+  },
+  thermal: {
+    code: 'GB/T 8484-2020',
+    short: 'GB/T 8484',
+    name: '建筑外门窗保温性能检测方法'
+  },
+  shgc: {
+    code: 'GB/T 2680-2021',
+    short: 'GB/T 2680',
+    name: '建筑玻璃 可见光透射比、太阳光直接透射比等测定'
+  },
+  safety_glass: {
+    code: 'GB 15763.3-2009',
+    short: 'GB 15763.3',
+    name: '建筑用安全玻璃 第3部分：夹层玻璃'
+  },
+  product_spec: {
+    code: 'GB/T 8478-2020',
+    short: 'GB/T 8478',
+    name: '铝合金门窗'
+  }
+};
+
 // 字段映射：calculator-v2 输出 vs documentMapper 使用
 const FIELD_MAP = {
   P3: 'P3_required',
@@ -207,6 +240,164 @@ function getFamilyDesc(familyRisk) {
   return hasSafety ? `${base}（含安全专项条款）` : base;
 }
 
+function build1_1(answers) {
+  const floor = Number(answers.floor) || 0;
+  const totalFloors = Number(answers.total_floors) || 1;
+  const band = getHeightBand(floor, totalFloors);
+
+  const roomTypeMap = {
+    bedroom: '卧室',
+    living_room: '客厅',
+    balcony: '阳台（外廊）',
+    study: '书房',
+    other: '其他空间'
+  };
+  const roomTypeText = Array.isArray(answers.room_type) && answers.room_type.length > 0
+    ? answers.room_type.map(v => roomTypeMap[v] || v).join('、')
+    : null;
+
+  const windowTypeMap = {
+    casement: '平开窗',
+    sliding: '推拉窗/门',
+    fixed: '固定窗',
+    tilt_turn: '内开内倒',
+    door_window: '门联窗'
+  };
+
+  const orientationText = answers.orientation || '';
+  const isWest = answers.orientation === 'west' || answers.orientation === '西';
+  const shadingText = isWest ? (answers.west_shading ? '西晒有遮挡' : '西晒无遮阳') : '非西晒';
+
+  return {
+    city: answers.city || '',
+    district: answers.district || '',
+    floorDesc: `第${floor}层/共${totalFloors}层（高度比${(band.ratio * 100).toFixed(0)}%，${band.label}）`,
+    roomType: roomTypeText,
+    windowType: windowTypeMap[answers.window_type] || answers.window_type || '',
+    orientation: `${orientationText}，${shadingText}`,
+    heatingType: getHeatingDesc(answers.heating_type),
+    familyDesc: getFamilyDesc(answers.family_risk)
+  };
+}
+
+function build1_2(answers, resolved) {
+  return {
+    needsTable: buildNeedsTable(resolved, answers),
+    coreTension: buildCoreTension(answers, resolved)
+  };
+}
+
+function buildNeedsTable(resolved, answers) {
+  const isForcedTest = ['sliding', 'door_window'].includes(answers.window_type);
+  const safetyValue = isForcedTest ? '夹胶构造（强制）+ 整窗测试报告' : '夹胶构造 / 普通构造';
+  const safetyBasis = isForcedTest
+    ? `${STANDARDS_MAP.safety_glass.short} · 推拉窗/门联窗`
+    : `${STANDARDS_MAP.safety_glass.short} · 家庭风险场景`;
+
+  const heightRatio = Number.isFinite(Number(resolved.height_ratio)) ? Number(resolved.height_ratio) : 0;
+
+  return [
+    {
+      dimension: '抗风压',
+      value: `≥ ${getField(resolved, 'P3')} kPa`,
+      basis: `${STANDARDS_MAP.wind_pressure.short} · ${resolved.wind_zone || 'W?'}风区${(heightRatio * 100).toFixed(0)}%`
+    },
+    {
+      dimension: '隔声',
+      value: `≥ ${getField(resolved, 'Rw')} dB`,
+      basis: `${STANDARDS_MAP.sound_insulation.short} · ${getNoiseShortDesc(answers.noise_type, answers.noise_dist)}`
+    },
+    {
+      dimension: '传热系数',
+      value: `≤ ${getField(resolved, 'K')} W/m²K`,
+      basis: `${STANDARDS_MAP.thermal.short} · ${getClimateLabel(resolved.climate_zone)}${getHeatingAdjText(answers.heating_type)}`
+    },
+    {
+      dimension: '太阳得热',
+      value: `≤ ${getField(resolved, 'SHGC')}`,
+      basis: resolved.shgc_note ? `${STANDARDS_MAP.shgc.short} · 西晒无遮阳已校正` : `${STANDARDS_MAP.shgc.short} · 标准要求`
+    },
+    {
+      dimension: '安全等级',
+      value: safetyValue,
+      basis: safetyBasis
+    }
+  ];
+}
+
+function buildCoreTension(answers, resolved) {
+  const sentences = [];
+
+  const painList = Array.isArray(answers.pain_points) ? answers.pain_points : [];
+  const primaryPain = painList.length > 0 ? painList[0] : null;
+
+  const mainConstraintMap = {
+    sound: '隔声降噪',
+    thermal: '保温节能',
+    security: '安全防盗',
+    view: '采光视野',
+    economy: '省钱经济'
+  };
+  const fallbacks = {
+    sound: '隔声降噪',
+    heat: '保温节能',
+    safety: '安全防盗',
+    view: '采光视野',
+    price: '省钱经济'
+  };
+  const mainConstraint = mainConstraintMap[primaryPain] || fallbacks[answers.pain_point] || '综合性能';
+
+  sentences.push(`您的项目位于${answers.city || ''}第${answers.floor || ''}层，${mainConstraint}是本案的主要技术制约。`);
+
+  const conflicts = detectConflicts(answers, resolved);
+  if (conflicts.hasConflict) {
+    sentences.push(`${conflicts.hardest}与${conflicts.secondHardest}存在配置重合，导致本案成本高于同档位普通场景。`);
+  }
+
+  sentences.push('以下技术红线是本次招标的最低门槛，商家方案低于任一项不予考虑。');
+
+  return sentences.join('');
+}
+
+function detectConflicts(answers, resolved) {
+  const result = { hasConflict: false, hardest: '', secondHardest: '' };
+
+  const rw = Number(getField(resolved, 'Rw'));
+  const p3 = Number(getField(resolved, 'P3'));
+  const k = Number(getField(resolved, 'K'));
+
+  const scores = {
+    '隔声': rw >= 40 ? 3 : rw >= 35 ? 2 : 1,
+    '抗风压': p3 >= 4.0 ? 3 : p3 >= 3.5 ? 2 : 1,
+    '热工': k <= 1.5 ? 3 : k <= 2.0 ? 2 : 1,
+    '安全': Array.isArray(answers.family_risk) && answers.family_risk.length > 0 ? 2 : 1
+  };
+
+  const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+  if (sorted[0] && sorted[1] && sorted[0][1] >= 3 && sorted[1][1] >= 3) {
+    result.hasConflict = true;
+    result.hardest = sorted[0][0];
+    result.secondHardest = sorted[1][0];
+  }
+
+  return result;
+}
+
+function getNoiseShortDesc(noiseType, noiseDist) {
+  if (noiseType === 'quiet') return '安静环境';
+  const typeMap = { main_road: '主干道', elevated: '高架', rail: '轨道' };
+  const distMap = { lt20: '近距', '20to50': '中距', gt50: '远距', gt50_shielded: '远距遮挡' };
+  const type = typeMap[noiseType] || noiseType;
+  const dist = distMap[noiseDist] || '';
+  return `${type}${dist}`;
+}
+
+function getHeatingAdjText(heatingType) {
+  if (heatingType === 'self') return '自采暖-0.2';
+  if (heatingType === 'none') return '无供暖+0.2';
+  return '';
+}
+
 function getAcceptanceNodes(climateZone) {
   return [ACCEPTANCE_NODES.entry, ACCEPTANCE_NODES.installation, ACCEPTANCE_NODES.final];
 }
@@ -363,7 +554,7 @@ function getForbiddenItems(budget_tier, K_target, window_features, Rw_required) 
   ];
 
   if (window_features && window_features.needs_whole_window_test) {
-    base.push('【强制】推拉窗/门联窗需提供整窗性能测试报告（GB/T 7106）');
+    base.push(`【强制】推拉窗/门联窗需提供整窗性能测试报告（${STANDARDS_MAP.wind_pressure.short}）`);
   }
 
   const TIER_WALL = {
@@ -563,7 +754,7 @@ function buildAnalysisParagraph(answers, resolved) {
     const who = arr.includes('child') ? '儿童' : '老人';
     text = `您的项目包含${who}家庭成员，本文件在常规技术指标外特别增设安全专项条款。所有安全配件（限位器/夹胶玻璃/适老五金）须在竣工验收时提供安装凭证。`;
   } else {
-    text = `您的项目位于${city}第${floor}层（${band.label}），综合考虑了${getClimateLabel(resolved.climate_zone)}的气候区标准与建筑环境，以下技术指标基于GB/T 8478-2020计算。`;
+    text = `您的项目位于${city}第${floor}层（${band.label}），综合考虑了${getClimateLabel(resolved.climate_zone)}的气候区标准与建筑环境，以下技术指标基于${STANDARDS_MAP.product_spec.code}计算。`;
   }
   
   return text;
@@ -631,6 +822,8 @@ function mapToSections(resolved, answers, pdfNo) {
     },
     
     chapter1: {
+      basicInfo: build1_1(answers),
+      needsAnalysis: build1_2(answers, resolved),
       city: answers.city,
       district: answers.district || '',
       climateLabel: getClimateLabel(resolved.climate_zone), // 修复：使用 climate_zone
@@ -661,12 +854,13 @@ function mapToSections(resolved, answers, pdfNo) {
             {
               type: 'safety_alert',
               condition: window_features.has_large_fixed,
-              text: '您的房间存在落地窗/整面玻璃墙，属于高安全等级场景，玻璃配置需符合 GB 15763.3-2009 对大面积玻璃的强制要求。'
+              text: `您的房间存在落地窗/整面玻璃墙，属于高安全等级场景，玻璃配置需符合 ${STANDARDS_MAP.safety_glass.code} 对大面积玻璃的强制要求。`
             },
             { type: 'cost_reveal', text: `在当前环境和预算组合下，要改善${targetDesc}，通常${glassDirection}，对配置会有${costLevel}程度的额外成本。` }
           ];
         })()
-      } : { show: false }
+      } : { show: false },
+      useNewStructure: true
     },
     
     chapter2: {
@@ -675,7 +869,7 @@ function mapToSections(resolved, answers, pdfNo) {
           name: '抗风压性能',
           value: `≥ ${getField(resolved, 'P3')}`, // 修复：使用 getField
           unit: 'kPa',
-          std: 'GB/T 7106-2019',
+          std: STANDARDS_MAP.wind_pressure.code,
           level: (getField(resolved, 'P3') >= 3.0 ? '高等级' : '标准等级'),
           note: `${answers.city}${resolved.wind_zone || 'W?'}风区，第${answers.floor}层`,
           isCore: painTag.coreMetric === 'P3'
@@ -684,7 +878,7 @@ function mapToSections(resolved, answers, pdfNo) {
           name: '计权隔声量',
           value: `≥ ${getField(resolved, 'Rw')}`, // 修复：使用 getField
           unit: 'dB',
-          std: 'GB/T 8485-2008',
+          std: STANDARDS_MAP.sound_insulation.code,
           level: (getField(resolved, 'Rw') >= 35 ? '高隔声' : '标准隔声'),
           note: `${getNoiseLabel(answers.noise_type, answers.noise_dist).typeLabel}环境${answers.pain_point === 'sound' ? '，睡眠场景加严' : ''}`,
           isCore: painTag.coreMetric === 'Rw'
@@ -693,7 +887,7 @@ function mapToSections(resolved, answers, pdfNo) {
           name: '热工性能',
           value: `K≤${getField(resolved, 'K')} / SHGC≤${getField(resolved, 'SHGC')}`, // 修复：使用 getField
           unit: 'W/m²·K',
-          std: 'GB/T 8484-2020',
+          std: STANDARDS_MAP.thermal.code,
           level: getClimateLabel(resolved.climate_zone),
           note: answers.west_shading === false && answers.orientation === 'west' ? '西晒无遮阳，SHGC已下调' : '标准热工要求',
           isCore: painTag.coreMetric === 'SHGC'

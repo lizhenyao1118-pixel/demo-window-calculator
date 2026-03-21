@@ -49,6 +49,24 @@
       <text class="ratio-value">{{heightRatio}}%</text>
       <text wx:if="{{heightRatio >= 80}}" class="ratio-hint">（顶楼区域）</text>
     </view>
+
+    <view class="form-section">
+      <view class="section-label">使用场景<text class="required">*</text></view>
+      <view class="checkbox-group">
+        <view
+          wx:for="{{roomTypeOptions}}"
+          wx:for-item="item"
+          wx:key="value"
+          class="checkbox-item {{roomTypeSelectedMap[item.value] ? 'selected' : 'unselected'}}"
+          bindtap="onRoomTypeChange"
+          data-value="{{item.value}}"
+        >
+          <text class="checkbox-icon">{{roomTypeSelectedMap[item.value] ? '✓' : ''}}</text>
+          <text class="checkbox-label">{{item.label}}</text>
+        </view>
+      </view>
+      <view class="hint-text">至少选择1项，可多选</view>
+    </view>
   </view>
 
   <!-- Q3: 痛点 -->

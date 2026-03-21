@@ -197,52 +197,131 @@ function renderChapter1(doc, c1) {
   drawChapterHeader(doc, "第一", "项目概况与需求分析", COLORS.brand_navy);
   
   drawSectionTitle(doc, "1.1 项目基本信息");
+  const basicInfo = c1.basicInfo || c1;
+  const hasNewStructure = !!c1.basicInfo;
   const cardY = doc.y;
-  doc.roundedRect(55, cardY, 485, 78, 6).fill(COLORS.bg_card);
+  const baseHeight = 78;
+  const extraHeight = (hasNewStructure && basicInfo.roomType) ? 18 : 0;
+  doc.roundedRect(55, cardY, 485, baseHeight + extraHeight, 6).fill(COLORS.bg_card);
+  
+  let textY = cardY + 14;
+  const leftX = 69;
+  const rightX = 297;
+  
   doc.fillColor(COLORS.text_body).fontSize(10.5)
-    .text(`城市：${c1.city} ${c1.district || ""}`, 69, cardY + 14)
-    .text(`气候区：${c1.climateLabel}`, 297, cardY + 14)
-    .text(`楼层：${c1.floorDesc}`, 69, cardY + 32)
-    .text(`取暖：${c1.heatingDesc}`, 297, cardY + 32)
-    .text(`家庭：${c1.familyDesc}`, 69, cardY + 50);
-  doc.y = cardY + 85;
+    .text(`城市：${basicInfo.city || ''} ${basicInfo.district || ""}`, leftX, textY)
+    .text(`气候区：${basicInfo.climateLabel || c1.climateLabel || ''}`, rightX, textY);
+  textY += 18;
+  
+  doc.fillColor(COLORS.text_body).fontSize(10.5)
+    .text(`楼层：${basicInfo.floorDesc || c1.floorDesc || ''}`, leftX, textY);
+  textY += 18;
+  
+  if (hasNewStructure && basicInfo.roomType) {
+    doc.fillColor(COLORS.text_body).fontSize(10.5)
+      .text(`使用场景：${basicInfo.roomType}`, leftX, textY);
+    textY += 18;
+  }
+  
+  doc.fillColor(COLORS.text_body).fontSize(10.5)
+    .text(`窗型：${basicInfo.windowType || ''}`, leftX, textY)
+    .text(`朝向：${basicInfo.orientation || ''}`, rightX, textY);
+  textY += 18;
+  
+  doc.fillColor(COLORS.text_body).fontSize(10.5)
+    .text(`供暖方式：${basicInfo.heatingType || c1.heatingDesc || ''}`, leftX, textY)
+    .text(`家庭：${basicInfo.familyDesc || c1.familyDesc || ''}`, rightX, textY);
+  
+  doc.y = cardY + baseHeight + extraHeight + 10;
 
   drawSectionTitle(doc, "1.2 需求分析");
-  doc.fillColor(COLORS.text_body).fontSize(10.5)
-    .text(c1.analysisPara, 55, doc.y, { width: 485, align: "justify", lineGap: 5 });
-  doc.y += 50;
-
-  if (c1.noise && c1.noise.show) {
-    drawSectionTitle(doc, "1.3 环境评估");
-    const n = c1.noise;
-    doc.fillColor(COLORS.text_body).fontSize(10.5).text(`噪音源：${n.typeLabel}｜距离：${n.distLabel}`, 55, doc.y);
-
-    const KEYS = ["lt20", "20to50", "gt50"];
-    const LABELS = ["近(<20m)", "中(20-50m)", "远(>50m)"];
-    const active = KEYS.indexOf(n.distKey);
-    const barY = doc.y + 18;
-    const gutter = 10;
-    const segW = (485 - gutter * 2) / 3;
-
-    for (let i = 0; i < 3; i++) {
-      const x = 55 + i * (segW + gutter);
-      doc.rect(x, barY, segW, 16).fill(i <= active ? COLORS.warn_orange : COLORS.border);
-      doc.fillColor(i <= active ? "#FFFFFF" : COLORS.text_secondary).fontSize(9).text(LABELS[i], x + 8, barY + 4, { width: segW - 16, align: "center" });
-    }
-
-    doc.fillColor(COLORS.text_secondary).fontSize(9).text(`评级：${n.levelLabel}`, 55, barY + 20);
-    doc.y = barY + 40;
-
-    if (Array.isArray(n.blocks) && n.blocks.length > 0) {
-      n.blocks.forEach((b) => {
-        if (!b || !b.text) return;
-        if (b.type === 'safety_alert' && b.condition !== true) return;
-
-        const isAlert = b.type === 'safety_alert';
-        const color = isAlert ? COLORS.risk_red : COLORS.text_secondary;
-        doc.fillColor(color).fontSize(10).text(b.text, 55, doc.y, { width: 485 });
-        doc.y += isAlert ? 28 : 18;
+  if (c1.needsAnalysis && c1.needsAnalysis.needsTable) {
+    const rows = Array.isArray(c1.needsAnalysis.needsTable) ? c1.needsAnalysis.needsTable : [];
+    const tableTop = doc.y;
+    const colWidths = [90, 110, 285];
+    const rowHeight = 28;
+    const tableWidth = 485;
+    const startX = 55;
+    
+    if (842 - tableTop < (rowHeight * (rows.length + 2) + 70)) doc.addPage();
+    const top = doc.y;
+    
+    doc.rect(startX, top, tableWidth, rowHeight).fill(COLORS.brand_navy);
+    const headers = ['性能维度', '参数值', '依据（标准文号 · 场景说明）'];
+    let colX = startX;
+    headers.forEach((h, i) => {
+      doc.fillColor("#FFFFFF").fontSize(9.5)
+        .text(h, colX + 5, top + 8, { width: colWidths[i] - 10, align: "center" });
+      colX += colWidths[i];
+    });
+    
+    rows.forEach((row, rowIdx) => {
+      const y = top + rowHeight + (rowIdx * rowHeight);
+      const bgColor = rowIdx % 2 === 0 ? COLORS.bg_card : "#FFFFFF";
+      doc.rect(startX, y, tableWidth, rowHeight).fill(bgColor).stroke(COLORS.border);
+      
+      const values = [row.dimension, row.value, row.basis];
+      colX = startX;
+      values.forEach((val, colIdx) => {
+        const textColor = colIdx === 2 ? COLORS.text_secondary : COLORS.text_body;
+        const fontSize = colIdx === 2 ? 9 : 10;
+        doc.fillColor(textColor).fontSize(fontSize)
+          .text(String(val || ""), colX + 5, y + 8, {
+            width: colWidths[colIdx] - 10,
+            align: colIdx === 0 ? "center" : "left"
+          });
+        colX += colWidths[colIdx];
       });
+    });
+    
+    doc.y = top + rowHeight + (rows.length * rowHeight) + 15;
+    
+    const tensionText = c1.needsAnalysis.coreTension || '';
+    if (tensionText) {
+      if (842 - doc.y < 120) doc.addPage();
+      doc.fillColor(COLORS.text_body).fontSize(10.5)
+        .text(tensionText, 55, doc.y, { width: 485, align: "justify", lineGap: 6 });
+      doc.y += 35;
+    }
+  } else {
+    doc.fillColor(COLORS.text_body).fontSize(10.5)
+      .text(c1.analysisPara || '', 55, doc.y, { width: 485, align: "justify", lineGap: 5 });
+    doc.y += 50;
+    
+    if (c1.noise && c1.noise.show) {
+      drawSectionTitle(doc, "1.3 环境评估");
+      const n = c1.noise;
+      doc.fillColor(COLORS.text_body).fontSize(10.5).text(`噪音源：${n.typeLabel}｜距离：${n.distLabel}`, 55, doc.y);
+      
+      const KEYS = ["lt20", "20to50", "gt50"];
+      const LABELS = ["近(<20m)", "中(20-50m)", "远(>50m)"];
+      const active = KEYS.indexOf(n.distKey);
+      const barY = doc.y + 18;
+      const gutter = 10;
+      const segW = (485 - gutter * 2) / 3;
+      
+      for (let i = 0; i < 3; i++) {
+        const x = 55 + i * (segW + gutter);
+        doc.rect(x, barY, segW, 16).fill(i <= active ? COLORS.warn_orange : COLORS.border);
+        doc.fillColor(i <= active ? "#FFFFFF" : COLORS.text_secondary).fontSize(9)
+          .text(LABELS[i], x + 8, barY + 4, { width: segW - 16, align: "center" });
+      }
+      
+      doc.fillColor(COLORS.text_secondary).fontSize(9)
+        .text(`评级：${n.levelLabel}`, 55, barY + 20);
+      doc.y = barY + 40;
+      
+      if (Array.isArray(n.blocks) && n.blocks.length > 0) {
+        n.blocks.forEach((b) => {
+          if (!b || !b.text) return;
+          if (b.type === 'safety_alert' && b.condition !== true) return;
+          
+          const isAlert = b.type === 'safety_alert';
+          const color = isAlert ? COLORS.risk_red : COLORS.text_secondary;
+          doc.fillColor(color).fontSize(10).text(b.text, 55, doc.y, { width: 485 });
+          doc.y += isAlert ? 28 : 18;
+        });
+      }
     }
   }
 }

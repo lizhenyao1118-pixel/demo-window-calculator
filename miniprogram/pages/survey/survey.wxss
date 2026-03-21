@@ -220,6 +220,45 @@
   gap: 6px;
 }
 
+.form-section {
+  margin-top: 16px;
+}
+
+.section-label {
+  font-size: 14px;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.required {
+  color: #fa5151;
+  margin-left: 4px;
+}
+
+.checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.checkbox-icon {
+  width: 18px;
+  text-align: center;
+  margin-right: 6px;
+  color: #07c160;
+}
+
+.checkbox-label {
+  font-size: 15px;
+  color: #333;
+}
+
+.hint-text {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #999;
+}
+
 .height-ratio-display {
   margin-top: 12px;
   padding: 10px 12px;

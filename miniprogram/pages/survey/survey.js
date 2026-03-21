@@ -41,6 +41,7 @@ Page({
       painPoint: [],
       floor: null,
       totalFloors: null,
+      room_type: [],
       noise_type: '',
       noise_dist: '',
       noise_type_label: '',
@@ -61,6 +62,14 @@ Page({
       { value: 'economy', label: '省钱经济' }
     ],
     painPointSelectedMap: {},
+    roomTypeOptions: [
+      { value: 'bedroom', label: '卧室' },
+      { value: 'living_room', label: '客厅' },
+      { value: 'balcony', label: '阳台' },
+      { value: 'study', label: '书房' },
+      { value: 'other', label: '其他' }
+    ],
+    roomTypeSelectedMap: {},
     noiseTypeOptions: [
       { label: '主干道/马路', value: 'main_road' },
       { label: '高架桥', value: 'elevated' },
@@ -149,6 +158,7 @@ Page({
         painPoint: [],
         floor: null,
         totalFloors: null,
+        room_type: [],
         noise_type: '',
         noise_dist: '',
         noise_type_label: '',
@@ -169,6 +179,14 @@ Page({
         { value: 'economy', label: '省钱经济' }
       ],
       painPointSelectedMap: {},
+      roomTypeOptions: [
+        { value: 'bedroom', label: '卧室' },
+        { value: 'living_room', label: '客厅' },
+        { value: 'balcony', label: '阳台' },
+        { value: 'study', label: '书房' },
+        { value: 'other', label: '其他' }
+      ],
+      roomTypeSelectedMap: {},
       familyRiskSelectedMap: {},
       noiseTypeOptions: [
         { label: '主干道/马路', value: 'main_road' },
@@ -208,19 +226,22 @@ Page({
     const raw = draft && draft.data ? draft.data : {};
     const familyRisk = Array.isArray(raw.family_risk) ? raw.family_risk : [];
     const painPoint = Array.isArray(raw.painPoint) ? raw.painPoint : [];
+    const roomType = Array.isArray(raw.room_type) ? raw.room_type : [];
 
     this.setData({
       formData: {
         ...this.data.formData,
         ...raw,
         painPoint: painPoint,
-        family_risk: familyRisk
+        family_risk: familyRisk,
+        room_type: roomType
       },
       family_risk: familyRisk,
       currentStep: Number.isFinite(draft.step) ? draft.step : (draft.step || 0)
     }, () => {
       if (raw.city) this.setCityHint(raw.city);
       this.updateSelectedMaps();
+      this.updateRoomTypeSelectedMap();
       this.calculateHeightRatio();
       this.checkBudgetConflict();
     });
@@ -241,6 +262,15 @@ Page({
       painPointSelectedMap: painPointMap,
       familyRiskSelectedMap: familyRiskMap
     });
+  },
+
+  updateRoomTypeSelectedMap() {
+    const formData = this.data.formData || {};
+    const roomType = Array.isArray(formData.room_type) ? formData.room_type : [];
+    const options = Array.isArray(this.data.roomTypeOptions) ? this.data.roomTypeOptions : [];
+    const map = {};
+    options.forEach((opt) => { map[opt.value] = roomType.includes(opt.value); });
+    this.setData({ roomTypeSelectedMap: map });
   },
 
   // 页面卸载时记录流失（如果未提交）
@@ -325,6 +355,25 @@ Page({
     } else {
       this.setData({ showHeightRatio: false, showRatio: false });
     }
+  },
+
+  onRoomTypeChange(e) {
+    const value = e && e.currentTarget && e.currentTarget.dataset ? e.currentTarget.dataset.value : '';
+    const currentSelected = Array.isArray(this.data.formData.room_type) ? this.data.formData.room_type : [];
+    const index = currentSelected.indexOf(value);
+    const nextSelected = index > -1
+      ? currentSelected.filter(item => item !== value)
+      : [...currentSelected, value];
+
+    const map = {};
+    const options = Array.isArray(this.data.roomTypeOptions) ? this.data.roomTypeOptions : [];
+    options.forEach((opt) => { map[opt.value] = nextSelected.includes(opt.value); });
+
+    this.setData({
+      'formData.room_type': nextSelected,
+      roomTypeSelectedMap: map
+    });
+    this.saveDraft();
   },
 
   // Q3: 困扰问题（多选）
@@ -558,6 +607,8 @@ Page({
           isValid = false; message = '请完善楼层信息';
         } else if (parseInt(formData.floor, 10) > parseInt(formData.totalFloors, 10)) {
           isValid = false; message = '所在楼层不能大于总楼层';
+        } else if (!Array.isArray(formData.room_type) || formData.room_type.length === 0) {
+          isValid = false; message = '请选择至少一个使用场景';
         }
         break;
       case 2:
@@ -681,6 +732,7 @@ Page({
     const payload = {
       ...this.data.formData,
       painPoint: primaryPainPoint,
+      pain_points: Array.isArray(this.data.formData.painPoint) ? this.data.formData.painPoint : [],
       family_risk: this.data.family_risk || [],
       window_features: windowFeatures,
       isDisclaimer: isDisclaimer,

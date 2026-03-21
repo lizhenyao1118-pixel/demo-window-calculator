@@ -78,6 +78,7 @@ function adaptAssessmentData(data) {
     floor: parseInt(data.floor) || 1,
     total_floors: parseInt(data.totalFloors) || 1,
     pain_point: painPointMap[data.pain_point || data.painPoint] || 'sound',
+    pain_points: Array.isArray(data.pain_points) ? data.pain_points : [],
     noise_type:
       noiseMap[data.noise_type || data.noiseType] ||
       (typeof data.noiseType === 'string' && data.noiseType.includes('主干') ? 'main_road' : null) ||
@@ -95,6 +96,7 @@ function adaptAssessmentData(data) {
     west_shading: data.westShading === true || data.westShading === '有遮挡',
     heating_type: heatingMap[data.heatingType] || heatingMap[data.heating_type] || 'none',
     window_type: data.window_type || '',
+    room_type: Array.isArray(data.room_type) ? data.room_type : [],
     family_risk: family_risk,
     budget_tier: (data.budgetTier || 'B').toUpperCase(),
     // 保留原始字段供 PDF 显示使用
