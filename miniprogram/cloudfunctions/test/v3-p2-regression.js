@@ -148,7 +148,7 @@ function main() {
       budget_tier: 'A'
     },
     ({ sections }) => {
-      if ((sections.chapter1.basicInfo || {}).roomType !== '卧室、客厅') throw new Error('S-C1 roomType mismatch');
+      if ((sections.chapter1.basicInfo || {}).roomType !== '主卧、客厅') throw new Error('S-C1 roomType mismatch');
       if ((sections.chapter1.basicInfo || {}).heatingType !== '自采暖') throw new Error('S-C1 heatingType mismatch');
       const rows = (((sections.chapter1 || {}).needsAnalysis || {}).needsTable) || [];
       if (rows.length !== 5) throw new Error('S-C1 needsTable rows mismatch');

@@ -243,11 +243,10 @@ function build1_1(answers) {
   const band = getHeightBand(floor, totalFloors);
 
   const roomTypeMap = {
-    bedroom: '卧室',
+    bedroom: '主卧',
     living_room: '客厅',
-    balcony: '阳台（外廊）',
-    study: '书房',
-    other: '其他空间'
+    balcony: '阳台',
+    study: '书房'
   };
   const roomTypeText = Array.isArray(answers.room_type) && answers.room_type.length > 0
     ? answers.room_type.map(v => roomTypeMap[v] || v).join('、')
