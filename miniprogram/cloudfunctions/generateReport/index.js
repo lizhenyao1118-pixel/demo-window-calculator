@@ -93,7 +93,10 @@ function adaptAssessmentData(data) {
       (typeof data.noiseDist === 'string' && (data.noiseDist.includes('>50') || data.noiseDist.includes('50m以上')) ? 'gt50' : null) ||
       'gt50',
     orientation: (data.orientation || 'south').toLowerCase(),
-    west_shading: data.westShading === true || data.westShading === '有遮挡',
+    west_shading: (() => {
+      const raw = (data.westShading !== undefined) ? data.westShading : data.west_shading;
+      return raw === true || raw === '有遮挡';
+    })(),
     heating_type: heatingMap[data.heatingType] || heatingMap[data.heating_type] || 'none',
     window_type: data.window_type || '',
     room_type: Array.isArray(data.room_type) ? data.room_type : [],

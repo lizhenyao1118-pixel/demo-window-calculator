@@ -74,7 +74,7 @@ function main() {
       budget_tier: 'B'
     },
     ({ sections, json }) => {
-      assertNotIncludes(json, '【强制】推拉窗/门联窗需提供整窗性能测试报告（GB/T 7106）', '1 should not require whole-window test');
+      assertNotIncludes(json, '【强制】推拉窗/门联窗需提供整窗性能测试报告（GB/T 7106 抗风压 + GB/T 7107 气密·水密）', '1 should not require whole-window test');
       const K = Number(sections.chapter2.metrics.find(x => x.name === '热工性能').value.match(/K≤([0-9.]+)/)?.[1] || NaN);
       if (K !== 2.5) throw new Error(`1 K_target mismatch: ${K}`);
     }
@@ -97,7 +97,7 @@ function main() {
       budget_tier: 'B'
     },
     ({ json }) => {
-      assertIncludes(json, '【强制】推拉窗/门联窗需提供整窗性能测试报告（GB/T 7106）', '2 whole-window test redline');
+      assertIncludes(json, '【强制】推拉窗/门联窗需提供整窗性能测试报告（GB/T 7106 抗风压 + GB/T 7107 气密·水密）', '2 whole-window test redline');
       const m = json.match(/K≤([0-9.]+)/);
       const K = m ? Number(m[1]) : NaN;
       if (K !== 2.3) throw new Error(`2 K_target mismatch: ${K}`);
@@ -121,7 +121,7 @@ function main() {
       budget_tier: 'B'
     },
     ({ json }) => {
-      assertIncludes(json, '【强制】推拉窗/门联窗需提供整窗性能测试报告（GB/T 7106）', '3 whole-window test redline');
+      assertIncludes(json, '【强制】推拉窗/门联窗需提供整窗性能测试报告（GB/T 7106 抗风压 + GB/T 7107 气密·水密）', '3 whole-window test redline');
       const m = json.match(/K≤([0-9.]+)/);
       const K = m ? Number(m[1]) : NaN;
       if (K !== 2.7) throw new Error(`3 K_target mismatch: ${K}`);
@@ -257,7 +257,8 @@ function main() {
       if (!/保温节能是本案的主要技术制约/.test(tension)) throw new Error('S-C5 subject mismatch');
       const rows = (((sections.chapter1 || {}).needsAnalysis || {}).needsTable) || [];
       const shgcRow = rows[3] || {};
-      if (!String(shgcRow.basis || '').includes('西晒无遮阳已校正')) throw new Error('S-C5 shgc basis missing');
+      if (!String(shgcRow.basis || '').includes('GB/T 2680')) throw new Error('S-C5 shgc std missing');
+      if (!String(shgcRow.basis || '').includes('西向无遮阳控制过热')) throw new Error('S-C5 shgc basis missing');
     }
   );
 }

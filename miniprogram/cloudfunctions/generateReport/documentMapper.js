@@ -300,6 +300,22 @@ function getClimateName(cz) {
   return cz.name;
 }
 
+function getShgcNote(answers) {
+  const hasShading = answers.westShading === true || answers.west_shading === true;
+  const orientation = answers.orientation;
+
+  if (orientation === 'west' && hasShading === false) {
+    return '西向无遮阳控制过热';
+  }
+  if (orientation === 'west') {
+    return '西向隔热需求';
+  }
+  if (orientation === 'south') {
+    return '南向得热均衡';
+  }
+  return '标准太阳得热控制';
+}
+
 function buildNeedsTable(resolved, answers) {
   const climateZone = answers.climateZone || resolved.climateZone || getClimateZone(answers.city);
   const isForcedTest = ['sliding', 'door_window'].includes(answers.window_type);
@@ -329,7 +345,7 @@ function buildNeedsTable(resolved, answers) {
     {
       dimension: '太阳得热',
       value: `≤ ${getField(resolved, 'SHGC')}`,
-      basis: resolved.shgc_note ? `${STANDARDS_MAP.shgc.short} · 西晒无遮阳已校正` : `${STANDARDS_MAP.shgc.short} · 标准要求`
+      basis: `${STANDARDS_MAP.shgc.short} · ${getShgcNote(answers)}`
     },
     {
       dimension: '安全等级',
@@ -576,7 +592,7 @@ function getForbiddenItems(budget_tier, K_target, window_features, Rw_required) 
   ];
 
   if (window_features && window_features.needs_whole_window_test) {
-    base.push(`【强制】推拉窗/门联窗需提供整窗性能测试报告（${STANDARDS_MAP.wind_pressure.short}）`);
+    base.push(`【强制】推拉窗/门联窗需提供整窗性能测试报告（${STANDARDS_MAP.wind_pressure.short} 抗风压 + GB/T 7107 气密·水密）`);
   }
 
   const TIER_WALL = {
@@ -867,7 +883,7 @@ function mapToSections(resolved, answers, pdfNo) {
         blocks: (() => {
           const climateLabel = getClimateLabel(climateZone);
           const westShavingNote = (normalizedAnswers.orientation === 'west' && normalizedAnswers.west_shading === false)
-            ? (resolved.shgc_note || '西晒无遮阳，SHGC已下调')
+            ? (getShgcNote(normalizedAnswers) || '西晒无遮阳，SHGC已下调')
             : '非西晒主风险位';
 
           const Rw_required = Number(getField(resolved, 'Rw'));
