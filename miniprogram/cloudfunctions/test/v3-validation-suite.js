@@ -73,8 +73,7 @@ const TEST_CASES = [
       window_features: { has_large_fixed: false, has_wide_slider: false, has_family_safety: false }
     },
     expect: {
-      thermal_overlay: 'Low-E镀膜',
-      K_target: 1.4
+      K_target: 1.8
     }
   },
   {

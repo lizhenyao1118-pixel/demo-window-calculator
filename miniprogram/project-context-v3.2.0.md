@@ -120,7 +120,7 @@ const STANDARDS_MAP = {
 依据列格式："标准文号 · 中文说明"（中点分隔，中文说明≤18字）
 ```
 
-4. Sprint 4 归档（PDF第一章重构）
+## 4. Sprint 4 归档（PDF第一章重构）
 
 4.1 变更摘要  
 目标：解决1.1节信息汇总缺失、1.2节需求翻译过度依赖painPoint、叙述过长问题  
@@ -145,7 +145,7 @@ SHGC强制使用GB/T 2680（玻璃光学性能测定），GB/T 8478仅用于第�
 新增场景：S-C1~S-C5通过（验证room_type渲染、整窗测试标注、SHGC西晒校正、冲突叙述逻辑）  
 PDF样本：v3-hotfix-sample.pdf生成成功，人工审查1.1/1.2节格式符合预期  
 
-5. AI协作模式规范（v1.2）
+## 5. AI协作模式规范（v1.2）
 
 5.1 决策链（单向流）  
 Kimi / Trae（起草/实现）  
@@ -158,7 +158,7 @@ Kimi / Trae（起草/实现）
 功能设计：李Sir提出 → Kimi起草 → Claude审查 → 李Sir决策 → Trae实现  
 Sprint执行：Kimi转译规格 → Trae实现 → Kimi验收 → Claude审查（必要时）→ 李Sir场景验收  
 
-6. 快速命令参考
+## 6. 快速命令参考
 
 ```bash
 # 部署云函数（生产环境）
@@ -175,28 +175,29 @@ git status
 git describe --tags
 ```
 
-7. 检查清单（新对话恢复后确认）
+## 7. 检查清单（新对话恢复后确认）
 
 - [ ] 已理解项目阶段：V3.2 Sprint4完成，9题结构定稿（Q2扩展），PDF第一章双层结构
 - [ ] 已掌握Git状态：main分支，tag v3.2.0，Sprint4已完成
 - [ ] 已确认技术资产：room_type（display_only）、STANDARDS_MAP、五维表格、核心矛盾叙述
 - [ ] 已明确下一步：等待Sprint5启动决策（数据看板/商家端/技术债务清理）
 
-8. 活跃阻塞（需用户决策）
+## 8. 活跃阻塞（需用户决策）
 
 □ 选项A：启动Sprint 5（待规划：数据看板/商家端/水密气密纳入）  
 □ 选项B：技术债务清理（单元测试补充/文档更新/性能优化）  
 □ 选项C：生产环境监控（A/B实验结果分析，Layer3实验设计）  
 
-变更日志  
+## 变更日志  
 v3.2.0 (2026-03-21)：Sprint4 PDF第一章重构完成。新增room_type字段（Q2, display_only），STANDARDS_MAP集中维护6项标准文号，1.1节信息补全（7字段），1.2节双层结构（五维表格+3句核心矛盾叙述），新旧结构兼容，回归测试通过。  
 v3.1.3-rev1 (2026-03-21)：恢复AI协作模式完整章节，补全检查清单，草稿恢复逻辑修复。  
 v3.1.3 (2026-03-21)：草稿恢复逻辑修复（restartSurvey/restoreDraft），WXML语法修正（*SelectedMap模式）。  
 v3.1.0 (2026-03-20)：V3.1字段对齐-window_type新增（Q7）、heatingType修正系数（Q6）、清理priority/timeline，9题结构定稿。  
 
-使用说明：将此文档保存为project-context-v3.2.0.md，每次开启新对话时上传，AI助手将基于此文档恢复上下文。  
+## 使用说明
+将此文档保存为project-context-v3.2.0.md，每次开启新对话时上传，AI助手将基于此文档恢复上下文。  
 
-执行后确认清单  
+## 执行后确认清单  
 - [ ] git log --oneline -3 显示 v3.2.0 tag 已打上  
 - [ ] git tag -l 列出 v3.2.0  
 - [ ] 仓库根目录存在 `project-context-v3.2.0.md`  

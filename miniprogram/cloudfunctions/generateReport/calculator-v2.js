@@ -40,26 +40,20 @@ function calcRw({ noise_type, noise_dist, pain_point }) {
   return Math.min(Math.max(rw, 28), 45);
 }
 
-function adjustKTargetByHeating(baseK, heatingType) {
-  if (heatingType === 'self') {
-    return Math.max(0.8, parseFloat((baseK - 0.2).toFixed(1)));
-  }
-  if (heatingType === 'none') {
-    return parseFloat((baseK + 0.2).toFixed(1));
-  }
-  return baseK;
+const { calcThermal: calcThermalFromClimate, getClimateZone } = require('./shared/climateSpec.js');
+
+function calcThermal(city, heatingType) {
+  return calcThermalFromClimate(city, heatingType);
 }
 
-// FIX P0-3: SHGC西晒扣减
-function calcThermal(city, orientation, west_shading) {
-  const config = CITY_MAP[city] || { climate: "hot_summer" };
-  const K_MAP = { severe_cold: 1.4, cold: 1.8, hot_summer: 2.4, hot_year: 2.8, mild: 3.0 };
-  const SHGC_MAP = { hot_year: 0.30, hot_summer: 0.35, cold: 0.45, severe_cold: 0.50 };
-  
-  const shgc_adj = (orientation === "west" && west_shading === false) ? -0.05 : 0;
-  return { 
-    K: K_MAP[config.climate], 
-    SHGC: parseFloat((SHGC_MAP[config.climate] + shgc_adj).toFixed(2)),
+function calcSHGC(city, orientation, west_shading) {
+  const zone = getClimateZone(city);
+  const SHGC_BY_CODE = { HSWA: 0.30, HSCW: 0.35, HD: 0.45, SC: 0.50 };
+  const base = SHGC_BY_CODE[zone.code] ?? 0.35;
+  const isWest = orientation === "west" || orientation === "西";
+  const shgc_adj = (isWest && west_shading === false) ? -0.05 : 0;
+  return {
+    SHGC: parseFloat((base + shgc_adj).toFixed(2)),
     shgc_note: shgc_adj !== 0 ? "西晒无遮阳，SHGC已下调0.05" : null
   };
 }
@@ -121,17 +115,28 @@ function calculateAll(assessment) {
   
   const cityConfig = getCityConfig(city);
   const p3Result = calcP3(city, floor, total_floors);
-  const thermalResult = calcThermal(city, orientation, west_shading);
-  const finalK = adjustKTargetByHeating(thermalResult.K, heating_type);
+  const rwValue = calcRw({ noise_type, noise_dist, pain_point });
+  const thermalResult = calcThermal(city, heating_type);
+  const solarResult = calcSHGC(city, orientation, west_shading);
+  const K_target = parseFloat(Number(thermalResult.K_target).toFixed(1));
   
   const computed = {
-    city, climate_zone: cityConfig.climate, wind_zone: cityConfig.wind_zone,
+    city,
+    climate_zone: thermalResult.climateZone.code,
+    climateZone: thermalResult.climateZone,
+    wind_zone: cityConfig.wind_zone,
     floor, total_floors, height_ratio: floor / Math.max(total_floors, 1),
-    P3: p3Result.value, Rw: calcRw({ noise_type, noise_dist, pain_point }),
-    K: finalK, SHGC: thermalResult.SHGC,
+    P3: p3Result.value,
+    P3_required: p3Result.value,
+    Rw: rwValue,
+    Rw_required: rwValue,
+    K: K_target,
+    K_target: K_target,
+    SHGC: solarResult.SHGC,
+    SHGC_target: solarResult.SHGC,
     budget_tier, degraded: cityConfig.degraded,
     degraded_msg: cityConfig.degraded_msg,
-    shgc_note: thermalResult.shgc_note
+    shgc_note: solarResult.shgc_note
   };
   
   const resolved = resolveConflicts(computed, assessment);

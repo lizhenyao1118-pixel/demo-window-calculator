@@ -8,15 +8,6 @@
 // 常量定义
 // ═══════════════════════════════════════════════════════════════
 
-const CLIMATE_MAP = {
-  severe_cold: '严寒地区（1类）',
-  cold: '寒冷地区（2类）',
-  hot_summer_cold_winter: '夏热冬冷地区（3类）',
-  hot_summer_warm_winter: '夏热冬暖地区（4类）',
-  hot_year: '夏热冬暖地区（4类）', // calculator-v2 使用的别名
-  mild: '温和地区（5类）'
-};
-
 const STANDARDS_MAP = {
   wind_pressure: {
     code: 'GB/T 7106-2019',
@@ -61,6 +52,7 @@ const FIELD_MAP = {
 const { GLASS_LEVELS, BUDGET_SPEC, getNextTier } = require('./shared/budgetSpec.js');
 const { getInsulationBarRequirement } = require('./shared/thermalSpec.js');
 const { resolveGlassConfig } = require('./arbitrator.js');
+const { getClimateZone } = require('./shared/climateSpec.js');
 
 const NOISE_SCENE = {
   main_road: {
@@ -133,8 +125,10 @@ function getField(resolved, key) {
 
 // 断言检查
 function assertResolved(resolved) {
-  const expected = ['P3_required', 'Rw_required', 'K_target', 'SHGC_target', 'climate_zone', 'wind_zone'];
+  const expected = ['P3_required', 'Rw_required', 'K_target', 'SHGC_target', 'wind_zone'];
   const missing = expected.filter(f => resolved[f] === undefined);
+  const hasClimate = !!(resolved.climateZone || resolved.climate_zone);
+  if (!hasClimate) missing.push('climateZone');
   if (missing.length > 0) {
     console.error('[documentMapper] ⚠️ resolved 缺少字段:', missing);
     console.log('[documentMapper] resolved 实际字段:', Object.keys(resolved));
@@ -142,8 +136,10 @@ function assertResolved(resolved) {
   return missing.length === 0;
 }
 
-function getClimateLabel(climateZone) {
-  return CLIMATE_MAP[climateZone] || '气候区待确认';
+function getClimateLabel(cz) {
+  if (!cz || cz.code === 'UNKNOWN') return '气候区未识别';
+  if (typeof cz === 'string') return '气候区未识别';
+  return `${cz.name}（${cz.code}）`;
 }
 
 function getHeightBand(floor, total) {
@@ -241,6 +237,7 @@ function getFamilyDesc(familyRisk) {
 }
 
 function build1_1(answers) {
+  const climateZone = answers.climateZone || getClimateZone(answers.city);
   const floor = Number(answers.floor) || 0;
   const totalFloors = Number(answers.total_floors) || 1;
   const band = getHeightBand(floor, totalFloors);
@@ -271,6 +268,7 @@ function build1_1(answers) {
   return {
     city: answers.city || '',
     district: answers.district || '',
+    climateLabel: getClimateLabel(climateZone),
     floorDesc: `第${floor}层/共${totalFloors}层（高度比${(band.ratio * 100).toFixed(0)}%，${band.label}）`,
     roomType: roomTypeText,
     windowType: windowTypeMap[answers.window_type] || answers.window_type || '',
@@ -283,11 +281,27 @@ function build1_1(answers) {
 function build1_2(answers, resolved) {
   return {
     needsTable: buildNeedsTable(resolved, answers),
-    coreTension: buildCoreTension(answers, resolved)
+    coreTension: buildCoreTension(answers, resolved),
+    disclaimer: buildParamDisclaimer()
   };
 }
 
+function getThermalModifier(formData) {
+  const isWest = formData.orientation === 'west' || formData.orientation === '西';
+  if (isWest && formData.west_shading === false) return '西向隔热加严';
+  if (formData.heating_type === 'none') return '无供暖保温加严';
+  if (formData.heating_type === 'self') return '自采暖修正';
+  return '标准热工要求';
+}
+
+function getClimateName(cz) {
+  if (!cz || typeof cz === 'string') return '气候区未识别';
+  if (cz.code === 'UNKNOWN') return '气候区未识别';
+  return cz.name;
+}
+
 function buildNeedsTable(resolved, answers) {
+  const climateZone = answers.climateZone || resolved.climateZone || getClimateZone(answers.city);
   const isForcedTest = ['sliding', 'door_window'].includes(answers.window_type);
   const safetyValue = isForcedTest ? '夹胶构造（强制）+ 整窗测试报告' : '夹胶构造 / 普通构造';
   const safetyBasis = isForcedTest
@@ -309,8 +323,8 @@ function buildNeedsTable(resolved, answers) {
     },
     {
       dimension: '传热系数',
-      value: `≤ ${getField(resolved, 'K')} W/m²K`,
-      basis: `${STANDARDS_MAP.thermal.short} · ${getClimateLabel(resolved.climate_zone)}${getHeatingAdjText(answers.heating_type)}`
+      value: `≤ ${getField(resolved, 'K')}`,
+      basis: `${STANDARDS_MAP.thermal.short} · ${getClimateName(climateZone)}区${getThermalModifier(answers)}`
     },
     {
       dimension: '太阳得热',
@@ -323,6 +337,14 @@ function buildNeedsTable(resolved, answers) {
       basis: safetyBasis
     }
   ];
+}
+
+function buildParamDisclaimer() {
+  return {
+    type: 'disclaimer',
+    style: 'footnote',
+    text: '参数说明：本文件中的技术参数为推荐目标值，而非国标原文照搬。计算方法：先按城市气候区确定基准值，再结合冬季供暖方式、朝向及窗型做小幅修正，最终形成适合本项目的选购标准。其中安全等级依据 GB 15763.3 强制条款，不可降级。'
+  };
 }
 
 function buildCoreTension(answers, resolved) {
@@ -354,7 +376,7 @@ function buildCoreTension(answers, resolved) {
     sentences.push(`${conflicts.hardest}与${conflicts.secondHardest}存在配置重合，导致本案成本高于同档位普通场景。`);
   }
 
-  sentences.push('以下技术红线是本次招标的最低门槛，商家方案低于任一项不予考虑。');
+  sentences.push('以下指标为本项目推荐技术门槛，商家方案低于任一项的，建议不予优先考虑。');
 
   return sentences.join('');
 }
@@ -723,7 +745,7 @@ function buildAnalysisParagraph(answers, resolved) {
   if (pain_point === 'sound') {
     const sceneDesc = getNoiseSceneDesc(noise_type, noise_dist);
     const lifeTarget = LIFE_TARGET.sound;
-    text = `您所在项目位于${city}第${floor}层（${band.label}），${sceneDesc}。本次采购的核心目标是：${lifeTarget}。要实现这一目标，窗户隔声量需达到Rw≥${getField(resolved, 'Rw')}dB。这是本次招标的技术红线，商家提案低于此值不予考虑。`;
+    text = `您所在项目位于${city}第${floor}层（${band.label}），${sceneDesc}。本次采购的核心目标是：${lifeTarget}。要实现这一目标，窗户隔声量需达到Rw≥${getField(resolved, 'Rw')}dB。这是本次招标的推荐门槛，低于此值的方案建议不予优先考虑。`;
 
     const Rw_required = Number(getField(resolved, 'Rw'));
     const costLevel = Rw_required <= 33 ? '轻' : Rw_required <= 38 ? '中' : '重';
@@ -746,7 +768,8 @@ function buildAnalysisParagraph(answers, resolved) {
     text += `\n要实现这一目标，通常需要采用${glass_summary}，对配置会有${costLevel}程度的额外成本。`;
   } else if (pain_point === 'heat') {
     const westDesc = (west_shading === false && orientation === 'west') ? '西晒无遮阳，热辐射压力较高，' : '';
-    text = `您的项目位于${city}${getClimateLabel(resolved.climate_zone)}的第${floor}层。${westDesc}以下标准以热工性能为核心，SHGC≤${getField(resolved, 'SHGC')}是夏季隔热的关键指标，请商家提供Low-E玻璃配置方案及检测报告。`;
+    const climateZone = answers.climateZone || resolved.climateZone || getClimateZone(city);
+    text = `您的项目位于${city}${getClimateLabel(climateZone)}的第${floor}层。${westDesc}以下标准以热工性能为核心，SHGC≤${getField(resolved, 'SHGC')}是夏季隔热的关键指标，请商家提供Low-E玻璃配置方案及检测报告。`;
   } else if (pain_point === 'wind') {
     text = `您的项目位于${city}（${resolved.wind_zone || 'W?'}风区）的第${floor}层，高度比${(band.ratio * 100).toFixed(0)}%（${band.label}），抗风压要求较高。P3≥${getField(resolved, 'P3')}kPa是本次采购的硬性门槛，商家须提供第三方检测证明。`;
   } else if (pain_point === 'safety') {
@@ -754,7 +777,8 @@ function buildAnalysisParagraph(answers, resolved) {
     const who = arr.includes('child') ? '儿童' : '老人';
     text = `您的项目包含${who}家庭成员，本文件在常规技术指标外特别增设安全专项条款。所有安全配件（限位器/夹胶玻璃/适老五金）须在竣工验收时提供安装凭证。`;
   } else {
-    text = `您的项目位于${city}第${floor}层（${band.label}），综合考虑了${getClimateLabel(resolved.climate_zone)}的气候区标准与建筑环境，以下技术指标基于${STANDARDS_MAP.product_spec.code}计算。`;
+    const climateZone = answers.climateZone || resolved.climateZone || getClimateZone(city);
+    text = `您的项目位于${city}第${floor}层（${band.label}），综合考虑了${getClimateLabel(climateZone)}的气候区标准与建筑环境，以下技术指标基于${STANDARDS_MAP.product_spec.code}计算。`;
   }
   
   return text;
@@ -781,22 +805,24 @@ function mapToSections(resolved, answers, pdfNo) {
   const issueDate = `${now.getFullYear()}年${String(now.getMonth() + 1).padStart(2, '0')}月${String(now.getDate()).padStart(2, '0')}日`;
   
   const band = getHeightBand(answers.floor, answers.total_floors);
+  const climateZone = answers.climateZone || resolved.climateZone || getClimateZone(answers.city);
+  const normalizedAnswers = { ...answers, climateZone };
   const painTag = getPainTag(answers.pain_point);
-  const budgetSpec = buildBudgetSpecView(resolved, answers);
-  const familyRisk = Array.isArray(answers.family_risk) ? answers.family_risk : [];
+  const budgetSpec = buildBudgetSpecView(resolved, normalizedAnswers);
+  const familyRisk = Array.isArray(normalizedAnswers.family_risk) ? normalizedAnswers.family_risk : [];
   const window_features = {
     has_large_fixed: familyRisk.includes('large_fixed'),
     has_wide_slider: familyRisk.includes('wide_slider'),
-    needs_whole_window_test: ['sliding', 'door_window'].includes(answers.window_type),
+    needs_whole_window_test: ['sliding', 'door_window'].includes(normalizedAnswers.window_type),
     has_family_safety: familyRisk.includes('child') || familyRisk.includes('elder')
   };
-  const safety = getSafetyItems(answers.family_risk, answers.budget_tier);
+  const safety = getSafetyItems(normalizedAnswers.family_risk, normalizedAnswers.budget_tier);
   
   // 风险触发条件：16层以上 或 高度比>50% 或 有risk_flags 或 免责声明
   const isHighFloor = answers.floor > 16;
   const isHighRatio = band.ratio > 0.5;
   const hasRiskFlags = resolved.risk_flags && Object.keys(resolved.risk_flags).length > 0;
-  const isRisk = hasRiskFlags || isHighFloor || isHighRatio || answers.isDisclaimer === true;
+  const isRisk = hasRiskFlags || isHighFloor || isHighRatio || normalizedAnswers.isDisclaimer === true;
   
   // 传递给风险生成函数
   const riskTrigger = {
@@ -809,48 +835,48 @@ function mapToSections(resolved, answers, pdfNo) {
     cover: {
       pdfNo: pdfNo,
       issueDate: issueDate,
-      city: answers.city || '未知城市',
-      district: answers.district || '',
-      climateLabel: getClimateLabel(resolved.climate_zone), // 修复：使用 climate_zone
-      floorDesc: `第${answers.floor}层/共${answers.total_floors}层（高度比${(band.ratio * 100).toFixed(0)}%，${band.label}）`,
+      city: normalizedAnswers.city || '未知城市',
+      district: normalizedAnswers.district || '',
+      climateLabel: getClimateLabel(climateZone),
+      floorDesc: `第${normalizedAnswers.floor}层/共${normalizedAnswers.total_floors}层（高度比${(band.ratio * 100).toFixed(0)}%，${band.label}）`,
       painTag: painTag.text,
       isRisk: isRisk,
-      hasSafety: Array.isArray(answers.family_risk) && (answers.family_risk.includes('child') || answers.family_risk.includes('elder')),
+      hasSafety: Array.isArray(normalizedAnswers.family_risk) && (normalizedAnswers.family_risk.includes('child') || normalizedAnswers.family_risk.includes('elder')),
       degradedCity: resolved.degraded || false,
-      degradedMsg: resolved.degraded ? `${answers.city}暂未精确覆盖，以下参数基于保守标准推算` : null,
+      degradedMsg: resolved.degraded ? `${normalizedAnswers.city}暂未精确覆盖，以下参数基于保守标准推算` : null,
       disclaimer: '本文件由李Sir门窗技术顾问系统基于用户填写信息自动生成，仅供参考，不构成正式法律合同。'
     },
     
     chapter1: {
-      basicInfo: build1_1(answers),
-      needsAnalysis: build1_2(answers, resolved),
-      city: answers.city,
-      district: answers.district || '',
-      climateLabel: getClimateLabel(resolved.climate_zone), // 修复：使用 climate_zone
+      basicInfo: build1_1(normalizedAnswers),
+      needsAnalysis: build1_2(normalizedAnswers, resolved),
+      city: normalizedAnswers.city,
+      district: normalizedAnswers.district || '',
+      climateLabel: getClimateLabel(climateZone),
       windZone: resolved.wind_zone || 'W?',
-      floorDesc: `第${answers.floor}层/共${answers.total_floors}层（高度比${(band.ratio * 100).toFixed(0)}%，${band.label}）`,
-      heatingDesc: getHeatingDesc(answers.heating_type),
-      familyDesc: getFamilyDesc(answers.family_risk),
-      analysisPara: buildAnalysisParagraph(answers, resolved),
-      noise: answers.noise_type !== 'quiet' ? {
+      floorDesc: `第${normalizedAnswers.floor}层/共${normalizedAnswers.total_floors}层（高度比${(band.ratio * 100).toFixed(0)}%，${band.label}）`,
+      heatingDesc: getHeatingDesc(normalizedAnswers.heating_type),
+      familyDesc: getFamilyDesc(normalizedAnswers.family_risk),
+      analysisPara: buildAnalysisParagraph(normalizedAnswers, resolved),
+      noise: normalizedAnswers.noise_type !== 'quiet' ? {
         show: true,
-        typeLabel: getNoiseLabel(answers.noise_type, answers.noise_dist).typeLabel,
-        distKey: answers.noise_dist === 'gt50_shielded' ? 'gt50' : answers.noise_dist,
-        distLabel: getNoiseLabel(answers.noise_type, answers.noise_dist).distLabel,
-        levelLabel: getNoiseLabel(answers.noise_type, answers.noise_dist).levelLabel,
+        typeLabel: getNoiseLabel(normalizedAnswers.noise_type, normalizedAnswers.noise_dist).typeLabel,
+        distKey: normalizedAnswers.noise_dist === 'gt50_shielded' ? 'gt50' : normalizedAnswers.noise_dist,
+        distLabel: getNoiseLabel(normalizedAnswers.noise_type, normalizedAnswers.noise_dist).distLabel,
+        levelLabel: getNoiseLabel(normalizedAnswers.noise_type, normalizedAnswers.noise_dist).levelLabel,
         blocks: (() => {
-          const climateZone = getClimateLabel(resolved.climate_zone);
-          const westShavingNote = (answers.orientation === 'west' && answers.west_shading === false)
+          const climateLabel = getClimateLabel(climateZone);
+          const westShavingNote = (normalizedAnswers.orientation === 'west' && normalizedAnswers.west_shading === false)
             ? (resolved.shgc_note || '西晒无遮阳，SHGC已下调')
             : '非西晒主风险位';
 
           const Rw_required = Number(getField(resolved, 'Rw'));
           const costLevel = Rw_required <= 33 ? '轻' : Rw_required <= 38 ? '中' : '重';
-          const targetDesc = answers.pain_point === 'heat' ? '隔热舒适' : answers.pain_point === 'wind' ? '抗风防水' : '隔声目标';
+          const targetDesc = normalizedAnswers.pain_point === 'heat' ? '隔热舒适' : normalizedAnswers.pain_point === 'wind' ? '抗风防水' : '隔声目标';
           const glassDirection = Rw_required <= 33 ? '可在档内用常规中空配置实现' : Rw_required <= 38 ? '需要夹胶/更高隔声玻璃构造' : '往往需要三玻两腔等高阶隔声构造';
 
           return [
-            { type: 'climate_note', text: `${answers.city}属于${climateZone}，${westShavingNote}` },
+            { type: 'climate_note', text: `${normalizedAnswers.city}属于${climateLabel}，${westShavingNote}` },
             {
               type: 'safety_alert',
               condition: window_features.has_large_fixed,
@@ -871,7 +897,7 @@ function mapToSections(resolved, answers, pdfNo) {
           unit: 'kPa',
           std: STANDARDS_MAP.wind_pressure.code,
           level: (getField(resolved, 'P3') >= 3.0 ? '高等级' : '标准等级'),
-          note: `${answers.city}${resolved.wind_zone || 'W?'}风区，第${answers.floor}层`,
+          note: `${normalizedAnswers.city}${resolved.wind_zone || 'W?'}风区，第${normalizedAnswers.floor}层`,
           isCore: painTag.coreMetric === 'P3'
         },
         {
@@ -880,22 +906,22 @@ function mapToSections(resolved, answers, pdfNo) {
           unit: 'dB',
           std: STANDARDS_MAP.sound_insulation.code,
           level: (getField(resolved, 'Rw') >= 35 ? '高隔声' : '标准隔声'),
-          note: `${getNoiseLabel(answers.noise_type, answers.noise_dist).typeLabel}环境${answers.pain_point === 'sound' ? '，睡眠场景加严' : ''}`,
+          note: `${getNoiseLabel(normalizedAnswers.noise_type, normalizedAnswers.noise_dist).typeLabel}环境${normalizedAnswers.pain_point === 'sound' ? '，睡眠场景加严' : ''}`,
           isCore: painTag.coreMetric === 'Rw'
         },
         {
           name: '热工性能',
-          value: `K≤${getField(resolved, 'K')} / SHGC≤${getField(resolved, 'SHGC')}`, // 修复：使用 getField
-          unit: 'W/m²·K',
+          value: `K≤${getField(resolved, 'K')} W/(m²·K)\nSHGC≤${getField(resolved, 'SHGC')}`,
+          unit: '',
           std: STANDARDS_MAP.thermal.code,
-          level: getClimateLabel(resolved.climate_zone),
-          note: answers.west_shading === false && answers.orientation === 'west' ? '西晒无遮阳，SHGC已下调' : '标准热工要求',
+          level: getClimateLabel(climateZone),
+          note: `${getClimateName(climateZone)}区 ${getThermalModifier(normalizedAnswers)}`,
           isCore: painTag.coreMetric === 'SHGC'
         }
       ],
       budgetSpec: budgetSpec,
       redLines: {
-        forbidden: getForbiddenItems(answers.budget_tier, getField(resolved, 'K'), window_features, getField(resolved, 'Rw')),
+        forbidden: getForbiddenItems(normalizedAnswers.budget_tier, getField(resolved, 'K'), window_features, getField(resolved, 'Rw')),
         safetyItems: safety.items,
         safetyBudgetWarning: safety.budgetWarning
       }

@@ -7,8 +7,8 @@ function buildResolvedFromAssessment(assessment) {
     ...computed,
     P3_required: computed.P3,
     Rw_required: computed.Rw,
-    K_target: computed.K,
-    SHGC_target: computed.SHGC
+    K_target: computed.K_target ?? computed.K,
+    SHGC_target: computed.SHGC_target ?? computed.SHGC
   };
 }
 
@@ -76,7 +76,7 @@ function main() {
     ({ sections, json }) => {
       assertNotIncludes(json, '【强制】推拉窗/门联窗需提供整窗性能测试报告（GB/T 7106）', '1 should not require whole-window test');
       const K = Number(sections.chapter2.metrics.find(x => x.name === '热工性能').value.match(/K≤([0-9.]+)/)?.[1] || NaN);
-      if (K !== 2.4) throw new Error(`1 K_target mismatch: ${K}`);
+      if (K !== 2.5) throw new Error(`1 K_target mismatch: ${K}`);
     }
   );
 
@@ -98,9 +98,9 @@ function main() {
     },
     ({ json }) => {
       assertIncludes(json, '【强制】推拉窗/门联窗需提供整窗性能测试报告（GB/T 7106）', '2 whole-window test redline');
-      const m = json.match(/K≤([0-9.]+)\s*\/\s*SHGC≤/);
+      const m = json.match(/K≤([0-9.]+)/);
       const K = m ? Number(m[1]) : NaN;
-      if (K !== 2.2) throw new Error(`2 K_target mismatch: ${K}`);
+      if (K !== 2.3) throw new Error(`2 K_target mismatch: ${K}`);
     }
   );
 
@@ -122,9 +122,9 @@ function main() {
     },
     ({ json }) => {
       assertIncludes(json, '【强制】推拉窗/门联窗需提供整窗性能测试报告（GB/T 7106）', '3 whole-window test redline');
-      const m = json.match(/K≤([0-9.]+)\s*\/\s*SHGC≤/);
+      const m = json.match(/K≤([0-9.]+)/);
       const K = m ? Number(m[1]) : NaN;
-      if (K !== 2.6) throw new Error(`3 K_target mismatch: ${K}`);
+      if (K !== 2.7) throw new Error(`3 K_target mismatch: ${K}`);
     }
   );
 

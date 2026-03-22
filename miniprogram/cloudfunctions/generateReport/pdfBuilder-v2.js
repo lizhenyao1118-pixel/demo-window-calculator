@@ -142,7 +142,7 @@ function renderRedLines(doc, redLines) {
 function renderCover(doc, cover) {
   // 安全回退
   const city = cover.city || '未知城市';
-  const climate = cover.climateLabel || '气候区待确认';
+  const climate = cover.climateLabel || '气候区未识别';
   const floorDesc = cover.floorDesc || '楼层信息待填';
   const pdfNo = cover.pdfNo || 'LSA-00000000-0000';
   const issueDate = cover.issueDate || new Date().toISOString().slice(0,10).replace(/-/g,'/');
@@ -275,6 +275,24 @@ function renderChapter1(doc, c1) {
     });
     
     doc.y = top + rowHeight + (rows.length * rowHeight) + 15;
+
+    if (c1.needsAnalysis.disclaimer && c1.needsAnalysis.disclaimer.type === 'disclaimer') {
+      const note = c1.needsAnalysis.disclaimer;
+      const text = String(note.text || '');
+      const barX = 55;
+      const barW = 3;
+      const padding = 8;
+      const textX = barX + barW + padding;
+      const width = 485 - barW - padding;
+      const y0 = doc.y;
+
+      doc.fontSize(9).fillColor('#666666');
+      const h = doc.heightOfString(text, { width: width, lineGap: 2 });
+      doc.rect(barX, y0 + 1, barW, h + 4).fill(COLORS.brand_blue);
+      doc.text(text, textX, y0, { width: width, align: 'left', lineGap: 2 });
+      doc.fillColor(COLORS.text_body);
+      doc.y = y0 + h + 12;
+    }
     
     const tensionText = c1.needsAnalysis.coreTension || '';
     if (tensionText) {
@@ -336,13 +354,24 @@ function renderChapter2(doc, c2) {
 
   const renderMetricBlock = (m, y0) => {
     if (!m) return y0;
-    doc.roundedRect(55, y0, 485, 78, 6).fill(COLORS.bg_card);
+    const rawValue = String(m.value || "");
+    const lines = rawValue.split('\n');
+    const isMultiLine = lines.length > 1;
+    const blockH = isMultiLine ? 98 : 78;
+
+    doc.roundedRect(55, y0, 485, blockH, 6).fill(COLORS.bg_card);
     doc.fillColor(COLORS.text_secondary).fontSize(10).text(m.std || "", 69, y0 + 14);
-    doc.fillColor(COLORS.brand_navy).fontSize(24).text(m.value || "", 69, y0 + 30);
+    doc.fillColor(COLORS.brand_navy).fontSize(24).text(lines[0] || "", 69, y0 + 30);
     doc.fillColor(COLORS.text_secondary).fontSize(11).text(m.unit || "", 210, y0 + 38);
-    if (m.level) doc.fillColor(COLORS.text_secondary).fontSize(10).text(m.level, 69, y0 + 56);
-    if (m.note) doc.fillColor(COLORS.text_light).fontSize(9).text(m.note, 280, y0 + 56, { width: 250 });
-    return y0 + 92;
+
+    if (isMultiLine) {
+      doc.fillColor(COLORS.brand_navy).fontSize(14).text(lines.slice(1).join('\n'), 69, y0 + 58, { width: 250 });
+    }
+
+    const metaY = isMultiLine ? (y0 + 80) : (y0 + 56);
+    if (m.level) doc.fillColor(COLORS.text_secondary).fontSize(10).text(m.level, 69, metaY);
+    if (m.note) doc.fillColor(COLORS.text_light).fontSize(9).text(m.note, 280, metaY, { width: 250 });
+    return y0 + blockH + 14;
   };
 
   drawSectionTitle(doc, "2.1 抗风压性能");
