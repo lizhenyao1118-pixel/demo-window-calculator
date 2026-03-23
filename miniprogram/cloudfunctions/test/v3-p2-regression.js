@@ -457,7 +457,7 @@ function main() {
       const checklist = ((sections.chapter4 || {}).redlineChecklist) || {};
       const m = Array.isArray(checklist.mandatory) ? checklist.mandatory : [];
       const r = Array.isArray(checklist.recommended) ? checklist.recommended : [];
-      if (m.length !== 5) throw new Error('T-RL1 mandatory count mismatch');
+      if (m.length !== 6) throw new Error('T-RL1 mandatory count mismatch');
       if (r.length !== 1) throw new Error('T-RL1 recommended count mismatch');
     }
   );
@@ -509,7 +509,7 @@ function main() {
       const checklist = ((sections.chapter4 || {}).redlineChecklist) || {};
       const m = Array.isArray(checklist.mandatory) ? checklist.mandatory : [];
       const r = Array.isArray(checklist.recommended) ? checklist.recommended : [];
-      if (m.length !== 6) throw new Error('T-RL3 mandatory count mismatch');
+      if (m.length !== 7) throw new Error('T-RL3 mandatory count mismatch');
       if (r.length !== 1) throw new Error('T-RL3 recommended count mismatch');
     }
   );

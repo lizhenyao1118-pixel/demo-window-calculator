@@ -1,14 +1,14 @@
 const CLIMATE_SPEC = {
-  '北京': { climateZone: 'HD', climateZoneCN: '寒冷', kBase: 1.8, kMin: 1.6 },
-  '沈阳': { climateZone: 'SC', climateZoneCN: '严寒', kBase: 1.8, kMin: 1.5 },
-  '西安': { climateZone: 'HD', climateZoneCN: '寒冷', kBase: 2.0, kMin: 1.8 },
-  '上海': { climateZone: 'HSCW', climateZoneCN: '夏热冬冷', kBase: 2.0, kMin: 1.8 },
-  '杭州': { climateZone: 'HSCW', climateZoneCN: '夏热冬冷', kBase: 2.2, kMin: 2.0 },
-  '南京': { climateZone: 'HSCW', climateZoneCN: '夏热冬冷', kBase: 2.2, kMin: 2.0 },
-  '武汉': { climateZone: 'HSCW', climateZoneCN: '夏热冬冷', kBase: 2.5, kMin: 2.3 },
-  '成都': { climateZone: 'HSCW', climateZoneCN: '夏热冬冷', kBase: 2.5, kMin: 2.3 },
-  '广州': { climateZone: 'HSWA', climateZoneCN: '夏热冬暖', kBase: 2.4, kMin: 2.2 },
-  '深圳': { climateZone: 'HSWA', climateZoneCN: '夏热冬暖', kBase: 2.2, kMin: 2.0 }
+  '北京': { climateZone: 'HD', climateZoneCN: '寒冷', kBase: 1.8, kMin: 1.6, isCoastal: false, typhoonRisk: false },
+  '沈阳': { climateZone: 'SC', climateZoneCN: '严寒', kBase: 1.8, kMin: 1.5, isCoastal: false, typhoonRisk: false },
+  '西安': { climateZone: 'HD', climateZoneCN: '寒冷', kBase: 2.0, kMin: 1.8, isCoastal: false, typhoonRisk: false },
+  '上海': { climateZone: 'HSCW', climateZoneCN: '夏热冬冷', kBase: 2.0, kMin: 1.8, isCoastal: true, typhoonRisk: false },
+  '杭州': { climateZone: 'HSCW', climateZoneCN: '夏热冬冷', kBase: 2.2, kMin: 2.0, isCoastal: true, typhoonRisk: false },
+  '南京': { climateZone: 'HSCW', climateZoneCN: '夏热冬冷', kBase: 2.2, kMin: 2.0, isCoastal: false, typhoonRisk: false },
+  '武汉': { climateZone: 'HSCW', climateZoneCN: '夏热冬冷', kBase: 2.5, kMin: 2.3, isCoastal: false, typhoonRisk: false },
+  '成都': { climateZone: 'HSCW', climateZoneCN: '夏热冬冷', kBase: 2.5, kMin: 2.3, isCoastal: false, typhoonRisk: false },
+  '广州': { climateZone: 'HSWA', climateZoneCN: '夏热冬暖', kBase: 2.4, kMin: 2.2, isCoastal: true, typhoonRisk: true },
+  '深圳': { climateZone: 'HSWA', climateZoneCN: '夏热冬暖', kBase: 2.2, kMin: 2.0, isCoastal: true, typhoonRisk: true }
 };
 
 const HEATING_CORRECTION = {

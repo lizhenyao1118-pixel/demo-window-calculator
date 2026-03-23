@@ -78,7 +78,7 @@ describe('buildRedlineChecklist', () => {
   test('DM09: 普通场景 - mandatory=5,recommended=1', () => {
     const a = fixtures.createPure(fixtures.chengduMinimal, { window_type: 'casement', family_risk: [], budget_tier: 'C', floor: 3, total_floors: 30 });
     const r = buildRedlineChecklist(a, { safetyForced: false });
-    expect(r.mandatory.length).toBe(5);
+    expect(r.mandatory.length).toBe(6);
     expect(r.recommended.length).toBe(1);
   });
 
@@ -206,5 +206,49 @@ describe('helpers', () => {
     const r = build1_2(a, resolved);
     const kRow = (r.needsTable || []).find(x => x.dimension === '传热系数') || {};
     expect(String(kRow.basis || '')).toContain('西向隔热加严');
+  });
+});
+
+describe('B-14 C短期 红线文案动态化', () => {
+  test('DM-21: 深圳15F开启窗 - 气密6级水密6级（沿海+台风+高层）', () => {
+    const answers = { city: 'shenzhen', floor: 15, window_type: 'casement', family_risk: [] };
+    const checklist = buildRedlineChecklist(answers, { safetyForced: false });
+    const r06 = (checklist.mandatory || []).find(r => r.id === 'R06');
+    expect(r06.text).toContain('气密≥6级');
+    expect(r06.text).toContain('水密≥6级');
+    expect(r06.text).toContain('若水密仅达5级');
+    expect(r06.text).toContain('若气密仅达4级');
+  });
+
+  test('DM-22: 成都3F固定窗 - 气密5级水密5级（固定窗+1）', () => {
+    const answers = { city: 'chengdu', floor: 3, window_type: 'fixed', family_risk: [] };
+    const checklist = buildRedlineChecklist(answers, { safetyForced: false });
+    const r06 = (checklist.mandatory || []).find(r => r.id === 'R06');
+    expect(r06.text).toContain('气密≥5级');
+    expect(r06.text).toContain('水密≥5级');
+  });
+
+  test('DM-23: 北京20F开启窗 - 气密6级水密4级（高层内陆）', () => {
+    const answers = { city: 'beijing', floor: 20, window_type: 'casement', family_risk: [] };
+    const checklist = buildRedlineChecklist(answers, { safetyForced: false });
+    const r06 = (checklist.mandatory || []).find(r => r.id === 'R06');
+    expect(r06.text).toContain('气密≥6级');
+    expect(r06.text).toContain('水密≥4级');
+  });
+
+  test('DM-24: 沈阳3F开启窗 - 气密6级（严寒推高）含降级条款', () => {
+    const answers = { city: 'shenyang', floor: 3, window_type: 'casement', family_risk: [] };
+    const checklist = buildRedlineChecklist(answers, { safetyForced: false });
+    const r06 = (checklist.mandatory || []).find(r => r.id === 'R06');
+    expect(r06.text).toContain('气密≥6级');
+    expect(r06.text).toContain('若气密仅达4级');
+  });
+
+  test('DM-25: 上海10F开启窗 - 气密6级水密6级（近海+高层）', () => {
+    const answers = { city: 'shanghai', floor: 10, window_type: 'casement', family_risk: [] };
+    const checklist = buildRedlineChecklist(answers, { safetyForced: false });
+    const r06 = (checklist.mandatory || []).find(r => r.id === 'R06');
+    expect(r06.text).toContain('气密≥6级');
+    expect(r06.text).toContain('水密≥6级');
   });
 });
