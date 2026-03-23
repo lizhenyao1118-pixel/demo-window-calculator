@@ -1,2 +1,3 @@
 _output/
 cloudfunctions/**/node_modules/
+cloudfunctions/**/coverage/

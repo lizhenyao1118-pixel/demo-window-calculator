@@ -1,15 +1,38 @@
 {
   "name": "generateReport",
-  "version": "1.0.0",
-  "description": "",
+  "version": "3.2.7",
+  "description": "门窗技术招标文件生成云函数",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest --verbose",
+    "test:unit": "jest test/unit/ --verbose",
+    "test:regression": "node test/v3-p2-regression.js",
+    "test:coverage": "jest --coverage"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "pdfkit": "^0.15.0",
     "wx-server-sdk": "~2.6.3"
+  },
+  "devDependencies": {
+    "jest": "^29.0.0"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "coverageDirectory": "coverage",
+    "collectCoverageFrom": [
+      "calculator-v2.js",
+      "documentMapper.js",
+      "arbitrator.js"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "lines": 90,
+        "branches": 75,
+        "functions": 90,
+        "statements": 90
+      }
+    }
   }
 }

@@ -216,4 +216,20 @@ function calculateAll(assessment) {
   return resolved;
 }
 
-module.exports = { calculateAll };
+function calcSound(answers) {
+  const Rw = calcRw({
+    noise_type: answers.noise_type,
+    noise_dist: answers.noise_dist,
+    pain_point: answers.pain_point
+  });
+  return { Rw };
+}
+
+function calcWindPressure(city, answers) {
+  const floor = Number(answers.floor) || 0;
+  const total = Number(answers.total_floors || answers.totalFloors) || 1;
+  const p3 = calcP3(city, floor, total);
+  return { P3: p3.value, warnings: p3.warnings };
+}
+
+module.exports = { calculateAll, calcThermal, calcSound, calcWindPressure };

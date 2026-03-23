@@ -363,6 +363,156 @@ function main() {
       if (!String(kRow.value || '').includes('推荐范围1.5~1.8')) throw new Error('T-K6 kRange mismatch');
     }
   );
+
+  runScenario(
+    'T-P1',
+    {
+      city: '上海',
+      floor: 8,
+      total_floors: 18,
+      pain_point: 'sound',
+      pain_points: ['sound', 'thermal'],
+      noise_type: 'main_road',
+      noise_dist: '20to50',
+      orientation: 'south',
+      west_shading: true,
+      heating_type: 'central',
+      window_type: 'casement',
+      family_risk: [],
+      budget_tier: 'B'
+    },
+    ({ sections }) => {
+      const checks = (((sections.chapter4 || {}).performanceChecks) || []);
+      if (!Array.isArray(checks) || checks.length !== 3) throw new Error('T-P1 performanceChecks count mismatch');
+      const ids = checks.map(x => x.id).join(',');
+      if (!ids.includes('perf_sound_compare') || !ids.includes('perf_sound_report') || !ids.includes('perf_thermal_ir')) throw new Error('T-P1 performanceChecks ids mismatch');
+    }
+  );
+
+  runScenario(
+    'T-P2',
+    {
+      city: '上海',
+      floor: 8,
+      total_floors: 18,
+      pain_point: 'sound',
+      pain_points: ['sound'],
+      noise_type: 'main_road',
+      noise_dist: '20to50',
+      orientation: 'south',
+      west_shading: true,
+      heating_type: 'central',
+      window_type: 'casement',
+      family_risk: [],
+      budget_tier: 'B'
+    },
+    ({ sections }) => {
+      const checks = (((sections.chapter4 || {}).performanceChecks) || []);
+      if (!Array.isArray(checks) || checks.length !== 2) throw new Error('T-P2 performanceChecks count mismatch');
+    }
+  );
+
+  runScenario(
+    'T-P3',
+    {
+      city: '上海',
+      floor: 8,
+      total_floors: 18,
+      pain_point: 'safety',
+      pain_points: ['security'],
+      noise_type: 'quiet',
+      noise_dist: 'gt50',
+      orientation: 'south',
+      west_shading: true,
+      heating_type: 'central',
+      window_type: 'casement',
+      family_risk: [],
+      budget_tier: 'B'
+    },
+    ({ sections }) => {
+      const checks = (((sections.chapter4 || {}).performanceChecks) || []);
+      if (!Array.isArray(checks) || checks.length !== 1) throw new Error('T-P3 performanceChecks count mismatch');
+      if (String(checks[0].num || '') !== '⑭') throw new Error('T-P3 performanceChecks num mismatch');
+    }
+  );
+
+  runScenario(
+    'T-RL1',
+    {
+      city: '上海',
+      floor: 5,
+      total_floors: 30,
+      pain_point: 'sound',
+      pain_points: ['sound'],
+      noise_type: 'quiet',
+      noise_dist: 'gt50',
+      orientation: 'south',
+      west_shading: true,
+      heating_type: 'central',
+      window_type: 'casement',
+      family_risk: [],
+      budget_tier: 'C'
+    },
+    ({ sections }) => {
+      const checklist = ((sections.chapter4 || {}).redlineChecklist) || {};
+      const m = Array.isArray(checklist.mandatory) ? checklist.mandatory : [];
+      const r = Array.isArray(checklist.recommended) ? checklist.recommended : [];
+      if (m.length !== 5) throw new Error('T-RL1 mandatory count mismatch');
+      if (r.length !== 1) throw new Error('T-RL1 recommended count mismatch');
+    }
+  );
+
+  runScenario(
+    'T-RL2',
+    {
+      city: '上海',
+      floor: 20,
+      total_floors: 30,
+      pain_point: 'sound',
+      pain_points: ['sound'],
+      noise_type: 'quiet',
+      noise_dist: 'gt50',
+      orientation: 'south',
+      west_shading: true,
+      heating_type: 'central',
+      window_type: 'sliding',
+      family_risk: ['elderly'],
+      budget_tier: 'A'
+    },
+    ({ sections }) => {
+      const checklist = ((sections.chapter4 || {}).redlineChecklist) || {};
+      const m = Array.isArray(checklist.mandatory) ? checklist.mandatory : [];
+      const r = Array.isArray(checklist.recommended) ? checklist.recommended : [];
+      if (m.length !== 8) throw new Error('T-RL2 mandatory count mismatch');
+      if (r.length !== 3) throw new Error('T-RL2 recommended count mismatch');
+    }
+  );
+
+  runScenario(
+    'T-RL3',
+    {
+      city: '上海',
+      floor: 5,
+      total_floors: 30,
+      pain_point: 'sound',
+      pain_points: ['sound'],
+      noise_type: 'quiet',
+      noise_dist: 'gt50',
+      orientation: 'south',
+      west_shading: true,
+      heating_type: 'central',
+      window_type: 'casement',
+      family_risk: ['child'],
+      budget_tier: 'B'
+    },
+    ({ sections }) => {
+      const checklist = ((sections.chapter4 || {}).redlineChecklist) || {};
+      const m = Array.isArray(checklist.mandatory) ? checklist.mandatory : [];
+      const r = Array.isArray(checklist.recommended) ? checklist.recommended : [];
+      if (m.length !== 6) throw new Error('T-RL3 mandatory count mismatch');
+      if (r.length !== 1) throw new Error('T-RL3 recommended count mismatch');
+    }
+  );
 }
 
 main();

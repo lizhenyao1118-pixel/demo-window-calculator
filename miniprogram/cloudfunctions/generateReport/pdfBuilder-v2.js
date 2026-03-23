@@ -596,6 +596,84 @@ function renderChapter3(doc, c3) {
   }
 }
 
+function renderPerformanceChecks(doc, checks) {
+  if (!Array.isArray(checks) || checks.length === 0) return;
+  if (842 - doc.y < 120) doc.addPage();
+
+  doc.fillColor(COLORS.brand_mid).fontSize(11).text("【性能验收】", 55, doc.y);
+  doc.y += 14;
+
+  checks.forEach((item) => {
+    const num = item.num ? String(item.num) : "";
+    const text = item.text ? String(item.text) : "";
+    const line = ` · ${num} ${text}`.trimEnd();
+    const h = doc.heightOfString(line, { width: 485, lineGap: 2 });
+    doc.fillColor(COLORS.text_body).fontSize(10).text(line, 55, doc.y, { width: 485, align: 'left', lineGap: 2 });
+    doc.y += h + 6;
+  });
+  doc.y += 6;
+}
+
+function renderRedlineChecklist(doc, checklist) {
+  if (!checklist) return;
+  const mandatory = Array.isArray(checklist.mandatory) ? checklist.mandatory : [];
+  const recommended = Array.isArray(checklist.recommended) ? checklist.recommended : [];
+  if (mandatory.length === 0 && recommended.length === 0) return;
+
+  if (842 - doc.y < 180) doc.addPage();
+  doc.fillColor(COLORS.brand_mid).fontSize(11).text("── 第三段：红线承诺（必填）──", 55, doc.y);
+  doc.y += 16;
+
+  if (mandatory.length > 0) {
+    doc.fillColor(COLORS.risk_red).fontSize(10.5).text("⚠️ 强制红线（以下任一项未满足，方案即视为不合格）", 55, doc.y, { width: 485 });
+    doc.y += 16;
+
+    mandatory.forEach((item) => {
+      const id = item.id ? String(item.id) : "";
+      const text = item.text ? String(item.text) : "";
+      const line1 = `□ ${id} ${text}`.trimEnd();
+      const confirmLine = "    商家确认：□ 满足  □ 不满足（请说明原因：__________）";
+
+      const h1 = doc.heightOfString(line1, { width: 485, lineGap: 2 });
+      const h2 = doc.heightOfString(confirmLine, { width: 485, lineGap: 2 });
+      const barH = Math.max(12, Math.min(h1, 40));
+      doc.rect(51, doc.y + 1, 3, barH + 2).fill(COLORS.risk_red);
+      doc.fillColor(COLORS.text_body).fontSize(10).text(line1, 55, doc.y, { width: 485, lineGap: 2 });
+      doc.y += h1 + 2;
+      doc.fillColor(COLORS.text_secondary).fontSize(9).text(confirmLine, 55, doc.y, { width: 485, lineGap: 2 });
+      doc.y += h2 + 10;
+
+      if (842 - doc.y < 80) doc.addPage();
+    });
+  }
+
+  if (recommended.length > 0) {
+    if (842 - doc.y < 120) doc.addPage();
+    doc.fillColor(COLORS.brand_mid).fontSize(10.5).text("推荐红线（建议满足，不强制）", 55, doc.y, { width: 485 });
+    doc.y += 14;
+
+    recommended.forEach((item) => {
+      const id = item.id ? String(item.id) : "";
+      const text = item.text ? String(item.text) : "";
+      const line1 = `□ ${id} ${text}`.trimEnd();
+      const confirmLine = "    商家确认：□ 知悉并同意  □ 不适用";
+
+      const h1 = doc.heightOfString(line1, { width: 485, lineGap: 2 });
+      const h2 = doc.heightOfString(confirmLine, { width: 485, lineGap: 2 });
+      doc.fillColor(COLORS.text_body).fontSize(10).text(line1, 55, doc.y, { width: 485, lineGap: 2 });
+      doc.y += h1 + 2;
+      doc.fillColor(COLORS.text_secondary).fontSize(9).text(confirmLine, 55, doc.y, { width: 485, lineGap: 2 });
+      doc.y += h2 + 8;
+
+      if (842 - doc.y < 60) doc.addPage();
+    });
+  }
+
+  if (842 - doc.y < 60) doc.addPage();
+  doc.fillColor(COLORS.text_body).fontSize(10.5).text("商家综合确认：□ 以上强制红线全部满足  □ 部分不满足（详见上方说明）", 55, doc.y, { width: 485 });
+  doc.y += 20;
+}
+
 function renderChapter4(doc, c4) {
   const isRisk = !!c4.isRisk;
   const title = c4.title || "下一步怎么用：问商家什么 & 怎么验收";
@@ -627,6 +705,25 @@ function renderChapter4(doc, c4) {
       doc.y += 18;
     }
   }
+
+  if (c4.acceptance && c4.acceptance.nodes && c4.acceptance.nodes.length > 0) {
+    drawSectionTitle(doc, c4.acceptance.title || "4.4 验收节点");
+    const nodes = c4.acceptance.nodes;
+    nodes.forEach((node) => {
+      const nodeTitle = node.title || (node.stage ? `【${node.stage}】` : "【验收节点】");
+      doc.fillColor(COLORS.brand_mid).fontSize(11).text(nodeTitle, 55, doc.y);
+      doc.y += 15;
+      (node.items || []).forEach((item) => {
+        doc.fillColor(COLORS.text_body).fontSize(10).text(` · ${item}`, 65, doc.y, { width: 475 });
+        doc.y += 12;
+      });
+      doc.y += 5;
+      if (842 - doc.y < 80) doc.addPage();
+    });
+    doc.y += 6;
+  }
+
+  renderPerformanceChecks(doc, c4.performanceChecks);
 
   const mq = c4.merchantQuestionnaire || {};
   if (mq.title) {
@@ -711,6 +808,8 @@ function renderChapter4(doc, c4) {
       }
     }
 
+    renderRedlineChecklist(doc, c4.redlineChecklist);
+
     if (mq.section3 && mq.section3.title) {
       if (842 - doc.y < 140) doc.addPage();
       doc.fillColor(COLORS.brand_mid).fontSize(11).text(mq.section3.title, 55, doc.y);
@@ -761,21 +860,6 @@ function renderChapter4(doc, c4) {
       doc.y += boxH + 10;
     });
   }
-
-  if (c4.acceptance && c4.acceptance.nodes && c4.acceptance.nodes.length > 0) {
-    drawSectionTitle(doc, c4.acceptance.title || "4.4 验收节点");
-    const nodes = c4.acceptance.nodes;
-    nodes.forEach((node) => {
-      const nodeTitle = node.title || (node.stage ? `【${node.stage}】` : "【验收节点】");
-      doc.fillColor(COLORS.brand_mid).fontSize(11).text(nodeTitle, 55, doc.y);
-      doc.y += 15;
-      (node.items || []).forEach((item) => {
-        doc.fillColor(COLORS.text_body).fontSize(10).text(` · ${item}`, 65, doc.y, { width: 475 });
-        doc.y += 12;
-      });
-      doc.y += 5;
-    });
-  }
 }
 
 function renderAttachments(doc, attachments) {
@@ -790,18 +874,30 @@ function renderAttachments(doc, attachments) {
 
 function addFooters(doc, disclaimer) {
   const range = doc.bufferedPageRange();
-  const shortDisc = (disclaimer || "").slice(0, 55) + "...";
-  const footerNotice = [
-    '以上价格区间基于一线城市市场水平，二三线城市实际采购成本可能降低15-25%。',
-    '玻璃配置推荐基于声学/热工/安全三维约束自动计算，商家可提供等效替代方案并附检测报告。',
-    '本文件生成时间：' + new Date().toLocaleDateString('zh-CN')
-  ].join(' ');
+  const dateText = new Date().toLocaleString('zh-CN', { hour12: false });
+  const footerText = {
+    short: (d) => `本文件由李Sir门窗技术顾问系统自动生成，仅供参考。生成时间：${d}`,
+    full: (d) => [
+      '以上价格区间基于一线城市市场水平，二三线城市实际采购成本可能降低15-25%。',
+      '玻璃配置推荐基于声学/热工/安全三维约束自动计算，商家可提供等效替代方案并附检测报告。',
+      `本文件生成时间：${d} 本文件由李Sir门窗技术顾问系统基于用户填写信息自动生成，仅供参考，不构成正式法律合同。`
+    ]
+  };
   
   for (let i = 0; i < range.count; i++) {
     doc.switchToPage(range.start + i);
-    doc.moveTo(55, 790).lineTo(540, 790).stroke(COLORS.border);
-    doc.fillColor(COLORS.text_light).fontSize(7).text(footerNotice, 55, 796, { width: 420 });
-    doc.fillColor(COLORS.text_light).fontSize(7).text(shortDisc, 55, 812, { width: 420 });
+    const isLast = (i === range.count - 1);
+    doc.moveTo(55, 782).lineTo(540, 782).stroke(COLORS.border);
+
+    if (isLast) {
+      const lines = footerText.full(dateText);
+      doc.fillColor(COLORS.text_light).fontSize(7).text(lines[0], 55, 788, { width: 420 });
+      doc.fillColor(COLORS.text_light).fontSize(7).text(lines[1], 55, 798, { width: 420 });
+      doc.fillColor(COLORS.text_light).fontSize(7).text(lines[2], 55, 808, { width: 420 });
+    } else {
+      doc.fillColor(COLORS.text_light).fontSize(7).text(footerText.short(dateText), 55, 804, { width: 420 });
+    }
+
     doc.fillColor(COLORS.text_secondary).fontSize(8).text(`${i + 1} / ${range.count}`, 502, 804);
   }
 }

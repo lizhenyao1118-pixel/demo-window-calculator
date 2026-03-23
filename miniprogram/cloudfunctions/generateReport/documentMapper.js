@@ -49,6 +49,24 @@ const FIELD_MAP = {
   SHGC: 'SHGC_target'
 };
 
+const TERM = {
+  paramLabel: '推荐目标值',
+  threshold: '推荐技术门槛',
+  excludeSoft: '建议不予优先考虑',
+  excludeHard: '方案即视为不合格',
+  tierA: '经济实用 A档',
+  tierB: '舒适均衡 B档',
+  tierC: '品质进阶 C档',
+  tierD: '定制高端 D档',
+  suggestUpgrade: '建议升至',
+  suggestAdjust: '建议适当上调'
+};
+
+function getTierLabel(tier) {
+  const map = { A: TERM.tierA, B: TERM.tierB, C: TERM.tierC, D: TERM.tierD };
+  return map[tier] || tier;
+}
+
 const { GLASS_LEVELS, BUDGET_SPEC, getNextTier } = require('./shared/budgetSpec.js');
 const { getInsulationBarRequirement } = require('./shared/thermalSpec.js');
 const { resolveGlassConfig } = require('./arbitrator.js');
@@ -139,6 +157,30 @@ const ACCEPTANCE_NODES = {
     ]
   }
 };
+
+const REDLINE_REGISTRY = [
+  { id: 'R01', text: '禁止使用回收铝型材，须提供原生铝材质检报告', level: 'mandatory', trigger: () => true },
+  { id: 'R02', text: '禁止单玻或无Low-E膜的普通中空玻璃', level: 'mandatory', trigger: () => true },
+  { id: 'R03', text: '禁止普通密封胶代替结构胶（须用中性硅酮结构胶）', level: 'mandatory', trigger: () => true },
+  { id: 'R04', text: '断桥铝隔热条宽度须≥要求值（K值驱动）', level: 'mandatory', trigger: () => true },
+  { id: 'R05', text: '型材主受力壁厚须≥1.5mm，提供截面检测报告', level: 'mandatory', trigger: () => true },
+  { id: 'R06', text: '推拉窗/门联窗须提供整窗性能测试报告（GB/T 7106+7107）', level: 'mandatory', trigger: (a) => ['sliding', 'door_window'].includes(a.window_type) },
+  { id: 'R07', text: '安全玻璃：夹胶构造强制', level: 'mandatory', trigger: (a, r) => !!(r && r.safetyForced) },
+  { id: 'R08', text: '执手操作力≤25N + 门槛≤15mm', level: 'mandatory', trigger: (a) => {
+    const fr = Array.isArray(a.family_risk) ? a.family_risk : [];
+    return fr.includes('elderly') || fr.includes('elder');
+  } },
+  { id: 'R09', text: '比价时偏差超过30%的最低价商家谨慎选择', level: 'recommended', trigger: () => true },
+  { id: 'R10', text: `${TERM.suggestUpgrade}${getTierLabel('B')}以保障安全配置`, level: 'recommended', trigger: (a, r) => {
+    const tier = String(a.budget_tier || a.budgetTier || '').toUpperCase();
+    return tier === 'A' && !!(r && r.safetyForced);
+  } },
+  { id: 'R11', text: '高区建议增加型材壁厚或升级档位', level: 'recommended', trigger: (a) => {
+    const floor = Number(a.floor) || 0;
+    const total = Number(a.total_floors || a.totalFloors) || 1;
+    return (floor / total) >= 0.5;
+  } }
+];
 
 // ═══════════════════════════════════════════════════════════════
 // 工具函数
@@ -473,7 +515,7 @@ function buildCoreTension(answers, resolved) {
     sentences.push(`${conflicts.hardest}与${conflicts.secondHardest}存在配置重合，导致本案成本高于同档位普通场景。`);
   }
 
-  sentences.push('以下指标为本项目推荐技术门槛，商家方案低于任一项的，建议不予优先考虑。');
+  sentences.push(`基于以上分析，以下指标为本项目的${TERM.paramLabel}，作为商家方案的最低准入标准——低于任一项的，${TERM.excludeSoft}。`);
 
   return sentences.join('');
 }
@@ -513,7 +555,7 @@ function getNoiseShortDesc(noiseType, noiseDist) {
 
 function getHeatingAdjText(heatingType) {
   if (heatingType === 'self') return '自采暖-0.2';
-  if (heatingType === 'none') return '无供暖+0.2';
+  if (heatingType === 'none') return '无供暖0';
   return '';
 }
 
@@ -535,9 +577,71 @@ function buildChapter3ConflictAlert(budgetSpec, resolved) {
   };
 }
 
+function buildRedlineChecklist(answers, resolved) {
+  const mandatory = [];
+  const recommended = [];
+
+  REDLINE_REGISTRY.forEach((r) => {
+    if (!r.trigger(answers, resolved)) return;
+    if (r.level === 'mandatory') mandatory.push(r);
+    else recommended.push(r);
+  });
+
+  return { mandatory, recommended };
+}
+
+function buildPerformanceChecks(answers) {
+  const checks = [];
+  const pp = Array.isArray(answers.pain_points)
+    ? answers.pain_points
+    : (Array.isArray(answers.painPoint) ? answers.painPoint : []);
+  const ppFromSingle = (typeof answers.pain_point === 'string' && answers.pain_point) ? [answers.pain_point] : (typeof answers.painPoint === 'string' ? [answers.painPoint] : []);
+  const painList = (pp.length > 0 ? pp : ppFromSingle).filter(Boolean);
+
+  if (painList.includes('sound')) {
+    checks.push({
+      id: 'perf_sound_compare',
+      num: '⑭',
+      text: '关窗前后分别在室内录制一段环境音（10秒即可），对比主观感受差异。如感知差异不明显，要求商家说明原因或补救措施。'
+    });
+    checks.push({
+      id: 'perf_sound_report',
+      num: '⑮',
+      text: `要求商家提供同系列产品的隔声检测报告（第三方实验室），核对 Rw 值是否达到本文件 1.2 节${TERM.paramLabel}。无报告的商家应在合同中明确性能承诺。`
+    });
+  }
+
+  if (painList.includes('thermal') || painList.includes('heat')) {
+    checks.push({
+      id: 'perf_thermal_ir',
+      num: '⑯',
+      text: '冬季室内外温差明显时，用红外热像仪（或手机热像配件）拍摄窗框接缝处，检查是否存在明显热桥/漏热点。如发现异常，要求商家说明原因并补救。'
+    });
+  }
+
+  if (checks.length === 0) {
+    checks.push({
+      id: 'perf_general',
+      num: '⑭',
+      text: '如商家承诺了特定性能指标，建议在合同中明确达标条件及未达标的补救方案。'
+    });
+  }
+
+  return checks;
+}
+
 function buildChapter4Data(answers, budgetSpec, resolved, riskTrigger, isRisk) {
   const deadline = '请于14个工作日内';
   const family_risk = Array.isArray(answers.family_risk) ? answers.family_risk : [];
+  const safetyForced = ['sliding', 'door_window'].includes(answers.window_type) ||
+    family_risk.includes('child') ||
+    family_risk.includes('elder') ||
+    family_risk.includes('elderly') ||
+    family_risk.includes('large_fixed') ||
+    family_risk.includes('floor_window') ||
+    !!resolved.hasSafetyClause;
+  const performanceChecks = buildPerformanceChecks(answers);
+  const redlineChecklist = buildRedlineChecklist(answers, { ...resolved, safetyForced });
 
   return {
     title: '下一步怎么用：问商家什么 & 怎么验收',
@@ -546,7 +650,7 @@ function buildChapter4Data(answers, budgetSpec, resolved, riskTrigger, isRisk) {
       title: '使用说明',
       items: [
         '① 建议同时将本答题表发送给 3-5 家商家，要求 3-5 个工作日内回复——回复速度本身也是态度的一部分',
-        '② 优先选择填写完整、回答具体的商家；对关键项含糊其辞者建议直接排除',
+        `② 优先选择填写完整、回答具体的商家；对关键项含糊其辞者${TERM.excludeSoft}`,
         '③ 对比同一格的内容（壁厚/玻璃配置/质保年限），而不是只对比总价，可以大幅降低被偷工减料的风险'
       ]
     },
@@ -575,7 +679,7 @@ function buildChapter4Data(answers, budgetSpec, resolved, riskTrigger, isRisk) {
         note: '若贵司认为在当前预算档位内难以满足某项关键指标，请在"配置建议与说明"栏中提出具体升级方案及差价估算，而非省略或模糊填写。'
       },
       section3: {
-        title: '── 第三段：施工态度问答 ─────────────────────────',
+        title: '── 第四段：施工态度问答 ─────────────────────────',
         questions: [
           '① 如现场发现墙体不方正/窗洞偏差，贵司的标准处理方式是什么？',
           '② 如果玻璃或五金在质保期内出现问题，贵司的响应时间与处理流程是怎样的？',
@@ -594,7 +698,9 @@ function buildChapter4Data(answers, budgetSpec, resolved, riskTrigger, isRisk) {
       action: '预约深度审计 →'
     },
     risks: { title: '4.3 风险提示', items: isRisk ? getRiskWarnings(answers, resolved, riskTrigger) : [] },
-    acceptance: { title: '4.4 验收节点', nodes: buildAcceptanceNodes(family_risk) }
+    acceptance: { title: '4.4 验收节点', nodes: buildAcceptanceNodes(family_risk) },
+    performanceChecks,
+    redlineChecklist
   };
 }
 
@@ -708,7 +814,7 @@ function getSafetyItems(familyRisk, budgetTier) {
   }
   
   if ((hasChild || hasElder) && budgetTier === 'A') {
-    budgetWarning = '⚠️ 上述安全配件成本通常超出A档预算，建议升至B档以保障安全';
+    budgetWarning = `⚠️ 上述安全配件成本通常超出${getTierLabel('A')}预算，${TERM.suggestUpgrade}${getTierLabel('B')}以保障安全`;
   }
   
   return { items, budgetWarning };
@@ -827,11 +933,53 @@ function getOptimizations() {
   ];
 }
 
-function getUpgrades(family_risk) {
+function calcUpgradeRating(upgradeType, answers, resolved) {
+  const pains = Array.isArray(answers.pain_points)
+    ? answers.pain_points
+    : (typeof answers.pain_point === 'string' && answers.pain_point ? [answers.pain_point] : []);
+  const noiseType = answers.noise_type;
+  const noiseDist = answers.noise_dist;
+  const familyRisk = Array.isArray(answers.family_risk) ? answers.family_risk : [];
+  const safetyForced = ['sliding', 'door_window'].includes(answers.window_type) ||
+    familyRisk.includes('child') ||
+    familyRisk.includes('elder') ||
+    familyRisk.includes('elderly') ||
+    familyRisk.includes('large_fixed') ||
+    familyRisk.includes('floor_window') ||
+    !!resolved.hasSafetyClause;
+
+  if (upgradeType === 'sound') {
+    let stars = 3;
+    if (pains.includes('sound')) stars += 1;
+    const severeNoiseType = ['traffic_rail', 'traffic_highway', 'traffic_road', 'rail', 'main_road', 'elevated'].includes(noiseType);
+    if (severeNoiseType && noiseDist === 'lt20') stars += 1;
+    return Math.min(stars, 5);
+  }
+
+  if (upgradeType === 'thermal') {
+    let stars = 3;
+    if (pains.includes('thermal') || pains.includes('heat')) stars += 1;
+    if (resolved && resolved.appliedFactor) stars += 1;
+    return Math.min(stars, 5);
+  }
+
+  if (upgradeType === 'safety') {
+    return safetyForced ? 5 : 3;
+  }
+
+  return 3;
+}
+
+function getStars(count) {
+  const n = Math.max(0, Math.min(5, Number(count) || 0));
+  return '★'.repeat(n) + '☆'.repeat(5 - n);
+}
+
+function getUpgrades(answers, resolved) {
   return [
-    { name: '隔音升级+', desc: 'Rw基础上+5dB，需三玻两腔', costHint: '+约180元/㎡', stars: 4 },
-    { name: '热工升级+', desc: 'K值降0.3，需注胶式断桥', costHint: '+约120元/㎡', stars: 3 },
-    { name: '安全升级+', desc: buildSafetyUpgradeDesc(family_risk), costHint: '+约80元/㎡', stars: 5 }
+    { name: '隔音升级+', desc: 'Rw基础上+5dB，需三玻两腔', costHint: '+约180元/㎡', stars: calcUpgradeRating('sound', answers, resolved) },
+    { name: '热工升级+', desc: 'K值降0.3，需注胶式断桥', costHint: '+约120元/㎡', stars: calcUpgradeRating('thermal', answers, resolved) },
+    { name: '安全升级+', desc: buildSafetyUpgradeDesc(answers.family_risk), costHint: '+约80元/㎡', stars: calcUpgradeRating('safety', answers, resolved) }
   ];
 }
 
@@ -844,7 +992,7 @@ function buildAnalysisParagraph(answers, resolved) {
   if (pain_point === 'sound') {
     const sceneDesc = getNoiseSceneDesc(noise_type, noise_dist);
     const lifeTarget = LIFE_TARGET.sound;
-    text = `您所在项目位于${city}第${floor}层（${band.label}），${sceneDesc}。本次采购的核心目标是：${lifeTarget}。要实现这一目标，窗户隔声量需达到Rw≥${getField(resolved, 'Rw')}dB。这是本次招标的推荐门槛，低于此值的方案建议不予优先考虑。`;
+    text = `您所在项目位于${city}第${floor}层（${band.label}），${sceneDesc}。本次采购的核心目标是：${lifeTarget}。要实现这一目标，窗户隔声量需达到Rw≥${getField(resolved, 'Rw')}dB。这是本次招标的${TERM.threshold}，低于此值的方案${TERM.excludeSoft}。`;
 
     const Rw_required = Number(getField(resolved, 'Rw'));
     const costLevel = Rw_required <= 33 ? '轻' : Rw_required <= 38 ? '中' : '重';
@@ -1027,21 +1175,21 @@ function mapToSections(resolved, answers, pdfNo) {
     },
     
     chapter3: {
-      recommendedConfig: { title: '3.1 推荐配置方案', spec: budgetSpec },
+      recommendedConfig: { title: '3.1 推荐配置方案', spec: { ...budgetSpec, label: getTierLabel(String(answers.budget_tier || 'B').toUpperCase()) } },
       budgetComparison: {
         title: '3.2 预算档位对比',
         currentTier: answers.budget_tier,
         tiers: [
-          { key: 'A', label: BUDGET_SPEC.A.label, priceRange: BUDGET_SPEC.A.price_range, barRatio: BUDGET_SPEC.A.bar_ratio },
-          { key: 'B', label: BUDGET_SPEC.B.label, priceRange: BUDGET_SPEC.B.price_range, barRatio: BUDGET_SPEC.B.bar_ratio },
-          { key: 'C', label: BUDGET_SPEC.C.label, priceRange: BUDGET_SPEC.C.price_range, barRatio: BUDGET_SPEC.C.bar_ratio },
-          { key: 'D', label: BUDGET_SPEC.D.label, priceRange: BUDGET_SPEC.D.price_range, barRatio: BUDGET_SPEC.D.bar_ratio }
+          { key: 'A', label: getTierLabel('A'), priceRange: BUDGET_SPEC.A.price_range, barRatio: BUDGET_SPEC.A.bar_ratio },
+          { key: 'B', label: getTierLabel('B'), priceRange: BUDGET_SPEC.B.price_range, barRatio: BUDGET_SPEC.B.bar_ratio },
+          { key: 'C', label: getTierLabel('C'), priceRange: BUDGET_SPEC.C.price_range, barRatio: BUDGET_SPEC.C.bar_ratio },
+          { key: 'D', label: getTierLabel('D'), priceRange: BUDGET_SPEC.D.price_range, barRatio: BUDGET_SPEC.D.bar_ratio }
         ]
       },
       conflictAlert: buildChapter3ConflictAlert(budgetSpec, resolved),
       upgradeOptions: {
         title: '3.4 可选升级项',
-        items: getUpgrades(answers.family_risk),
+        items: getUpgrades(normalizedAnswers, resolved),
         l2_entry: {
           text: '以下升级项未包含在当前标准中。如需评估哪项性价比最高、或商家能否在报价中实现，可咨询李Sir',
           action: '预约咨询 →',
@@ -1062,4 +1210,21 @@ function mapToSections(resolved, answers, pdfNo) {
   };
 }
 
-module.exports = { mapToSections, getField, assertResolved, BUDGET_SPEC };
+module.exports = {
+  mapToSections,
+  getField,
+  assertResolved,
+  BUDGET_SPEC,
+  build1_1,
+  build1_2,
+  buildRedlineChecklist,
+  buildPerformanceChecks,
+  calcUpgradeRating,
+  getStars,
+  TERM,
+  getTierLabel,
+  getBudgetSpec,
+  getHeatingAdjText,
+  getShgcNote,
+  getThermalModifier
+};
