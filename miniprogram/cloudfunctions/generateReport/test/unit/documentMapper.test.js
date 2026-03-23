@@ -252,3 +252,40 @@ describe('B-14 C短期 红线文案动态化', () => {
     expect(r06.text).toContain('水密≥6级');
   });
 });
+
+describe('B-14 A中期 七维参数表与结构化等级', () => {
+  test('DM-26: 1.2需求表五维→七维（新增气密/水密）', () => {
+    const a = fixtures.createPure(fixtures.chengduMinimal, { city: '成都', floor: 3, total_floors: 18, window_type: 'casement', family_risk: [] });
+    const resolved = { P3_required: 2.6, Rw_required: 30, K_target: 2.3, SHGC_target: 0.35, kRange: '2.3~2.5', climateZoneCN: '夏热冬冷', appliedFactor: null };
+    const r = build1_2(a, resolved);
+    expect(Array.isArray(r.needsTable)).toBe(true);
+    expect(r.needsTable.length).toBe(7);
+    expect(r.needsTable.some(x => x.dimension === '气密性')).toBe(true);
+    expect(r.needsTable.some(x => x.dimension === '水密性')).toBe(true);
+  });
+
+  test('DM-27: 无级差处理 - 气密airGap=0不显示最低等级', () => {
+    const a = fixtures.createPure(fixtures.chengduMinimal, { city: '成都', floor: 3, total_floors: 18, window_type: 'casement', family_risk: [] });
+    const resolved = { P3_required: 2.6, Rw_required: 30, K_target: 2.3, SHGC_target: 0.35, kRange: '2.3~2.5', climateZoneCN: '夏热冬冷', appliedFactor: null };
+    const r = build1_2(a, resolved);
+    const airRow = (r.needsTable || []).find(x => x.dimension === '气密性') || {};
+    expect(String(airRow.value || '')).toContain('≥ 4级');
+    expect(String(airRow.value || '')).not.toContain('最低');
+  });
+
+  test('DM-28: R06新增结构化_sealGrades字段', () => {
+    const answers = { city: 'shenzhen', floor: 15, window_type: 'casement', family_risk: [] };
+    const checklist = buildRedlineChecklist(answers, { safetyForced: false });
+    const r06 = (checklist.mandatory || []).find(r => r.id === 'R06') || {};
+    expect(r06._sealGrades).toBeTruthy();
+    expect(r06._sealGrades.airRec).toBe(6);
+    expect(r06._sealGrades.waterRec).toBe(6);
+  });
+
+  test('DM-28b: 固定窗 - sealGrades.isFixed=true', () => {
+    const a = fixtures.createPure(fixtures.chengduMinimal, { city: '成都', floor: 3, total_floors: 18, window_type: 'fixed', family_risk: [] });
+    const resolved = { P3_required: 2.6, Rw_required: 30, K_target: 2.3, SHGC_target: 0.35, kRange: '2.3~2.5', climateZoneCN: '夏热冬冷', appliedFactor: null };
+    const r = build1_2(a, resolved);
+    expect(r.sealGrades && r.sealGrades.isFixed).toBe(true);
+  });
+});

@@ -151,7 +151,7 @@ function main() {
       if ((sections.chapter1.basicInfo || {}).roomType !== '主卧、客厅') throw new Error('S-C1 roomType mismatch');
       if ((sections.chapter1.basicInfo || {}).heatingType !== '自采暖') throw new Error('S-C1 heatingType mismatch');
       const rows = (((sections.chapter1 || {}).needsAnalysis || {}).needsTable) || [];
-      if (rows.length !== 5) throw new Error('S-C1 needsTable rows mismatch');
+      if (rows.length !== 7) throw new Error('S-C1 needsTable rows mismatch');
       if (!String(rows[0].basis || '').includes('GB/T 7106')) throw new Error('S-C1 wind std missing');
       if (!String(rows[4].value || '').includes('夹胶构造')) throw new Error('S-C1 safety value mismatch');
       if (!/隔声降噪是本案的主要技术制约/.test(String(((sections.chapter1 || {}).needsAnalysis || {}).coreTension || ''))) throw new Error('S-C1 coreTension subject mismatch');
@@ -230,7 +230,7 @@ function main() {
     ({ sections }) => {
       if ((sections.chapter1.basicInfo || {}).roomType !== null) throw new Error('S-C4 roomType should be null');
       const rows = (((sections.chapter1 || {}).needsAnalysis || {}).needsTable) || [];
-      if (rows.length !== 5) throw new Error('S-C4 needsTable rows mismatch');
+      if (rows.length !== 7) throw new Error('S-C4 needsTable rows mismatch');
     }
   );
 

@@ -272,7 +272,7 @@ function renderChapter1(doc, c1) {
     
     rows.forEach((row, rowIdx) => {
       const y = top + rowHeight + (rowIdx * rowHeight);
-      const bgColor = rowIdx % 2 === 0 ? COLORS.bg_card : "#FFFFFF";
+      const bgColor = rowIdx >= 5 ? '#f0f7ff' : (rowIdx % 2 === 0 ? COLORS.bg_card : "#FFFFFF");
       doc.rect(startX, y, tableWidth, rowHeight).fill(bgColor).stroke(COLORS.border);
       
       const values = [row.dimension, row.value, row.basis];
@@ -290,6 +290,12 @@ function renderChapter1(doc, c1) {
     });
     
     doc.y = top + rowHeight + (rows.length * rowHeight) + 15;
+    if (c1.needsAnalysis.sealGrades && c1.needsAnalysis.sealGrades.isFixed) {
+      doc.fillColor(COLORS.text_secondary).fontSize(8.5)
+        .text('注：固定窗因无可开启部件，密封性能天然更高，可按更高一档理解（气密、水密推荐值已+1级）', 55, doc.y, { width: 485, align: 'left', lineGap: 2 });
+      doc.fillColor(COLORS.text_body);
+      doc.y += 18;
+    }
 
     if (c1.needsAnalysis.disclaimer && c1.needsAnalysis.disclaimer.type === 'disclaimer') {
       const note = c1.needsAnalysis.disclaimer;

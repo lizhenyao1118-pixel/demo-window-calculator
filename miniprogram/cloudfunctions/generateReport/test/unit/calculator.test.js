@@ -1,4 +1,4 @@
-const { calcThermal, calcSound, calcWindPressure, calculateAll } = require('../../calculator-v2');
+const { calcThermal, calcSound, calcWindPressure, calculateAll, calcSealGrades } = require('../../calculator-v2');
 const fixtures = require('../fixtures/testAnswers');
 
 describe('calcThermal', () => {
@@ -100,6 +100,36 @@ describe('calcWindPressure', () => {
   test('CW02: 成都/低区28% - 低区风压', () => {
     const r = calcWindPressure('成都', fixtures.chengduMinimal);
     expect(parseFloat(r.P3)).toBeLessThanOrEqual(3.0);
+  });
+});
+
+describe('calcSealGrades', () => {
+  test('CT-09: 深圳15F开启窗 - 气密6级水密6级', () => {
+    const r = calcSealGrades({ city: 'shenzhen', floor: 15, windowType: 'casement' });
+    expect(r.airRec).toBe(6);
+    expect(r.waterRec).toBe(6);
+    expect(r.waterMin).toBe(5);
+    expect(r.airMin).toBe(4);
+    expect(r.waterGap).toBe(1);
+    expect(r.airGap).toBe(2);
+  });
+
+  test('CT-10: 成都3F固定窗 - 推荐值+1级', () => {
+    const r = calcSealGrades({ city: 'chengdu', floor: 3, windowType: 'fixed' });
+    expect(r.airRec).toBe(5);
+    expect(r.waterRec).toBe(5);
+    expect(r.airMin).toBe(4);
+    expect(r.waterMin).toBe(3);
+  });
+
+  test('CT-11: 北京20F开启窗 - 气密6级水密4级', () => {
+    const r = calcSealGrades({ city: 'beijing', floor: 20, windowType: 'casement' });
+    expect(r.airRec).toBe(6);
+    expect(r.waterRec).toBe(4);
+  });
+
+  test('CT-12: 无效城市 - 抛错', () => {
+    expect(() => calcSealGrades({ city: 'luoyang', floor: 3, windowType: 'casement' })).toThrow();
   });
 });
 

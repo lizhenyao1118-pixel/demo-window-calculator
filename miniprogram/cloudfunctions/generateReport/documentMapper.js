@@ -70,7 +70,8 @@ function getTierLabel(tier) {
 const { GLASS_LEVELS, BUDGET_SPEC, getNextTier } = require('./shared/budgetSpec.js');
 const { getInsulationBarRequirement } = require('./shared/thermalSpec.js');
 const { resolveGlassConfig } = require('./arbitrator.js');
-const { CLIMATE_SPEC, getClimateZone } = require('./shared/climateSpec.js');
+const { getClimateZone } = require('./shared/climateSpec.js');
+const { calcSealGrades } = require('./calculator-v2.js');
 
 const NOISE_SCENE = {
   main_road: {
@@ -158,64 +159,13 @@ const ACCEPTANCE_NODES = {
   }
 };
 
-function calcSealGradesInline(city, floor, windowType) {
-  const cityMap = {
-    beijing: '北京',
-    shenyang: '沈阳',
-    xian: '西安',
-    shanghai: '上海',
-    hangzhou: '杭州',
-    nanjing: '南京',
-    wuhan: '武汉',
-    chengdu: '成都',
-    guangzhou: '广州',
-    shenzhen: '深圳'
-  };
-
-  const cityKey = CLIMATE_SPEC[city] ? city : (cityMap[String(city || '').toLowerCase()] || city);
-  const spec = CLIMATE_SPEC[cityKey] || { climateZone: 'UNKNOWN', isCoastal: false, typhoonRisk: false };
-  const isHighFloor = Number(floor) >= 7;
-  const isSevere = spec.climateZone === 'SC';
-  const isCoastalOrTyphoon = !!spec.isCoastal || !!spec.typhoonRisk;
-  const isFixed = windowType === 'fixed';
-
-  let airMin = 4, airRec = 4;
-  if (isHighFloor) airRec = 6;
-  if (isSevere) airRec = Math.max(airRec, 6);
-  if (isHighFloor && isSevere) airMin = 6;
-
-  let waterMin = 3, waterRec = 4;
-  if (isCoastalOrTyphoon) {
-    waterMin = 4; waterRec = 5;
-  }
-  if (isHighFloor && isCoastalOrTyphoon) {
-    waterMin = Math.max(waterMin, 5);
-    waterRec = Math.max(waterRec, 6);
-  }
-
-  if (isFixed) {
-    airRec += 1;
-    waterRec += 1;
-  }
-
-  let desc = `提供整窗淋水及气密性测试报告（气密≥${airRec}级，水密≥${waterRec}级，GB/T 7106）`;
-  if (waterRec - waterMin >= 1) {
-    desc += `。若水密仅达${waterMin}级，需说明具体构造、排水与密封加强措施，由业主确认是否接受`;
-  }
-  if (airRec - airMin >= 1) {
-    desc += `。若气密仅达${airMin}级，需说明理由并由业主确认`;
-  }
-
-  return { airMin, airRec, waterMin, waterRec, desc, isFixed };
-}
-
 const REDLINE_REGISTRY = [
   { id: 'R01', text: '禁止使用回收铝型材，须提供原生铝材质检报告', level: 'mandatory', trigger: () => true },
   { id: 'R02', text: '禁止单玻或无Low-E膜的普通中空玻璃', level: 'mandatory', trigger: () => true },
   { id: 'R03', text: '禁止普通密封胶代替结构胶（须用中性硅酮结构胶）', level: 'mandatory', trigger: () => true },
   { id: 'R04', text: '断桥铝隔热条宽度须≥要求值（K值驱动）', level: 'mandatory', trigger: () => true },
   { id: 'R05', text: '型材主受力壁厚须≥1.5mm，提供截面检测报告', level: 'mandatory', trigger: () => true },
-  { id: 'R06', text: (a) => calcSealGradesInline(a.city, a.floor, a.window_type).desc, level: 'mandatory', trigger: () => true },
+  { id: 'R06', text: '', level: 'mandatory', trigger: () => true },
   { id: 'R07', text: '安全玻璃：夹胶构造强制', level: 'mandatory', trigger: (a, r) => !!(r && r.safetyForced) },
   { id: 'R08', text: '执手操作力≤25N + 门槛≤15mm', level: 'mandatory', trigger: (a) => {
     const fr = Array.isArray(a.family_risk) ? a.family_risk : [];
@@ -440,11 +390,19 @@ function build1_2(answers, resolved) {
     };
   })();
 
+  let sealGrades = null;
+  try {
+    sealGrades = calcSealGrades({ city: answers.city, floor: answers.floor, windowType: answers.window_type });
+  } catch (e) {
+    sealGrades = null;
+  }
+
   return {
-    needsTable: buildNeedsTable(resolved, answers),
+    needsTable: buildNeedsTable(resolved, answers, sealGrades),
     coreTension: buildCoreTension(answers, resolved),
     disclaimer: buildParamDisclaimer(),
-    budgetFitnessNote: budgetFitnessNote
+    budgetFitnessNote: budgetFitnessNote,
+    sealGrades
   };
 }
 
@@ -478,7 +436,7 @@ function getShgcNote(answers) {
   return '标准太阳得热控制';
 }
 
-function buildNeedsTable(resolved, answers) {
+function buildNeedsTable(resolved, answers, sealGrades) {
   const climateZone = answers.climateZone || resolved.climateZone || getClimateZone(answers.city);
   const isForcedTest = ['sliding', 'door_window'].includes(answers.window_type);
   const safetyValue = isForcedTest ? '夹胶构造（强制）+ 整窗测试报告' : '夹胶构造 / 普通构造';
@@ -499,6 +457,11 @@ function buildNeedsTable(resolved, answers) {
   } else if (resolved.appliedFactor === 'bigWindow') {
     kBasisText = `${czCN}区 落地窗隔热加严`;
   }
+
+  const sg = sealGrades || { airMin: 4, airRec: 4, airGap: 0, waterMin: 3, waterRec: 4, waterGap: 1, isFixed: false };
+  const fixedNote = sg.isFixed ? '（固定窗推荐值+1级）' : '';
+  const airValue = `≥ ${sg.airRec}级${sg.airGap > 0 ? `（最低${sg.airMin}级）` : ''}`;
+  const waterValue = `≥ ${sg.waterRec}级${sg.waterGap > 0 ? `（最低${sg.waterMin}级）` : ''}`;
 
   return [
     {
@@ -525,6 +488,16 @@ function buildNeedsTable(resolved, answers) {
       dimension: '安全等级',
       value: safetyValue,
       basis: safetyBasis
+    },
+    {
+      dimension: '气密性',
+      value: airValue,
+      basis: `${STANDARDS_MAP.wind_pressure.short} · 气密性能等级${fixedNote}`
+    },
+    {
+      dimension: '水密性',
+      value: waterValue,
+      basis: `${STANDARDS_MAP.wind_pressure.short} · 水密性能等级${fixedNote}`
     }
   ];
 }
@@ -635,6 +608,18 @@ function buildRedlineChecklist(answers, resolved) {
   REDLINE_REGISTRY.forEach((r) => {
     if (!r.trigger(answers, resolved)) return;
     const item = { ...r, text: (typeof r.text === 'function' ? r.text(answers, resolved) : r.text) };
+    if (r.id === 'R06') {
+      const sealGrades = calcSealGrades({ city: answers.city, floor: answers.floor, windowType: answers.window_type });
+      let desc = `提供整窗淋水及气密性测试报告（气密≥${sealGrades.airRec}级，水密≥${sealGrades.waterRec}级，GB/T 7106）`;
+      if (sealGrades.waterGap >= 1) {
+        desc += `。若水密仅达${sealGrades.waterMin}级，需说明具体构造、排水与密封加强措施，由业主确认是否接受`;
+      }
+      if (sealGrades.airGap >= 1) {
+        desc += `。若气密仅达${sealGrades.airMin}级，需说明理由并由业主确认`;
+      }
+      item.text = desc;
+      item._sealGrades = { airMin: sealGrades.airMin, airRec: sealGrades.airRec, waterMin: sealGrades.waterMin, waterRec: sealGrades.waterRec };
+    }
     if (r.level === 'mandatory') mandatory.push(item);
     else recommended.push(item);
   });

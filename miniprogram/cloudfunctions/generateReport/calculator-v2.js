@@ -232,4 +232,55 @@ function calcWindPressure(city, answers) {
   return { P3: p3.value, warnings: p3.warnings };
 }
 
-module.exports = { calculateAll, calcThermal, calcSound, calcWindPressure };
+function calcSealGrades({ city, floor, windowType }) {
+  const cityMap = {
+    beijing: '北京',
+    shenyang: '沈阳',
+    xian: '西安',
+    shanghai: '上海',
+    hangzhou: '杭州',
+    nanjing: '南京',
+    wuhan: '武汉',
+    chengdu: '成都',
+    guangzhou: '广州',
+    shenzhen: '深圳'
+  };
+
+  const key = CLIMATE_SPEC[city] ? city : (cityMap[String(city || '').toLowerCase()] || city);
+  if (!key || !CLIMATE_SPEC[key]) throw new Error(`calcSealGrades: 无效城市 "${city}"`);
+  const fl = Number(floor);
+  if (!Number.isFinite(fl) || fl < 1) throw new Error(`calcSealGrades: 无效楼层 "${floor}"`);
+
+  const spec = CLIMATE_SPEC[key];
+  const isHighFloor = fl >= 7;
+  const isSevere = spec.climateZone === 'SC';
+  const isCoastalOrTyphoon = !!spec.isCoastal || !!spec.typhoonRisk;
+  const isFixed = windowType === 'fixed';
+
+  let airMin = 4, airRec = 4;
+  if (isHighFloor) airRec = 6;
+  if (isSevere) airRec = Math.max(airRec, 6);
+  if (isHighFloor && isSevere) airMin = 6;
+
+  let waterMin = 3, waterRec = 4;
+  if (isCoastalOrTyphoon) { waterMin = 4; waterRec = 5; }
+  if (isHighFloor && isCoastalOrTyphoon) {
+    waterMin = Math.max(waterMin, 5);
+    waterRec = Math.max(waterRec, 6);
+  }
+
+  if (isFixed) {
+    airRec += 1;
+    waterRec += 1;
+  }
+
+  return {
+    airMin, airRec, waterMin, waterRec,
+    airGap: airRec - airMin,
+    waterGap: waterRec - waterMin,
+    isFixed,
+    _debug: { isHighFloor, isSevere, isCoastalOrTyphoon, climateZone: spec.climateZone }
+  };
+}
+
+module.exports = { calculateAll, calcThermal, calcSound, calcWindPressure, calcSealGrades };
