@@ -40,10 +40,72 @@ function calcRw({ noise_type, noise_dist, pain_point }) {
   return Math.min(Math.max(rw, 28), 45);
 }
 
-const { calcThermal: calcThermalFromClimate, getClimateZone } = require('./shared/climateSpec.js');
+const { CLIMATE_SPEC, getClimateZone } = require('./shared/climateSpec.js');
 
-function calcThermal(city, heatingType) {
-  return calcThermalFromClimate(city, heatingType);
+function calcThermal(city, answers) {
+  const spec = CLIMATE_SPEC[city];
+  if (!spec) {
+    return {
+      K_target: 2.5,
+      kBase: 2.5,
+      kMin: 2.3,
+      kRange: '2.3~2.5',
+      climateZone: 'UNKNOWN',
+      climateZoneCN: '未知',
+      adjustment: 0,
+      appliedFactor: null,
+      appliedLabel: null,
+      corrections: []
+    };
+  }
+
+  const heatingType = answers.heatingType || answers.heating_type || 'central';
+  const westShadingRaw = (answers.westShading !== undefined) ? answers.westShading : answers.west_shading;
+  const westShading = westShadingRaw === true || westShadingRaw === '有遮挡';
+  const orientation = answers.orientation;
+  const familyRisk = answers.family_risk || answers.familyRisk || [];
+
+  const corrections = [];
+  if (heatingType === 'self') {
+    corrections.push({ factor: 'heating', value: -0.2, label: '自采暖保温加严' });
+  } else if (heatingType === 'none') {
+    corrections.push({ factor: 'heating', value: 0, label: '无供暖' });
+  } else {
+    corrections.push({ factor: 'heating', value: 0, label: '集中供暖' });
+  }
+
+  if (orientation === 'west' && !westShading) {
+    corrections.push({ factor: 'westSun', value: -0.1, label: '西向隔热加严' });
+  }
+
+  const familyArr = Array.isArray(familyRisk) ? familyRisk : [];
+  if (familyArr.includes('large_fixed') || familyArr.includes('floor_window') || familyArr.includes('landing') || familyArr.includes('glass_wall')) {
+    corrections.push({ factor: 'bigWindow', value: -0.2, label: '落地窗隔热加严' });
+  }
+
+  const adjustment = corrections.length > 0 ? Math.min(...corrections.map(c => c.value)) : 0;
+  const appliedCorrection = corrections.find(c => c.value === adjustment && c.value !== 0);
+  const appliedFactor = appliedCorrection ? appliedCorrection.factor : null;
+  const appliedLabel = appliedCorrection ? appliedCorrection.label : null;
+
+  const rawK = spec.kBase + adjustment;
+  const K_target = Math.max(Number(rawK.toFixed(1)), spec.kMin);
+
+  const kMin = Number(spec.kMin.toFixed(1));
+  const kBase = Number(spec.kBase.toFixed(1));
+
+  return {
+    K_target,
+    kBase,
+    kMin,
+    kRange: `${spec.kMin.toFixed(1)}~${spec.kBase.toFixed(1)}`,
+    climateZone: spec.climateZone,
+    climateZoneCN: spec.climateZoneCN,
+    adjustment,
+    appliedFactor,
+    appliedLabel,
+    corrections
+  };
 }
 
 function calcSHGC(city, orientation, west_shading) {
@@ -111,19 +173,26 @@ const { BUDGET_SPEC } = require('./shared/budgetSpec.js');
 
 // 主计算入口
 function calculateAll(assessment) {
-  const { city, floor, total_floors, noise_type, noise_dist, orientation, west_shading, pain_point, heating_type, family_risk, budget_tier } = assessment;
+  const { city, floor, total_floors, noise_type, noise_dist, orientation, westShading, west_shading, pain_point, heating_type, family_risk, budget_tier } = assessment;
+  const effectiveWestShading = (westShading !== undefined) ? westShading : west_shading;
   
   const cityConfig = getCityConfig(city);
   const p3Result = calcP3(city, floor, total_floors);
   const rwValue = calcRw({ noise_type, noise_dist, pain_point });
-  const thermalResult = calcThermal(city, heating_type);
-  const solarResult = calcSHGC(city, orientation, west_shading);
-  const K_target = parseFloat(Number(thermalResult.K_target).toFixed(1));
+  const thermalResult = calcThermal(city, { ...assessment, west_shading: effectiveWestShading, heatingType: heating_type });
+  const solarResult = calcSHGC(city, orientation, effectiveWestShading);
+  const K_target = Number(thermalResult.K_target);
   
   const computed = {
     city,
-    climate_zone: thermalResult.climateZone.code,
-    climateZone: thermalResult.climateZone,
+    climate_zone: thermalResult.climateZone,
+    climateZone: { code: thermalResult.climateZone, name: thermalResult.climateZoneCN, kBase: thermalResult.kBase, kMin: thermalResult.kMin },
+    climateZoneCN: thermalResult.climateZoneCN,
+    kBase: thermalResult.kBase,
+    kMin: thermalResult.kMin,
+    kRange: thermalResult.kRange,
+    appliedFactor: thermalResult.appliedFactor,
+    appliedLabel: thermalResult.appliedLabel,
     wind_zone: cityConfig.wind_zone,
     floor, total_floors, height_ratio: floor / Math.max(total_floors, 1),
     P3: p3Result.value,

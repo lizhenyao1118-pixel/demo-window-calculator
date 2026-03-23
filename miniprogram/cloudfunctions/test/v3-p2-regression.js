@@ -76,7 +76,7 @@ function main() {
     ({ sections, json }) => {
       assertNotIncludes(json, '【强制】推拉窗/门联窗需提供整窗性能测试报告（GB/T 7106 抗风压 + GB/T 7107 气密·水密）', '1 should not require whole-window test');
       const K = Number(sections.chapter2.metrics.find(x => x.name === '热工性能').value.match(/K≤([0-9.]+)/)?.[1] || NaN);
-      if (K !== 2.5) throw new Error(`1 K_target mismatch: ${K}`);
+      if (K !== 2.0) throw new Error(`1 K_target mismatch: ${K}`);
     }
   );
 
@@ -100,7 +100,7 @@ function main() {
       assertIncludes(json, '【强制】推拉窗/门联窗需提供整窗性能测试报告（GB/T 7106 抗风压 + GB/T 7107 气密·水密）', '2 whole-window test redline');
       const m = json.match(/K≤([0-9.]+)/);
       const K = m ? Number(m[1]) : NaN;
-      if (K !== 2.3) throw new Error(`2 K_target mismatch: ${K}`);
+      if (K !== 1.8) throw new Error(`2 K_target mismatch: ${K}`);
     }
   );
 
@@ -124,7 +124,7 @@ function main() {
       assertIncludes(json, '【强制】推拉窗/门联窗需提供整窗性能测试报告（GB/T 7106 抗风压 + GB/T 7107 气密·水密）', '3 whole-window test redline');
       const m = json.match(/K≤([0-9.]+)/);
       const K = m ? Number(m[1]) : NaN;
-      if (K !== 2.7) throw new Error(`3 K_target mismatch: ${K}`);
+      if (K !== 2.0) throw new Error(`3 K_target mismatch: ${K}`);
     }
   );
 
@@ -259,6 +259,108 @@ function main() {
       const shgcRow = rows[3] || {};
       if (!String(shgcRow.basis || '').includes('GB/T 2680')) throw new Error('S-C5 shgc std missing');
       if (!String(shgcRow.basis || '').includes('西向无遮阳控制过热')) throw new Error('S-C5 shgc basis missing');
+    }
+  );
+
+  runScenario(
+    'T-K1',
+    {
+      city: '广州',
+      floor: 8,
+      total_floors: 18,
+      pain_point: 'heat',
+      pain_points: ['thermal'],
+      noise_type: 'quiet',
+      noise_dist: 'gt50',
+      orientation: 'south',
+      west_shading: true,
+      heating_type: 'none',
+      window_type: 'casement',
+      family_risk: [],
+      budget_tier: 'B'
+    },
+    ({ sections }) => {
+      const rows = (((sections.chapter1 || {}).needsAnalysis || {}).needsTable) || [];
+      const kRow = rows[2] || {};
+      if (!String(kRow.value || '').includes('K≤2.4')) throw new Error('T-K1 K_target mismatch');
+      if (!String(kRow.value || '').includes('推荐范围2.2~2.4')) throw new Error('T-K1 kRange mismatch');
+    }
+  );
+
+  runScenario(
+    'T-K2',
+    {
+      city: '广州',
+      floor: 8,
+      total_floors: 18,
+      pain_point: 'heat',
+      pain_points: ['thermal'],
+      noise_type: 'quiet',
+      noise_dist: 'gt50',
+      orientation: 'west',
+      west_shading: false,
+      heating_type: 'none',
+      window_type: 'casement',
+      family_risk: [],
+      budget_tier: 'B'
+    },
+    ({ sections }) => {
+      const rows = (((sections.chapter1 || {}).needsAnalysis || {}).needsTable) || [];
+      const kRow = rows[2] || {};
+      if (!String(kRow.value || '').includes('K≤2.3')) throw new Error('T-K2 K_target mismatch');
+      if (!String(kRow.value || '').includes('推荐范围2.2~2.4')) throw new Error('T-K2 kRange mismatch');
+      if (!String(kRow.basis || '').includes('西向隔热加严')) throw new Error('T-K2 basis mismatch');
+    }
+  );
+
+  runScenario(
+    'T-K3',
+    {
+      city: '深圳',
+      floor: 8,
+      total_floors: 18,
+      pain_point: 'heat',
+      pain_points: ['thermal'],
+      noise_type: 'quiet',
+      noise_dist: 'gt50',
+      orientation: 'south',
+      west_shading: true,
+      heating_type: 'none',
+      window_type: 'casement',
+      family_risk: ['large_fixed'],
+      budget_tier: 'B'
+    },
+    ({ sections }) => {
+      const rows = (((sections.chapter1 || {}).needsAnalysis || {}).needsTable) || [];
+      const kRow = rows[2] || {};
+      if (!String(kRow.value || '').includes('K≤2.0')) throw new Error('T-K3 K_target mismatch');
+      if (!String(kRow.value || '').includes('推荐范围2.0~2.2')) throw new Error('T-K3 kRange mismatch');
+      if (!String(kRow.basis || '').includes('落地窗隔热加严')) throw new Error('T-K3 basis mismatch');
+    }
+  );
+
+  runScenario(
+    'T-K6',
+    {
+      city: '沈阳',
+      floor: 8,
+      total_floors: 18,
+      pain_point: 'heat',
+      pain_points: ['thermal'],
+      noise_type: 'quiet',
+      noise_dist: 'gt50',
+      orientation: 'south',
+      west_shading: true,
+      heating_type: 'central',
+      window_type: 'casement',
+      family_risk: [],
+      budget_tier: 'B'
+    },
+    ({ sections }) => {
+      const rows = (((sections.chapter1 || {}).needsAnalysis || {}).needsTable) || [];
+      const kRow = rows[2] || {};
+      if (!String(kRow.value || '').includes('K≤1.8')) throw new Error('T-K6 K_target mismatch');
+      if (!String(kRow.value || '').includes('推荐范围1.5~1.8')) throw new Error('T-K6 kRange mismatch');
     }
   );
 }

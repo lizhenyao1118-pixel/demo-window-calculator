@@ -122,7 +122,6 @@ function renderChapter4(doc, ch) {
   
   if (ch.is_risk) {
     doc.save().rotate(-45, { origin: [297, 421] });
-    doc.fontSize(60).fillColor('#DC2626', 0.08).text('RISK', 60, 360);
     doc.restore();
     
     doc.fontSize(14).fillColor('#DC2626').text('风险提示');

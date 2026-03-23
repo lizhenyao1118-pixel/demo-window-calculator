@@ -63,7 +63,7 @@ const TEST_CASES = [
     id: 'TC04',
     name: 'C档严寒+西晒（热工叠加）',
     input: {
-      city: '哈尔滨',
+      city: '沈阳',
       noise_type: 'quiet',
       noise_dist: 'gt50',
       pain_point: 'heat',
@@ -73,7 +73,7 @@ const TEST_CASES = [
       window_features: { has_large_fixed: false, has_wide_slider: false, has_family_safety: false }
     },
     expect: {
-      K_target: 1.8
+      K_target: 1.7
     }
   },
   {

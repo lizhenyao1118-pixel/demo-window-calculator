@@ -78,6 +78,37 @@ const LIFE_TARGET = {
   safety: '儿童或老人独自在家时，窗户不会成为安全隐患，即使意外碰撞也不会发生坠落风险'
 };
 
+const PAIN_POINT_MAP = {
+  sound: '隔声降噪',
+  thermal: '保温隔热',
+  security: '安全防护',
+  view: '通风采光',
+  economy: '经济实用',
+  heat: '保温隔热',
+  wind: '防风防水',
+  safety: '安全防护',
+  price: '经济实用'
+};
+
+const NOISE_TYPE_MAP = {
+  traffic_road: '交通公路',
+  traffic_rail: '轨道交通',
+  construction: '施工噪音',
+  community: '社区生活',
+  main_road: '主干道',
+  elevated: '高架桥',
+  rail: '轨道交通',
+  quiet: '安静环境'
+};
+
+const NOISE_DIST_MAP = {
+  lt20: '近距离（<20m）',
+  '20_50': '中距离（20~50m）',
+  '20to50': '中距离（20~50m）',
+  gt50: '远距离（>50m）',
+  gt50_shielded: '远距离有遮挡'
+};
+
 const ACCEPTANCE_NODES = {
   entry: {
     title: '【进场验收】（4条）',
@@ -262,7 +293,31 @@ function build1_1(answers) {
 
   const orientationText = answers.orientation || '';
   const isWest = answers.orientation === 'west' || answers.orientation === '西';
-  const shadingText = isWest ? (answers.west_shading ? '西晒有遮挡' : '西晒无遮阳') : '非西晒';
+  const shadingRaw = (answers.westShading !== undefined) ? answers.westShading : answers.west_shading;
+  const hasShading = shadingRaw === true || shadingRaw === '有遮挡';
+  const shadingText = isWest ? (hasShading ? '西晒有遮挡' : '西晒无遮阳') : '非西晒';
+
+  const painPointArr = (() => {
+    const v = Array.isArray(answers.pain_points)
+      ? answers.pain_points
+      : Array.isArray(answers.painPoint)
+        ? answers.painPoint
+        : (typeof answers.painPoint === 'string' ? [answers.painPoint] : []);
+    if (v.length > 0) return v;
+    return (typeof answers.pain_point === 'string' && answers.pain_point) ? [answers.pain_point] : [];
+  })();
+  const painPointText = painPointArr.map(k => PAIN_POINT_MAP[k] || k).join('、') || '未选择';
+
+  let noiseText = '未选择';
+  if (answers.noise_type) {
+    if (answers.noise_type === 'quiet') {
+      noiseText = '安静环境';
+    } else {
+      const typeText = NOISE_TYPE_MAP[answers.noise_type] || answers.noise_type;
+      const distText = NOISE_DIST_MAP[answers.noise_dist] || answers.noise_dist || '';
+      noiseText = distText ? `${typeText}·${distText}` : typeText;
+    }
+  }
 
   return {
     city: answers.city || '',
@@ -273,15 +328,30 @@ function build1_1(answers) {
     windowType: windowTypeMap[answers.window_type] || answers.window_type || '',
     orientation: `${orientationText}，${shadingText}`,
     heatingType: getHeatingDesc(answers.heating_type),
-    familyDesc: getFamilyDesc(answers.family_risk)
+    familyDesc: getFamilyDesc(answers.family_risk),
+    painPoint: painPointText,
+    noiseEnv: noiseText
   };
 }
 
 function build1_2(answers, resolved) {
+  const budgetFitnessNote = (() => {
+    const tier = (answers.budget_tier || answers.budgetTier || '').toUpperCase();
+    const dominated = ['A', 'B'].includes(tier);
+    const familyRisk = Array.isArray(answers.family_risk) ? answers.family_risk : [];
+    const forced = ['sliding', 'door_window'].includes(answers.window_type) || familyRisk.includes('child') || familyRisk.includes('elder') || familyRisk.includes('large_fixed');
+    if (!dominated || !forced) return null;
+    return {
+      type: 'budget_fitness_warning',
+      text: '根据您的需求分析，本项目存在强制性安全配置要求（如钢化玻璃、夹胶玻璃等），该类配置的市场成本通常高于当前所选预算档位的覆盖范围。建议您在比价时适当上调预算预期，或与商家沟通安全配置的具体加价幅度，以确保核心安全需求不因预算约束而被削减。'
+    };
+  })();
+
   return {
     needsTable: buildNeedsTable(resolved, answers),
     coreTension: buildCoreTension(answers, resolved),
-    disclaimer: buildParamDisclaimer()
+    disclaimer: buildParamDisclaimer(),
+    budgetFitnessNote: budgetFitnessNote
   };
 }
 
@@ -324,6 +394,18 @@ function buildNeedsTable(resolved, answers) {
     : `${STANDARDS_MAP.safety_glass.short} · 家庭风险场景`;
 
   const heightRatio = Number.isFinite(Number(resolved.height_ratio)) ? Number(resolved.height_ratio) : 0;
+  const thermalRange = resolved.kRange || (resolved.kMin !== undefined && resolved.kBase !== undefined ? `${resolved.kMin}~${resolved.kBase}` : '');
+  const czCN = resolved.climateZoneCN || getClimateName(climateZone);
+  const kNum = Number(getField(resolved, 'K'));
+  const kText = Number.isFinite(kNum) ? kNum.toFixed(1) : String(getField(resolved, 'K'));
+  let kBasisText = `${czCN}区基准`;
+  if (resolved.appliedFactor === 'heating') {
+    if (answers.heating_type === 'self') kBasisText = `${czCN}区 自采暖保温加严`;
+  } else if (resolved.appliedFactor === 'westSun') {
+    kBasisText = `${czCN}区 西向隔热加严`;
+  } else if (resolved.appliedFactor === 'bigWindow') {
+    kBasisText = `${czCN}区 落地窗隔热加严`;
+  }
 
   return [
     {
@@ -338,8 +420,8 @@ function buildNeedsTable(resolved, answers) {
     },
     {
       dimension: '传热系数',
-      value: `≤ ${getField(resolved, 'K')}`,
-      basis: `${STANDARDS_MAP.thermal.short} · ${getClimateName(climateZone)}区${getThermalModifier(answers)}`
+      value: `K≤${kText} W/(m²·K)${thermalRange ? `（推荐范围${thermalRange}）` : ''}`,
+      basis: `${STANDARDS_MAP.thermal.short} · ${kBasisText}`
     },
     {
       dimension: '太阳得热',
@@ -441,13 +523,15 @@ function getAcceptanceNodes(climateZone) {
 
 function buildChapter3ConflictAlert(budgetSpec, resolved) {
   const notes = Array.isArray(resolved.conflict_notes) ? resolved.conflict_notes : [];
-  if (!budgetSpec || !budgetSpec.conflict || notes.length === 0) return null;
+  const hasConflicts = notes.length > 0;
+  const conflictMeta = budgetSpec && budgetSpec.conflict ? budgetSpec.conflict : null;
 
   return {
-    title: '配置升级提醒',
-    items: notes,
-    severity: budgetSpec.conflict.severity || 'warning',
-    cost_estimate: `预计玻璃成本增加：${budgetSpec.cost_delta}元/㎡`
+    title: hasConflicts ? '配置升级提醒' : '配置兼容性检查',
+    items: hasConflicts ? notes : [],
+    noConflictText: hasConflicts ? null : '经分析，您的需求配置与所选预算档位无明显冲突。',
+    severity: (conflictMeta && conflictMeta.severity) ? conflictMeta.severity : 'warning',
+    cost_estimate: hasConflicts ? `预计玻璃成本增加：${budgetSpec.cost_delta}元/㎡` : null
   };
 }
 

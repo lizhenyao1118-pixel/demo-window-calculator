@@ -201,7 +201,10 @@ function renderChapter1(doc, c1) {
   const hasNewStructure = !!c1.basicInfo;
   const cardY = doc.y;
   const baseHeight = 78;
-  const extraHeight = (hasNewStructure && basicInfo.roomType) ? 18 : 0;
+  const extraHeight =
+    (hasNewStructure && basicInfo.roomType ? 18 : 0) +
+    (hasNewStructure && basicInfo.painPoint ? 18 : 0) +
+    (hasNewStructure && basicInfo.noiseEnv ? 18 : 0);
   doc.roundedRect(55, cardY, 485, baseHeight + extraHeight, 6).fill(COLORS.bg_card);
   
   let textY = cardY + 14;
@@ -231,6 +234,18 @@ function renderChapter1(doc, c1) {
   doc.fillColor(COLORS.text_body).fontSize(10.5)
     .text(`供暖方式：${basicInfo.heatingType || c1.heatingDesc || ''}`, leftX, textY)
     .text(`家庭：${basicInfo.familyDesc || c1.familyDesc || ''}`, rightX, textY);
+  textY += 18;
+
+  if (hasNewStructure && basicInfo.painPoint) {
+    doc.fillColor(COLORS.text_body).fontSize(10.5)
+      .text(`核心诉求：${basicInfo.painPoint}`, leftX, textY);
+    textY += 18;
+  }
+
+  if (hasNewStructure && basicInfo.noiseEnv) {
+    doc.fillColor(COLORS.text_body).fontSize(10.5)
+      .text(`噪音环境：${basicInfo.noiseEnv}`, leftX, textY);
+  }
   
   doc.y = cardY + baseHeight + extraHeight + 10;
 
@@ -300,6 +315,36 @@ function renderChapter1(doc, c1) {
       doc.fillColor(COLORS.text_body).fontSize(10.5)
         .text(tensionText, 55, doc.y, { width: 485, align: "justify", lineGap: 6 });
       doc.y += 35;
+    }
+
+    if (c1.needsAnalysis.budgetFitnessNote && c1.needsAnalysis.budgetFitnessNote.type === 'budget_fitness_warning') {
+      const note = c1.needsAnalysis.budgetFitnessNote;
+      const titleText = '预算适配性提示';
+      const bodyText = String(note.text || '');
+      const boxX = 55;
+      const boxW = 485;
+      const padding = { top: 8, bottom: 8, left: 12, right: 12 };
+      const titleSize = 10;
+      const bodySize = 10;
+      const titleW = boxW - padding.left - padding.right;
+      const bodyW = boxW - padding.left - padding.right;
+      const y0 = doc.y + 6;
+
+      doc.fontSize(titleSize);
+      const titleH = doc.heightOfString(titleText, { width: titleW });
+      doc.fontSize(bodySize);
+      const bodyH = doc.heightOfString(bodyText, { width: bodyW, lineGap: 2 });
+      const boxH = padding.top + titleH + 4 + bodyH + padding.bottom;
+
+      if (842 - doc.y < boxH + 40) doc.addPage();
+      const y = doc.y + 6;
+      doc.rect(boxX, y, boxW, boxH).fill('#FFF8E1');
+      doc.rect(boxX, y, boxW, boxH).lineWidth(1).strokeColor('#E0C36A').stroke();
+
+      doc.fillColor(COLORS.text_body).fontSize(titleSize).text(titleText, boxX + padding.left, y + padding.top, { width: titleW });
+      doc.fillColor(COLORS.text_body).fontSize(bodySize).text(bodyText, boxX + padding.left, y + padding.top + titleH + 4, { width: bodyW, align: 'left', lineGap: 2 });
+      doc.fillColor(COLORS.text_body);
+      doc.y = y + boxH + 18;
     }
   } else {
     doc.fillColor(COLORS.text_body).fontSize(10.5)
@@ -472,37 +517,48 @@ function renderChapter3(doc, c3) {
     .text("* 价格为市场参考值（元/㎡），差异>30%时谨慎选择最低价", 55, y + 5);
   doc.y = y + 25;
 
-  if (c3.conflictAlert && c3.conflictAlert.items && c3.conflictAlert.items.length > 0) {
-    drawSectionTitle(doc, `3.3 ${c3.conflictAlert.title || "配置升级提醒"}`);
+  if (c3.conflictAlert) {
+    drawSectionTitle(doc, `3.3 ${c3.conflictAlert.title || "配置兼容性检查"}`);
 
-    const severity = c3.conflictAlert.severity || 'warning';
-    const leftColor = severity === 'error' ? COLORS.risk_red : severity === 'warning' ? "#E67E22" : COLORS.safe_green;
-    const bgColor = severity === 'error' ? COLORS.risk_red_bg : severity === 'warning' ? "#FEF9E7" : COLORS.safe_green_bg;
+    const hasItems = Array.isArray(c3.conflictAlert.items) && c3.conflictAlert.items.length > 0;
+    if (hasItems) {
+      const severity = c3.conflictAlert.severity || 'warning';
+      const leftColor = severity === 'error' ? COLORS.risk_red : severity === 'warning' ? "#E67E22" : COLORS.safe_green;
+      const bgColor = severity === 'error' ? COLORS.risk_red_bg : severity === 'warning' ? "#FEF9E7" : COLORS.safe_green_bg;
 
-    const itemLines = (c3.conflictAlert.items || []).length;
-    const extraH = c3.conflictAlert.cost_estimate ? 16 : 0;
-    const boxH = 18 + itemLines * 14 + extraH + 12;
+      const itemLines = (c3.conflictAlert.items || []).length;
+      const extraH = c3.conflictAlert.cost_estimate ? 16 : 0;
+      const boxH = 18 + itemLines * 14 + extraH + 12;
 
-    doc.rect(55, doc.y, 5, boxH).fill(leftColor);
-    doc.rect(60, doc.y, 480, boxH).fill(bgColor);
+      doc.rect(55, doc.y, 5, boxH).fill(leftColor);
+      doc.rect(60, doc.y, 480, boxH).fill(bgColor);
 
-    let yy = doc.y + 10;
-    const alertTitle = severity === 'warning' ? `⚠️ ${c3.conflictAlert.title || "配置升级提醒"}` : (c3.conflictAlert.title || "配置升级提醒");
-    doc.fillColor(leftColor).fontSize(12).text(alertTitle, 70, yy);
-    yy += 18;
+      let yy = doc.y + 10;
+      const alertTitle = severity === 'warning' ? `⚠️ ${c3.conflictAlert.title || "配置升级提醒"}` : (c3.conflictAlert.title || "配置升级提醒");
+      doc.fillColor(leftColor).fontSize(12).text(alertTitle, 70, yy);
+      yy += 18;
 
-    (c3.conflictAlert.items || []).forEach((item) => {
-      doc.fillColor(COLORS.text_body).fontSize(10).text(`· ${item}`, 70, yy, { width: 460 });
-      yy += 14;
-    });
+      (c3.conflictAlert.items || []).forEach((item) => {
+        doc.fillColor(COLORS.text_body).fontSize(10).text(`· ${item}`, 70, yy, { width: 460 });
+        yy += 14;
+      });
 
-    if (c3.conflictAlert.cost_estimate) {
-      yy += 2;
-      doc.fillColor(leftColor).fontSize(10).text(c3.conflictAlert.cost_estimate, 70, yy, { width: 460 });
-      yy += 14;
+      if (c3.conflictAlert.cost_estimate) {
+        yy += 2;
+        doc.fillColor(leftColor).fontSize(10).text(c3.conflictAlert.cost_estimate, 70, yy, { width: 460 });
+        yy += 14;
+      }
+
+      doc.y = doc.y + boxH + 12;
+    } else if (c3.conflictAlert.noConflictText) {
+      const text = String(c3.conflictAlert.noConflictText || '');
+      const boxH = 44;
+      doc.rect(55, doc.y, 5, boxH).fill(COLORS.safe_green);
+      doc.rect(60, doc.y, 480, boxH).fill(COLORS.safe_green_bg);
+      doc.fillColor(COLORS.safe_green).fontSize(12).text("✓ 配置兼容性检查", 70, doc.y + 10);
+      doc.fillColor(COLORS.text_body).fontSize(10).text(text, 70, doc.y + 26, { width: 460 });
+      doc.y = doc.y + boxH + 12;
     }
-
-    doc.y = doc.y + boxH + 12;
   }
 
   // 可选升级项
@@ -732,20 +788,6 @@ function renderAttachments(doc, attachments) {
     .text(`共 ${attachments.photos.length} 张照片（照片将在实现后显示）`, 55, doc.y);
 }
 
-function renderWatermark(doc, isRisk) {
-  const text = isRisk ? "RISK" : "STANDARD";
-  const color = isRisk ? COLORS.risk_red : COLORS.safe_green;
-  const range = doc.bufferedPageRange();
-  
-  for (let i = 0; i < range.count; i++) {
-    doc.switchToPage(range.start + i);
-    doc.save();
-    doc.rotate(45, { origin: [297, 421] });
-    doc.fillColor(color, 0.08).fontSize(60).text(text, 40, 360);
-    doc.restore();
-  }
-}
-
 function addFooters(doc, disclaimer) {
   const range = doc.bufferedPageRange();
   const shortDisc = (disclaimer || "").slice(0, 55) + "...";
@@ -786,7 +828,6 @@ async function buildPDF(sections, outputPath) {
         renderAttachments(doc, sections.attachments);
       }
       
-      renderWatermark(doc, sections.cover.isRisk);
       addFooters(doc, sections.cover.disclaimer);
       
       doc.end();
