@@ -59,7 +59,7 @@ describe('mapToSections', () => {
     const sections = mapToSections(resolved, buildAnswers(fixtures.shanghaiThermal), 'UNIT-SEC02');
     const tension = String((((sections.chapter1 || {}).needsAnalysis) || {}).coreTension || '');
     expect(tension).toContain('基于以上分析');
-    expect(tension).toContain('最低准入标准');
+    expect(tension).toContain('最低可接受值');
   });
 
   test('SEC03: 档位标签统一为完整名称', () => {

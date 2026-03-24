@@ -160,11 +160,11 @@ const ACCEPTANCE_NODES = {
 };
 
 const REDLINE_REGISTRY = [
-  { id: 'R01', text: '禁止使用回收铝型材，须提供原生铝材质检报告', level: 'mandatory', trigger: () => true },
+  { id: 'R01', text: '本项目建议优先采用原生铝型材，并提供材质检验证明；如采用其他材质，应说明理由并提供检测依据。', level: 'mandatory', trigger: () => true },
   { id: 'R02', text: '禁止单玻或无Low-E膜的普通中空玻璃', level: 'mandatory', trigger: () => true },
   { id: 'R03', text: '禁止普通密封胶代替结构胶（须用中性硅酮结构胶）', level: 'mandatory', trigger: () => true },
-  { id: 'R04', text: '断桥铝隔热条宽度须≥要求值（K值驱动）', level: 'mandatory', trigger: () => true },
-  { id: 'R05', text: '型材主受力壁厚须≥1.5mm，提供截面检测报告', level: 'mandatory', trigger: () => true },
+  { id: 'R04', text: '断桥铝隔热条宽度建议不低于本项目所需的热工要求（如常规穿条式≥28mm），不建议使用明显低于要求的仿断桥产品。', level: 'mandatory', trigger: () => true },
+  { id: 'R05', text: '型材主受力壁厚建议不低于 1.5mm，并提供截面检测报告；如提议采用更薄型材，应说明承载与风压校核依据。', level: 'mandatory', trigger: () => true },
   { id: 'R06', text: '', level: 'mandatory', trigger: () => true },
   { id: 'R07', text: '安全玻璃：夹胶构造强制', level: 'mandatory', trigger: (a, r) => !!(r && r.safetyForced) },
   { id: 'R08', text: '执手操作力≤25N + 门槛≤15mm', level: 'mandatory', trigger: (a) => {
@@ -460,8 +460,12 @@ function buildNeedsTable(resolved, answers, sealGrades) {
 
   const sg = sealGrades || { airMin: 4, airRec: 4, airGap: 0, waterMin: 3, waterRec: 4, waterGap: 1, isFixed: false };
   const fixedNote = sg.isFixed ? '（固定窗推荐值+1级）' : '';
-  const airValue = `≥ ${sg.airRec}级${sg.airGap > 0 ? `（最低${sg.airMin}级）` : ''}`;
-  const waterValue = `≥ ${sg.waterRec}级${sg.waterGap > 0 ? `（最低${sg.waterMin}级）` : ''}`;
+  const airValue = sg.airGap > 0
+    ? `推荐目标值：≥${sg.airRec}级（最低可接受值：${sg.airMin}级，需业主书面确认）`
+    : `推荐目标值：≥${sg.airRec}级`;
+  const waterValue = sg.waterGap > 0
+    ? `推荐目标值：≥${sg.waterRec}级（最低可接受值：${sg.waterMin}级，需业主书面确认）`
+    : `推荐目标值：≥${sg.waterRec}级`;
 
   return [
     {
@@ -539,7 +543,7 @@ function buildCoreTension(answers, resolved) {
     sentences.push(`${conflicts.hardest}与${conflicts.secondHardest}存在配置重合，导致本案成本高于同档位普通场景。`);
   }
 
-  sentences.push(`基于以上分析，以下指标为本项目的${TERM.paramLabel}，作为商家方案的最低准入标准——低于任一项的，${TERM.excludeSoft}。`);
+  sentences.push('基于以上分析，本表各项为本项目的推荐目标值。商家方案如仅能满足最低可接受值，应在报价中说明原因，并由业主确认是否接受；低于最低值的方案，建议不予优先考虑。');
 
   return sentences.join('');
 }
@@ -597,7 +601,11 @@ function buildChapter3ConflictAlert(budgetSpec, resolved) {
     items: hasConflicts ? notes : [],
     noConflictText: hasConflicts ? null : '经分析，您的需求配置与所选预算档位无明显冲突。',
     severity: (conflictMeta && conflictMeta.severity) ? conflictMeta.severity : 'warning',
-    cost_estimate: hasConflicts ? `预计玻璃成本增加：${budgetSpec.cost_delta}元/㎡` : null
+    cost_estimate: hasConflicts
+      ? (Number(budgetSpec.cost_delta) === 0
+        ? '预计玻璃成本增加：视实际玻璃配置而定（请商家在报价中单独列出玻璃部分的加价幅度）'
+        : `预计玻璃成本增加：${budgetSpec.cost_delta}元/㎡`)
+      : null
   };
 }
 
@@ -610,13 +618,7 @@ function buildRedlineChecklist(answers, resolved) {
     const item = { ...r, text: (typeof r.text === 'function' ? r.text(answers, resolved) : r.text) };
     if (r.id === 'R06') {
       const sealGrades = calcSealGrades({ city: answers.city, floor: answers.floor, windowType: answers.window_type });
-      let desc = `提供整窗淋水及气密性测试报告（气密≥${sealGrades.airRec}级，水密≥${sealGrades.waterRec}级，GB/T 7106）`;
-      if (sealGrades.waterGap >= 1) {
-        desc += `。若水密仅达${sealGrades.waterMin}级，需说明具体构造、排水与密封加强措施，由业主确认是否接受`;
-      }
-      if (sealGrades.airGap >= 1) {
-        desc += `。若气密仅达${sealGrades.airMin}级，需说明理由并由业主确认`;
-      }
+      const desc = `提供整窗淋水及气密性测试报告（推荐：气密≥${sealGrades.airRec}级、水密≥${sealGrades.waterRec}级，GB/T 7106）。若方案仅能达到水密 5 级或气密 4~5 级，应说明具体构造、排水与密封加强措施，并由业主确认是否接受；该类方案不建议作为首选。`;
       item.text = desc;
       item._sealGrades = { airMin: sealGrades.airMin, airRec: sealGrades.airRec, waterMin: sealGrades.waterMin, waterRec: sealGrades.waterRec };
     }
@@ -639,7 +641,7 @@ function buildPerformanceChecks(answers) {
     checks.push({
       id: 'perf_sound_compare',
       num: '⑭',
-      text: '关窗前后分别在室内录制一段环境音（10秒即可），对比主观感受差异。如感知差异不明显，要求商家说明原因或补救措施。'
+      text: '关窗前后分别在室内录制一段环境音（约 10 秒），对比主观感受差异（仅作为居住体验参考，不等同于实验室检测）。如感知差异不明显，可要求商家说明原因或提出改进方案。'
     });
     checks.push({
       id: 'perf_sound_report',
@@ -711,7 +713,7 @@ function buildChapter4Data(answers, budgetSpec, resolved, riskTrigger, isRisk) {
       },
       section2: {
         title: '── 第二段：技术答题表 ────────────────────────────',
-        hint: '请填写完整；写不出来就空着，业主会看得很清楚',
+        hint: '请尽量完整填写；未填写项将影响方案的可比性和业主的优先选择。',
         columns: ['品牌及系列', '型材壁厚(mm)', '玻璃配置', '检测报告编号', '含税报价(元/㎡)', '工期(天)', '质保(年)', '签名确认'],
         note: '若贵司认为在当前预算档位内难以满足某项关键指标，请在"配置建议与说明"栏中提出具体升级方案及差价估算，而非省略或模糊填写。'
       },
@@ -724,8 +726,8 @@ function buildChapter4Data(answers, budgetSpec, resolved, riskTrigger, isRisk) {
         ]
       },
       signature: {
-        text: '签名代表对上述填写内容的确认；如进入签约，请将关键指标写入合同',
-        fields: ['商家签名（无需公章）', '日期', '回传方式：扫描/拍照发送至业主微信']
+        text: '下列签名表示填写人已确认上述内容的真实性；如进入签约，建议将关键指标写入合同。填写人确认：__________',
+        fields: []
       }
     },
     l2_entry: {
