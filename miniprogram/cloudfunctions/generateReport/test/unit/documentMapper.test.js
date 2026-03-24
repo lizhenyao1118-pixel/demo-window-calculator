@@ -213,6 +213,25 @@ describe('helpers', () => {
     const kRow = (r.needsTable || []).find(x => x.dimension === '传热系数') || {};
     expect(String(kRow.basis || '')).toContain('西向隔热加严');
   });
+
+  test('DM-40: build1_2 无效城市触发sealGrades兜底文案', () => {
+    const a = fixtures.createPure(fixtures.guangzhouFull, { city: '火星', district: '未知', window_type: 'sliding' });
+    const assessment = { city: a.city, floor: a.floor, total_floors: a.total_floors, noise_type: a.noise_type, noise_dist: a.noise_dist, orientation: a.orientation, west_shading: a.west_shading, pain_point: a.pain_point, heating_type: a.heating_type, family_risk: a.family_risk, budget_tier: a.budget_tier };
+    const resolved = calculateAll(assessment);
+    const r = build1_2(a, resolved);
+    expect(String(((r.parameterNote || {}).block2 || ''))).toContain('⑤ **气密性**：气密性等级按 GB/T 7106 推荐等级确定。');
+    expect(String(((r.parameterNote || {}).block2 || ''))).toContain('⑥ **水密性**：水密性等级按 GB/T 7106 推荐等级确定。');
+  });
+
+  test('DM-41: build1_2 传热修正包含未知因子时不影响输出', () => {
+    const a = fixtures.createPure(fixtures.guangzhouFull, { heating_type: 'self', heatingType: 'self' });
+    const assessment = { city: a.city, floor: a.floor, total_floors: a.total_floors, noise_type: a.noise_type, noise_dist: a.noise_dist, orientation: a.orientation, west_shading: a.west_shading, pain_point: a.pain_point, heating_type: a.heating_type, family_risk: a.family_risk, budget_tier: a.budget_tier };
+    const resolved = calculateAll(assessment);
+    resolved.corrections = [{ factor: 'unknown', value: -0.2 }];
+    const r = build1_2(a, resolved);
+    expect(String(((r.parameterNote || {}).block2 || ''))).toContain('③ **传热系数**：');
+    expect(String(((r.parameterNote || {}).block2 || ''))).not.toContain('unknown');
+  });
 });
 
 describe('B-14 C短期 红线文案动态化', () => {
@@ -413,14 +432,24 @@ describe('Sprint 7 A-中期（逻辑层）端到端', () => {
     const a = fixtures.createPure(fixtures.guangzhouFull, { heating_type: 'self', heatingType: 'self' });
     const pdfContent = await buildPdfTextForAnswers(a, 'S7A-E2E-01');
     expect(pdfContent).toContain('本表各项参数综合三类信息确定');
+    expect(pdfContent).toContain('① 抗风压：');
+    expect(pdfContent).toContain('② 隔声：');
+    expect(pdfContent).toContain('③ 传热系数：');
+    expect(pdfContent).toContain('④ 太阳得热：');
+    expect(pdfContent).toContain('⑤ 气密性：');
+    expect(pdfContent).toContain('⑥ 水密性：');
+    expect(pdfContent).toContain('⑦ 安全等级：');
     expect(pdfContent).toMatch(/广州属\s+W\d+\s+风区/);
     expect(pdfContent).toContain('基准 2.4 W/(m²·K)');
     expect(pdfContent).toContain('自采暖保温修正 -0.2');
     expect(pdfContent).toContain('高层（≥7F）建议上调至 6 级');
     expect(pdfContent).toContain('不可降级');
+    expect(pdfContent).not.toContain('参数说明：本文件中的技术参数为推荐目标值');
 
     expect(pdfContent).toContain('推拉扇限位块');
     expect(pdfContent).toContain('推拉扇锁定装置');
+    expect((pdfContent.match(/儿童安全配件/g) || []).length).toBe(1);
+    expect((pdfContent.match(/大面积安全玻璃/g) || []).length).toBe(1);
 
     const idx41 = pdfContent.indexOf('4.1 给商家的说明');
     const idx42 = pdfContent.indexOf('4.2 商家答题表');

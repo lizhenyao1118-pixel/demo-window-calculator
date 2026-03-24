@@ -469,7 +469,6 @@ function build1_2(answers, resolved) {
   return {
     needsTable: buildNeedsTable(resolved, answers, sealGrades),
     coreTension: buildCoreTension(answers, resolved),
-    disclaimer: buildParamDisclaimer(),
     budgetFitnessNote: budgetFitnessNote,
     sealGrades,
     parameterNote
@@ -582,8 +581,17 @@ function buildNeedsTable(resolved, answers, sealGrades) {
 function buildParameterNote({ windPressure, soundInsulation, thermal, shgc, safety, sealGrades, inputs }) {
   const block1 = '本表各项参数综合三类信息确定：① 国家/行业标准的基准值；② 您填写的项目信息（城市、楼层、窗型、噪声环境等）；③ 李Sir 基于工程案例的专业修正。';
   const lines = [];
-  lines.push(`${inputs.city}属 ${windPressure.windZone} 风区，第 ${inputs.floor} 层高度比 ${Math.round(Number(inputs.heightRatio) * 100)}%，按 GB/T 7106 推荐等级取 ≥${windPressure.value} kPa。`);
-  lines.push(`${inputs.noiseType === 'main_road' ? '主干道 <20m' : '噪声源已评估'}，按 GB/T 8485 分类取 Rw≥${soundInsulation.base} dB，结合${inputs.roomType.includes('bedroom') ? '卧室睡眠场景' : '房间场景'}加严至 ${soundInsulation.value} dB。`);
+
+  lines.push(`① **抗风压**：${inputs.city}属 ${windPressure.windZone} 风区，第 ${inputs.floor} 层高度比 ${Math.round(Number(inputs.heightRatio) * 100)}%，按 GB/T 7106 推荐等级取 ≥${windPressure.value} kPa。`);
+
+  const soundScene = inputs.noiseType === 'main_road'
+    ? '主干道 <20m'
+    : inputs.noiseType === 'rail'
+      ? '轨道交通近距'
+      : '噪声源已评估';
+  const roomScene = inputs.roomType.includes('bedroom') ? '卧室睡眠场景' : '使用场景';
+  lines.push(`② **隔声**：${soundScene}，按 GB/T 8485 分类取 Rw≥${soundInsulation.base} dB，结合${roomScene}加严至 ${soundInsulation.value} dB。`);
+
   const factorStr = Array.isArray(thermal.corrections) && thermal.corrections.length > 0
     ? thermal.corrections
       .filter(f => Number(f.value) !== 0)
@@ -596,26 +604,22 @@ function buildParameterNote({ windPressure, soundInsulation, thermal, shgc, safe
       .filter(Boolean)
       .join('，')
     : '';
-  lines.push(`${inputs.city}属 ${thermal.climateZone}，基准 ${thermal.kBase || '2.4'} W/(m²·K)${factorStr ? '，' + factorStr : ''}，取 K≤${thermal.kValue}。`);
-  lines.push(`${inputs.facing === 'west' ? '西向无遮阳' : '方位已评估'}，按 GB/T 2680 标准取 SHGC≤${shgc.value}。`);
+  lines.push(`③ **传热系数**：${inputs.city}属 ${thermal.climateZone}，基准 ${thermal.kBase || '2.4'} W/(m²·K)${factorStr ? '，' + factorStr : ''}，取 K≤${thermal.kValue}。`);
+
+  const facingText = inputs.facing === 'west' ? '西向无遮阳' : inputs.facing === 'south' ? '南向' : inputs.facing === 'east' ? '东向' : inputs.facing === 'north' ? '北向' : '朝向已评估，无特殊修正';
+  lines.push(`④ **太阳得热**：${facingText}，按 GB/T 2680 标准取 SHGC≤${shgc.value}。`);
+
   if (sealGrades) {
-    lines.push(`住宅基础线为 ${sealGrades.airMin} 级${inputs.isHighFloor ? `，高层（≥7F）建议上调至 ${sealGrades.airRec} 级，以减轻风噪和渗风感` : ''}。`);
-    lines.push(`${inputs.isCoastal ? '沿海城市 + ' : ''}${inputs.isHighFloor ? '高层' : '普通楼层'}，由基础 ${sealGrades.waterMin} 级上调至推荐 ${sealGrades.waterRec} 级，以应对台风季暴雨侵蚀。`);
+    lines.push(`⑤ **气密性**：住宅基础线为 ${sealGrades.airMin} 级${inputs.isHighFloor ? `，高层（≥7F）建议上调至 ${sealGrades.airRec} 级，以减轻风噪和渗风感` : ''}。`);
+    lines.push(`⑥ **水密性**：${inputs.isCoastal ? '沿海城市 + ' : ''}${inputs.isHighFloor ? '高层' : '普通楼层'}，由基础 ${sealGrades.waterMin} 级上调至推荐 ${sealGrades.waterRec} 级，以应对台风季暴雨侵蚀。`);
+  } else {
+    lines.push('⑤ **气密性**：气密性等级按 GB/T 7106 推荐等级确定。');
+    lines.push('⑥ **水密性**：水密性等级按 GB/T 7106 推荐等级确定。');
   }
-  if (inputs.hasBigWindow || inputs.hasChild) {
-    lines.push(`${inputs.hasBigWindow ? '落地窗 + ' : ''}${inputs.hasChild ? '儿童家庭' : ''}，依据 GB 15763.3 强制要求夹胶安全玻璃构造。`);
-  }
+  lines.push(`⑦ **安全等级**：${inputs.hasBigWindow ? '落地窗 + ' : ''}${inputs.hasChild ? '儿童家庭' : ''}依据 GB 15763.3 强制要求夹胶安全玻璃构造。`);
   const block2 = lines.join('\n');
   const block3 = '其中安全等级依据 GB 15763.3 强制条款，不可降级。即使为控制成本，亦不建议放宽安全配置。';
   return { block1, block2, block3 };
-}
-
-function buildParamDisclaimer() {
-  return {
-    type: 'disclaimer',
-    style: 'footnote',
-    text: '参数说明：本文件中的技术参数为推荐目标值，而非国标原文照搬。计算方法：先按城市气候区确定基准值，再结合冬季供暖方式、朝向及窗型做小幅修正，最终形成适合本项目的选购标准。其中安全等级依据 GB 15763.3 强制条款，不可降级。'
-  };
 }
 
 function buildCoreTension(answers, resolved) {
@@ -1019,10 +1023,19 @@ function buildAcceptanceNodes(family_risk, window_type) {
     const i13 = items.findIndex(x => typeof x === 'string' && x.startsWith('⑬'));
     if (i13 >= 0) {
       const baseText = String(items[i13]).replace(/^⑬\s*/, '');
-      const merged = baseText ? `${baseText}；${node13}` : node13;
-      items[i13] = `⑬ ${merged}`;
+      const extras = String(node13)
+        .split('；')
+        .map(s => s.trim())
+        .filter(Boolean)
+        .filter(s => !baseText.includes(s))
+        .filter(s => !(baseText.includes('儿童安全配件') && s.startsWith('儿童安全配件')))
+        .filter(s => !(baseText.includes('大面积安全玻璃') && s.startsWith('大面积安全玻璃')));
+      if (extras.length > 0) {
+        items[i13] = `⑬ ${baseText}；${extras.join('；')}`;
+      } else {
+        items[i13] = `⑬ ${baseText}`;
+      }
     }
-    else items.push(`⑬ ${node13}`);
   }
   return [base[0], base[1], { ...final, items }];
 }
@@ -1097,13 +1110,6 @@ function getRiskWarnings(answers, resolved, riskTrigger) {
   });
 
   return risks;
-}
-
-function getOptimizations() {
-  return [
-    { title: '隔声优化', desc: '若窗外为低频噪音（高架），建议玻璃升级为夹胶+中空' },
-    { title: '节能优化', desc: '冬季保温可提升K值至1.8以下，降低采暖费用' }
-  ];
 }
 
 function calcUpgradeRating(upgradeType, answers, resolved) {

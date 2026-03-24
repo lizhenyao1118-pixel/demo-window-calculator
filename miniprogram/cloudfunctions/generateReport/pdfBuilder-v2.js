@@ -320,8 +320,26 @@ function renderChapter1(doc, c1) {
       // block2 lines
       const lines = String(pn.block2 || '').split('\n').filter(Boolean);
       lines.forEach((ln) => {
-        doc.fillColor(COLORS.text_secondary).fontSize(9.5).text(`· ${ln}`, 55, doc.y, { width: 485, lineGap: 2 });
-        doc.y += 14;
+        const m = String(ln).match(/^([①②③④⑤⑥⑦⑧⑨⑩])\s+\*\*(.+?)\*\*：([\s\S]*)$/);
+        if (m) {
+          const num = m[1];
+          const name = m[2];
+          const rest = m[3];
+          const displayLine = `${num} ${name}：${rest}`;
+          const y0 = doc.y;
+          doc.fillColor(COLORS.text_secondary).fontSize(9.5).text(displayLine, 55, y0, { width: 485, lineGap: 2 });
+          const prefixW = doc.widthOfString(`${num} `, { lineGap: 2 });
+          const nameX = 55 + prefixW;
+          doc.fillColor(COLORS.text_secondary).fontSize(9.5).text(name, nameX, y0, { lineGap: 2 });
+          doc.fillColor(COLORS.text_secondary).fontSize(9.5).text(name, nameX + 0.35, y0, { lineGap: 2 });
+          const h = doc.heightOfString(displayLine, { width: 485, lineGap: 2 });
+          doc.y = y0 + h + 2;
+          return;
+        }
+        const y0 = doc.y;
+        doc.fillColor(COLORS.text_secondary).fontSize(9.5).text(String(ln), 55, y0, { width: 485, lineGap: 2 });
+        const h = doc.heightOfString(String(ln), { width: 485, lineGap: 2 });
+        doc.y = y0 + h + 2;
       });
       doc.y += 6;
       // block3 emphasis
