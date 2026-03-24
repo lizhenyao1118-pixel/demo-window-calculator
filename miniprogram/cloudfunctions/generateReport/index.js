@@ -202,7 +202,7 @@ exports.main = async (event, context) => {
     
     // 3. 生成PDF（Phase 1：使用新的 buildPDF）
     console.log('[Cloud] 开始生成 PDF（Phase 1 新引擎）...');
-    await buildPDF(sections, tempPath);
+    await buildPDF(sections, tempPath, { tenderId, qrCodeBuffer });
     
     // 4. 验证文件（保留原有逻辑）
     const stats = fs.statSync(tempPath);
@@ -246,6 +246,7 @@ exports.main = async (event, context) => {
     }
 
     let tenderId = null;
+    let qrCodeBuffer = null;
     try {
       const tenderSections = {
         parameterTable: sections && sections.chapter1 ? sections.chapter1.needsTable : null,
@@ -270,6 +271,19 @@ exports.main = async (event, context) => {
         }
       });
       tenderId = createTenderRes && createTenderRes.result ? createTenderRes.result.tenderId : null;
+      if (tenderId) {
+        try {
+          const qrRes = await cloud.openapi.wxacode.getUnlimited({
+            scene: tenderId,
+            page: 'pages/vendor/fill',
+            width: 280
+          });
+          qrCodeBuffer = qrRes && qrRes.buffer ? qrRes.buffer : null;
+        } catch (qrErr) {
+          console.error('[Cloud] 小程序码生成失败（非阻断）：', qrErr);
+          qrCodeBuffer = null;
+        }
+      }
     } catch (e) {
       console.error('[Cloud] createTender 失败（非阻断）：', e);
       tenderId = null;

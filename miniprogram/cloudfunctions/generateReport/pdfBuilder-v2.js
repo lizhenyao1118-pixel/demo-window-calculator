@@ -737,7 +737,7 @@ function renderRedlineChecklist(doc, checklist) {
   doc.y += 20;
 }
 
-function renderChapter4(doc, c4) {
+function renderChapter4(doc, c4, opts) {
   const isRisk = !!c4.isRisk;
   const title = c4.title || "下一步怎么用：问商家什么 & 怎么验收";
   const color = COLORS.brand_navy;
@@ -767,6 +767,28 @@ function renderChapter4(doc, c4) {
       doc.fillColor(COLORS.text_secondary).fontSize(10).text(c4.merchantNotice.deadline, 55, doc.y, { width: 485 });
       doc.y += 18;
     }
+  }
+
+  // 插入小程序码区块（在 4.2 前方）
+  const tenderId = opts && opts.tenderId ? String(opts.tenderId) : null;
+  const qrCodeBuffer = opts && opts.qrCodeBuffer ? opts.qrCodeBuffer : null;
+  if (tenderId) {
+    if (842 - doc.y < 280) doc.addPage();
+    doc.fillColor(COLORS.brand_mid).fontSize(16).text('在线响应入口', 55, doc.y, { width: 485, align: 'center' });
+    doc.y += 18;
+    doc.fillColor(COLORS.text_body).fontSize(12).text('扫描下方小程序码，在线填写技术响应与报价', 55, doc.y, { width: 485, align: 'center' });
+    doc.y += 14;
+    if (qrCodeBuffer) {
+      const imgY = doc.y;
+      const imgX = (595 - 200) / 2;
+      doc.image(qrCodeBuffer, imgX, imgY, { width: 200, height: 200 });
+      doc.y = imgY + 210;
+    } else {
+      doc.fillColor(COLORS.risk_red).fontSize(10).text('（小程序码生成失败，请手动分享链接给商家）', 55, doc.y, { width: 485, align: 'center' });
+      doc.y += 14;
+    }
+    doc.fillColor(COLORS.text_secondary).fontSize(10).text(`招标编号：${tenderId}`, 55, doc.y, { width: 485, align: 'center' });
+    doc.y += 16;
   }
 
   const mq = c4.merchantQuestionnaire || {};
@@ -965,7 +987,7 @@ function addFooters(doc, disclaimer) {
   }
 }
 
-async function buildPDF(sections, outputPath) {
+async function buildPDF(sections, outputPath, opts) {
   return new Promise((resolve, reject) => {
     try {
       const doc = new PDFDocument({ size: "A4", margin: 0, bufferPages: true });
@@ -981,7 +1003,7 @@ async function buildPDF(sections, outputPath) {
       doc.addPage(); renderChapter1(doc, sections.chapter1);
       doc.addPage(); renderChapter2(doc, sections.chapter2);
       doc.addPage(); renderChapter3(doc, sections.chapter3);
-      doc.addPage(); renderChapter4(doc, sections.chapter4);
+      doc.addPage(); renderChapter4(doc, sections.chapter4, opts || {});
       
       if (sections.attachments && sections.attachments.photos && sections.attachments.photos.length > 0) {
         renderAttachments(doc, sections.attachments);
