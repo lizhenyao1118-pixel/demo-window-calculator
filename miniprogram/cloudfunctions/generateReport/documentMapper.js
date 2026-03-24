@@ -70,7 +70,7 @@ function getTierLabel(tier) {
 const { GLASS_LEVELS, BUDGET_SPEC, getNextTier, BUDGET_TIER_GLASS_BASE } = require('./shared/budgetSpec.js');
 const { getInsulationBarRequirement } = require('./shared/thermalSpec.js');
 const { resolveGlassConfig } = require('./arbitrator.js');
-const { getClimateZone } = require('./shared/climateSpec.js');
+const { getClimateZone, CLIMATE_SPEC } = require('./shared/climateSpec.js');
 const { calcSealGrades } = require('./calculator-v2.js');
 
 const NOISE_SCENE = {
@@ -439,14 +439,25 @@ function build1_2(answers, resolved) {
       windZone: resolved.wind_zone || 'W?',
       factors: []
     },
-    soundInsulation: {
-      base: 30,
-      value: getField(resolved, 'Rw')
-    },
+    soundInsulation: (function () {
+      const BASE = { main_road: 35, elevated: 38, rail: 40, quiet: 30 };
+      const DIST = { lt20: 3, '20to50': 0, gt50: -3, gt50_shielded: -3 };
+      const baseRw = BASE[answers.noise_type] || 30;
+      const distAdj = DIST[answers.noise_dist] || 0;
+      const isSoundPriority = (answers.pain_point === 'sound') || (Array.isArray(answers.pain_points) && answers.pain_points.includes('sound'));
+      const usageAdj = (answers.noise_type === 'rail') ? 0 : (isSoundPriority ? 3 : 0);
+      return {
+        baseRw,
+        distAdj,
+        usageAdj,
+        value: getField(resolved, 'Rw')
+      };
+    })(),
     thermal: {
       kValue: getField(resolved, 'K'),
       kBase: resolved.kBase || null,
       climateZone: resolved.climateZoneCN || '',
+      appliedFactor: resolved.appliedFactor || null,
       corrections: Array.isArray(resolved.corrections) ? resolved.corrections : []
     },
     shgc: { value: getField(resolved, 'SHGC') },
@@ -459,8 +470,8 @@ function build1_2(answers, resolved) {
       noiseType: answers.noise_type,
       roomType: Array.isArray(answers.room_type) ? answers.room_type : [],
       facing: answers.orientation,
+      painPoint: answers.pain_point,
       isHighFloor: Number(answers.floor) >= 7,
-      isCoastal: false,
       hasBigWindow: Array.isArray(answers.family_risk) && answers.family_risk.includes('large_fixed'),
       hasChild: Array.isArray(answers.family_risk) && (answers.family_risk.includes('child') || answers.family_risk.includes('children'))
     }
@@ -469,7 +480,6 @@ function build1_2(answers, resolved) {
   return {
     needsTable: buildNeedsTable(resolved, answers, sealGrades),
     coreTension: buildCoreTension(answers, resolved),
-    disclaimer: buildParamDisclaimer(),
     budgetFitnessNote: budgetFitnessNote,
     sealGrades,
     parameterNote
@@ -582,40 +592,71 @@ function buildNeedsTable(resolved, answers, sealGrades) {
 function buildParameterNote({ windPressure, soundInsulation, thermal, shgc, safety, sealGrades, inputs }) {
   const block1 = '本表各项参数综合三类信息确定：① 国家/行业标准的基准值；② 您填写的项目信息（城市、楼层、窗型、噪声环境等）；③ 李Sir 基于工程案例的专业修正。';
   const lines = [];
-  lines.push(`${inputs.city}属 ${windPressure.windZone} 风区，第 ${inputs.floor} 层高度比 ${Math.round(Number(inputs.heightRatio) * 100)}%，按 GB/T 7106 推荐等级取 ≥${windPressure.value} kPa。`);
-  lines.push(`${inputs.noiseType === 'main_road' ? '主干道 <20m' : '噪声源已评估'}，按 GB/T 8485 分类取 Rw≥${soundInsulation.base} dB，结合${inputs.roomType.includes('bedroom') ? '卧室睡眠场景' : '房间场景'}加严至 ${soundInsulation.value} dB。`);
-  const factorStr = Array.isArray(thermal.corrections) && thermal.corrections.length > 0
-    ? thermal.corrections
-      .filter(f => Number(f.value) !== 0)
-      .map(f => {
-        if (f.factor === 'heating' && Number(f.value) < 0) return '自采暖保温修正 -0.2';
-        if (f.factor === 'westSun' && Number(f.value) < 0) return '西晒修正 -0.1';
-        if (f.factor === 'bigWindow' && Number(f.value) < 0) return '落地窗修正 -0.2';
-        return '';
-      })
-      .filter(Boolean)
-      .join('，')
-    : '';
-  lines.push(`${inputs.city}属 ${thermal.climateZone}，基准 ${thermal.kBase || '2.4'} W/(m²·K)${factorStr ? '，' + factorStr : ''}，取 K≤${thermal.kValue}。`);
-  lines.push(`${inputs.facing === 'west' ? '西向无遮阳' : '方位已评估'}，按 GB/T 2680 标准取 SHGC≤${shgc.value}。`);
+
+  lines.push(`① **抗风压**：${inputs.city}属 ${windPressure.windZone} 风区，第 ${inputs.floor} 层高度比 ${Math.round(Number(inputs.heightRatio) * 100)}%，按 GB/T 7106 推荐等级取 ≥${windPressure.value} kPa。`);
+
+  const noiseText = inputs.noiseType === 'main_road'
+    ? '主干道 <20m'
+    : inputs.noiseType === 'rail'
+      ? '轨道近距'
+      : (inputs.noiseType === 'elevated' ? '高架近距' : '噪声源已评估');
+  const distAdjText = `${soundInsulation.distAdj > 0 ? '+' : ''}${soundInsulation.distAdj}`;
+  const usageAdjText = `${soundInsulation.usageAdj > 0 ? '+' : ''}${soundInsulation.usageAdj}`;
+  const usageExplain = (inputs.noiseType === 'rail')
+    ? '隔声降噪诉求加严 0（轨道噪声已按最严基准计）'
+    : `隔声降噪诉求加严 ${usageAdjText}`;
+  lines.push(`② **隔声**：${noiseText}，基础 Rw≥${soundInsulation.baseRw} dB，距离修正 ${distAdjText}，${usageExplain}，最终 ≥${soundInsulation.value} dB。`);
+
+  const factorMap = {
+    heating: '自采暖保温修正 -0.2',
+    bigWindow: '落地窗热工修正 -0.2',
+    westSun: '西晒修正 -0.1'
+  };
+  const factorText = factorMap[thermal.appliedFactor] || '';
+  lines.push(`③ **传热系数**：${inputs.city}属 ${thermal.climateZone}，基准 ${thermal.kBase || '2.4'} W/(m²·K)${factorText ? `，${factorText}` : ''}，取 K≤${thermal.kValue}。`);
+
+  const facing = inputs.facing || inputs.sunExposure;
+  const facingMap = {
+    west: '西向无遮阳',
+    west_sun: '西向无遮阳',
+    south: '南向',
+    east: '东向',
+    north: '北向',
+    none: '朝向已评估，无特殊遮阳需求'
+  };
+  const facingText = facingMap[facing] || '朝向已评估';
+  lines.push(`④ **太阳得热**：${facingText}，按 GB/T 2680 标准取 SHGC≤${shgc.value}。`);
+
   if (sealGrades) {
-    lines.push(`住宅基础线为 ${sealGrades.airMin} 级${inputs.isHighFloor ? `，高层（≥7F）建议上调至 ${sealGrades.airRec} 级，以减轻风噪和渗风感` : ''}。`);
-    lines.push(`${inputs.isCoastal ? '沿海城市 + ' : ''}${inputs.isHighFloor ? '高层' : '普通楼层'}，由基础 ${sealGrades.waterMin} 级上调至推荐 ${sealGrades.waterRec} 级，以应对台风季暴雨侵蚀。`);
+    lines.push(`⑤ **气密性**：住宅基础线为 ${sealGrades.airMin} 级${inputs.isHighFloor ? `，高层（≥7F）建议上调至 ${sealGrades.airRec} 级，以减轻风噪和渗风感` : ''}。`);
+    const spec = CLIMATE_SPEC[inputs.city] || null;
+    const isCoastal = !!(spec && spec.isCoastal);
+    const isTyphoon = !!(spec && spec.typhoonRisk);
+    const isHighFloor = Number(inputs.floor) >= 7;
+    const waterParts = [];
+    if (isCoastal) waterParts.push('沿海城市');
+    if (isHighFloor) waterParts.push('高层');
+    let waterText = '⑥ **水密性**：';
+    if (waterParts.length > 0) {
+      let reason = '';
+      if (isCoastal || isTyphoon) {
+        reason = '，以应对台风季暴雨侵蚀';
+      } else if (isHighFloor) {
+        reason = '，以提升高层抗渗能力';
+      }
+      waterText += `${waterParts.join(' + ')}，由基础 ${sealGrades.waterMin} 级上调至推荐 ${sealGrades.waterRec} 级${reason}。`;
+    } else {
+      waterText += `基础 ${sealGrades.waterMin} 级，推荐 ${sealGrades.waterRec} 级。`;
+    }
+    lines.push(waterText);
+  } else {
+    lines.push('⑤ **气密性**：气密性等级按 GB/T 7106 推荐等级确定。');
+    lines.push('⑥ **水密性**：水密性等级按 GB/T 7106 推荐等级确定。');
   }
-  if (inputs.hasBigWindow || inputs.hasChild) {
-    lines.push(`${inputs.hasBigWindow ? '落地窗 + ' : ''}${inputs.hasChild ? '儿童家庭' : ''}，依据 GB 15763.3 强制要求夹胶安全玻璃构造。`);
-  }
+  lines.push(`⑦ **安全等级**：${inputs.hasBigWindow ? '落地窗 + ' : ''}${inputs.hasChild ? '儿童家庭' : ''}依据 GB 15763.3 强制要求夹胶安全玻璃构造。`);
   const block2 = lines.join('\n');
   const block3 = '其中安全等级依据 GB 15763.3 强制条款，不可降级。即使为控制成本，亦不建议放宽安全配置。';
   return { block1, block2, block3 };
-}
-
-function buildParamDisclaimer() {
-  return {
-    type: 'disclaimer',
-    style: 'footnote',
-    text: '参数说明：本文件中的技术参数为推荐目标值，而非国标原文照搬。计算方法：先按城市气候区确定基准值，再结合冬季供暖方式、朝向及窗型做小幅修正，最终形成适合本项目的选购标准。其中安全等级依据 GB 15763.3 强制条款，不可降级。'
-  };
 }
 
 function buildCoreTension(answers, resolved) {
@@ -924,27 +965,19 @@ function buildBudgetSpecView(resolved, answers) {
 }
 
 function getForbiddenItems(budget_tier, K_target, window_features, Rw_required) {
-  const bar = getInsulationBarRequirement(Number(K_target));
-
   const base = [
-    '建议优先采用原生铝型材，并提供材质检验证明；如采用其他材质，应说明理由并提供检测依据。',
+    '建议优先采用原生铝型材，并提供相应材质证明；如采用其他材质，应说明理由并提供检测依据。',
     '禁止单玻或无Low-E膜的普通中空玻璃',
     '禁止以普通密封胶代替结构胶（须使用中性硅酮结构胶）',
-    `断桥铝隔热条宽度建议不低于本项目所需的热工要求（如常规穿条式≥${bar.min_mm}mm），不建议使用明显低于要求的仿断桥产品`
+    '断桥铝隔热条宽度建议不低于本项目所需的热工要求（如常规穿条式≥28mm），不建议使用明显低于要求的仿断桥产品。'
   ];
 
   if (window_features && window_features.needs_whole_window_test) {
     base.push(`【强制】推拉窗/门联窗需提供整窗性能测试报告（${STANDARDS_MAP.wind_pressure.short} 抗风压 + GB/T 7107 气密·水密）`);
   }
 
-  const TIER_WALL = {
-    A: '型材主受力壁厚建议不低于 1.5mm，并提供截面检测报告；如提议采用更薄型材，应说明承载与风压校核依据。',
-    B: '型材主受力壁厚建议不低于 1.6mm，并提供截面检测报告；如提议采用更薄型材，应说明承载与风压校核依据。',
-    C: '型材主受力壁厚建议不低于 1.8mm，并提供截面检测报告；如提议采用更薄型材，应说明承载与风压校核依据。',
-    D: '型材主受力壁厚建议不低于 2.0mm，并提供截面检测报告；如提议采用更薄型材，应说明承载与风压校核依据。'
-  };
-
-  return [...base, TIER_WALL[budget_tier] || TIER_WALL.A];
+  const wall = '型材主受力壁厚建议不低于 1.5mm，并提供截面检测报告；如提议采用更薄型材，应说明承载与风压校核依据。';
+  return [...base, wall];
 }
 
 function getSafetyItems(familyRisk, budgetTier) {
@@ -1019,10 +1052,19 @@ function buildAcceptanceNodes(family_risk, window_type) {
     const i13 = items.findIndex(x => typeof x === 'string' && x.startsWith('⑬'));
     if (i13 >= 0) {
       const baseText = String(items[i13]).replace(/^⑬\s*/, '');
-      const merged = baseText ? `${baseText}；${node13}` : node13;
-      items[i13] = `⑬ ${merged}`;
+      const extras = String(node13)
+        .split('；')
+        .map(s => s.trim())
+        .filter(Boolean)
+        .filter(s => !baseText.includes(s))
+        .filter(s => !(baseText.includes('儿童安全配件') && s.startsWith('儿童安全配件')))
+        .filter(s => !(baseText.includes('大面积安全玻璃') && s.startsWith('大面积安全玻璃')));
+      if (extras.length > 0) {
+        items[i13] = `⑬ ${baseText}；${extras.join('；')}`;
+      } else {
+        items[i13] = `⑬ ${baseText}`;
+      }
     }
-    else items.push(`⑬ ${node13}`);
   }
   return [base[0], base[1], { ...final, items }];
 }
@@ -1097,13 +1139,6 @@ function getRiskWarnings(answers, resolved, riskTrigger) {
   });
 
   return risks;
-}
-
-function getOptimizations() {
-  return [
-    { title: '隔声优化', desc: '若窗外为低频噪音（高架），建议玻璃升级为夹胶+中空' },
-    { title: '节能优化', desc: '冬季保温可提升K值至1.8以下，降低采暖费用' }
-  ];
 }
 
 function calcUpgradeRating(upgradeType, answers, resolved) {
