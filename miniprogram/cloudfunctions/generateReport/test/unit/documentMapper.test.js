@@ -358,7 +358,7 @@ describe('Sprint 7 C-短期文案优化', () => {
     expect(pdfContent).toContain('低于最低值的方案，建议不予优先考虑');
   });
 
-  test('DM-32: 玻璃差价为0时应显示绕行文案', async () => {
+  test('DM-32: 玻璃差价提示应标明档位标准配置基准', async () => {
     const a = fixtures.createPure(fixtures.guangzhouFull, {
       noise_type: 'quiet',
       noise_dist: 'gt50',
@@ -367,8 +367,7 @@ describe('Sprint 7 C-短期文案优化', () => {
       window_type: 'casement'
     });
     const pdfContent = await buildPdfTextForAnswers(a, 'S7-DM32');
-    expect(pdfContent).toContain('视实际玻璃配置而定（请商家在报价中单独列出玻璃部分的加价幅度）');
-    expect(pdfContent).not.toContain('预计玻璃成本增加：0元');
+    expect(pdfContent).toContain('相对于 A 档标准配置');
   });
 
   test('DM-33: R06降级条款应覆盖气密4~5级区间', async () => {
@@ -406,5 +405,69 @@ describe('Sprint 7 C-短期文案优化', () => {
     const pdfContent = await buildPdfTextForAnswers(fixtures.guangzhouFull, 'S7-DM37');
     expect(pdfContent).toContain('仅作为居住体验参考，不等同于实验室检测');
     expect(pdfContent).toContain('如感知差异不明显，可要求商家说明原因或提出改进方案');
+  });
+});
+
+describe('Sprint 7 A-中期（逻辑层）端到端', () => {
+  test('E2E-01: 广州8F推拉窗A档 - 三块脚注 + ⑫/⑬推拉适配 + 4.1~4.4顺序', async () => {
+    const a = fixtures.createPure(fixtures.guangzhouFull, { heating_type: 'self', heatingType: 'self' });
+    const pdfContent = await buildPdfTextForAnswers(a, 'S7A-E2E-01');
+    expect(pdfContent).toContain('本表各项参数综合三类信息确定');
+    expect(pdfContent).toMatch(/广州属\s+W\d+\s+风区/);
+    expect(pdfContent).toContain('基准 2.4 W/(m²·K)');
+    expect(pdfContent).toContain('自采暖保温修正 -0.2');
+    expect(pdfContent).toContain('高层（≥7F）建议上调至 6 级');
+    expect(pdfContent).toContain('不可降级');
+
+    expect(pdfContent).toContain('推拉扇限位块');
+    expect(pdfContent).toContain('推拉扇锁定装置');
+
+    const idx41 = pdfContent.indexOf('4.1 给商家的说明');
+    const idx42 = pdfContent.indexOf('4.2 商家答题表');
+    const idx43 = pdfContent.indexOf('4.3 风险提示');
+    const idx44 = pdfContent.indexOf('4.4 验收节点');
+    expect(idx41).toBeGreaterThanOrEqual(0);
+    expect(idx42).toBeGreaterThanOrEqual(0);
+    expect(idx43).toBeGreaterThanOrEqual(0);
+    expect(idx44).toBeGreaterThanOrEqual(0);
+    expect(idx41).toBeLessThan(idx42);
+    expect(idx42).toBeLessThan(idx43);
+    expect(idx43).toBeLessThan(idx44);
+  });
+
+  test('E2E-02: 北京15F平开窗C档 - ⑫平开适配（防坠绳）', async () => {
+    const a = fixtures.createPure(fixtures.shanghaiThermal, {
+      city: '北京',
+      district: '朝阳',
+      floor: 15,
+      total_floors: 30,
+      window_type: 'casement',
+      windowType: 'casement',
+      budget_tier: 'C',
+      budgetTier: 'C',
+      room_type: ['bedroom'],
+      noise_type: 'main_road',
+      noise_dist: 'lt20',
+      family_risk: [],
+      familyRisk: []
+    });
+    const pdfContent = await buildPdfTextForAnswers(a, 'S7A-E2E-02');
+    expect(pdfContent).toContain('防坠绳安装牢固');
+  });
+
+  test('E2E-03: 深圳3F固定窗B档 - 固定窗无⑫且⑬含固定压条', async () => {
+    const a = fixtures.createPure(fixtures.shenzhenSafety, {
+      floor: 3,
+      total_floors: 32,
+      window_type: 'fixed',
+      windowType: 'fixed',
+      budget_tier: 'B',
+      budgetTier: 'B',
+      family_risk: [],
+      familyRisk: []
+    });
+    const pdfContent = await buildPdfTextForAnswers(a, 'S7A-E2E-03');
+    expect(pdfContent).not.toMatch(/⑫\s/);
+    expect(pdfContent).toContain('固定压条');
   });
 });
