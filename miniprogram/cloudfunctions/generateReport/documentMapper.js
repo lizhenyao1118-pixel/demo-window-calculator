@@ -927,10 +927,10 @@ function getForbiddenItems(budget_tier, K_target, window_features, Rw_required) 
   const bar = getInsulationBarRequirement(Number(K_target));
 
   const base = [
-    '禁止使用回收铝型材，须提供原生铝材质检报告',
+    '建议优先采用原生铝型材，并提供材质检验证明；如采用其他材质，应说明理由并提供检测依据。',
     '禁止单玻或无Low-E膜的普通中空玻璃',
     '禁止以普通密封胶代替结构胶（须使用中性硅酮结构胶）',
-    `断桥铝隔热条宽度须≥${bar.min_mm}mm（${bar.process}），禁止使用宽度不足的仿断桥产品` + (bar.note ? `（依据：本项目K≤${K_target}W/m²·K${bar.note}）` : '')
+    `断桥铝隔热条宽度建议不低于本项目所需的热工要求（如常规穿条式≥${bar.min_mm}mm），不建议使用明显低于要求的仿断桥产品`
   ];
 
   if (window_features && window_features.needs_whole_window_test) {
@@ -938,10 +938,10 @@ function getForbiddenItems(budget_tier, K_target, window_features, Rw_required) 
   }
 
   const TIER_WALL = {
-    A: '型材主受力壁厚须≥1.5mm，提供截面检测报告',
-    B: '型材主受力壁厚须≥1.6mm，提供截面检测报告',
-    C: '型材主受力壁厚须≥1.8mm，须为系统门窗品牌，提供厂商授权书',
-    D: '型材主受力壁厚须≥2.0mm，须提供欧标或国内第三方认证报告'
+    A: '型材主受力壁厚建议不低于 1.5mm，并提供截面检测报告；如提议采用更薄型材，应说明承载与风压校核依据。',
+    B: '型材主受力壁厚建议不低于 1.6mm，并提供截面检测报告；如提议采用更薄型材，应说明承载与风压校核依据。',
+    C: '型材主受力壁厚建议不低于 1.8mm，并提供截面检测报告；如提议采用更薄型材，应说明承载与风压校核依据。',
+    D: '型材主受力壁厚建议不低于 2.0mm，并提供截面检测报告；如提议采用更薄型材，应说明承载与风压校核依据。'
   };
 
   return [...base, TIER_WALL[budget_tier] || TIER_WALL.A];
