@@ -7,7 +7,9 @@
     "pages/question/question",
     "pages/vendor/fill",
     "pages/vendor/confirm",
-    "pages/vendor/success"
+    "pages/vendor/success",
+    "pages/tender/list",
+    "pages/tender/detail"
   ],
   "window": {
     "navigationBarTitleText": "极简门窗测评",

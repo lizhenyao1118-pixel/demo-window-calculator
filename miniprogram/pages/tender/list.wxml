@@ -1,0 +1,20 @@
+<view class="container">
+  <view wx:if="{{loading}}" class="loading">加载中...</view>
+  <view wx:elif="{{error}}" class="error">{{error}}</view>
+  <block wx:else>
+    <block wx:if="{{items.length===0}}">
+      <view class="empty">暂无招标</view>
+    </block>
+    <block wx:else>
+      <block wx:for="{{items}}" wx:key="tenderId">
+        <view class="card" bindtap="goDetail" data-id="{{item.tenderId}}">
+          <view class="row">
+            <text class="id">{{item.tenderId}}</text>
+            <text class="status">{{item.status}}</text>
+          </view>
+          <view class="meta">已响应 {{item.vendorCount}} 家</view>
+        </view>
+      </block>
+    </block>
+  </block>
+</view>
