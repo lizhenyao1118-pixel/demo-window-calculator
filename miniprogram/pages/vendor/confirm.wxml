@@ -1,0 +1,29 @@
+<view class="container">
+  <view wx:if="{{!submitData}}" class="loading">加载中...</view>
+
+  <block wx:else>
+    <view class="section">
+      <view class="section-title">商家信息</view>
+      <text class="line">{{submitData.vendorInfo.brandName}}</text>
+      <text class="line">{{submitData.vendorInfo.contactName}} · {{submitData.vendorInfo.contactPhone}}</text>
+    </view>
+
+    <view class="section">
+      <view class="section-title">红线命中（未勾选）</view>
+      <view wx:if="{{redlineHits.length === 0}}" class="muted">无</view>
+      <block wx:else>
+        <view wx:for="{{redlineHits}}" wx:key="displayId" class="hit-item {{item.softened ? 'soft' : 'hard'}}">
+          <text class="hit-id">{{item.displayId}}</text>
+          <text class="hit-text">{{item.text}}</text>
+          <text wx:if="{{item.softened}}" class="hit-note">理由：{{item.note}}</text>
+          <text wx:if="{{!item.softened}}" class="hit-note">此项不可软化，将被服务端拒绝</text>
+        </view>
+      </block>
+    </view>
+
+    <view class="footer">
+      <button class="back-btn" bindtap="onBack">返回修改</button>
+      <button class="confirm-btn" loading="{{submitting}}" disabled="{{submitting}}" bindtap="onConfirm">确认提交</button>
+    </view>
+  </block>
+</view>

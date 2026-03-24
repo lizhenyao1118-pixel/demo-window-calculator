@@ -1,0 +1,7 @@
+<view class="container">
+  <view class="card">
+    <text class="title">提交成功</text>
+    <text class="desc">您的技术响应已提交，业主将收到通知并查看</text>
+    <button class="btn" bindtap="onBackHome">返回首页</button>
+  </view>
+</view>

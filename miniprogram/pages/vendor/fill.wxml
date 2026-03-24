@@ -1,0 +1,58 @@
+<view class="container">
+  <view wx:if="{{loading}}" class="loading">加载中...</view>
+
+  <view wx:elif="{{error}}" class="error-state">
+    <text class="error-text">{{error}}</text>
+    <button class="retry-btn" bindtap="retry">重试</button>
+  </view>
+
+  <block wx:else>
+    <view class="tender-header">
+      <text class="tender-id">{{tenderId}}</text>
+      <text class="tender-meta">{{reportSnapshot.city}} · {{reportSnapshot.floor}}层 · {{reportSnapshot.windowType}} · {{reportSnapshot.budgetTier}}档</text>
+    </view>
+
+    <view class="section vendor-info">
+      <view class="section-title">商家信息</view>
+      <input class="input" placeholder="品牌名称" data-field="brandName" value="{{vendorInfo.brandName}}" bindinput="onVendorInfoChange" />
+      <input class="input" placeholder="联系人" data-field="contactName" value="{{vendorInfo.contactName}}" bindinput="onVendorInfoChange" />
+      <input class="input" placeholder="联系电话" type="number" data-field="contactPhone" value="{{vendorInfo.contactPhone}}" bindinput="onVendorInfoChange" />
+    </view>
+
+    <view class="section redlines">
+      <view class="section-title">产品红线（必须满足）</view>
+      <block wx:for="{{answers}}" wx:key="displayId">
+        <view wx:if="{{item.type === 'redline'}}" class="redline-item {{item.checkValue ? 'green' : (item.softened ? 'yellow' : 'red')}}">
+          <view class="row">
+            <text class="display-id">{{item.displayId}}</text>
+            <text class="item-text">{{item.text}}</text>
+            <switch class="item-switch" checked="{{item.checkValue}}" data-id="{{item.displayId}}" bindchange="onCheckChange" />
+          </view>
+
+          <view wx:if="{{!item.checkValue && item.softened}}" class="reason-input">
+            <textarea class="textarea" placeholder="请说明无法满足的理由（必填）" data-id="{{item.displayId}}" bindinput="onNoteChange" value="{{item.note}}" />
+          </view>
+
+          <view wx:if="{{!item.checkValue && !item.softened}}" class="warning-hint">此项为强制要求，必须满足</view>
+        </view>
+      </block>
+    </view>
+
+    <view class="section acceptance">
+      <view class="section-title">验收承诺</view>
+      <block wx:for="{{answers}}" wx:key="displayId">
+        <view wx:if="{{item.type === 'acceptance'}}" class="acceptance-item">
+          <text class="item-text">{{item.text}}</text>
+          <switch class="item-switch" checked="{{item.checkValue}}" data-id="{{item.displayId}}" bindchange="onCheckChange" />
+        </view>
+      </block>
+    </view>
+
+    <view class="footer">
+      <text wx:if="{{lastSaveTime}}" class="save-hint">草稿已保存 {{lastSaveTime}}</text>
+      <button class="submit-btn {{canSubmit ? '' : 'disabled'}}" disabled="{{!canSubmit}}" bindtap="onSubmit">
+        提交响应
+      </button>
+    </view>
+  </block>
+</view>

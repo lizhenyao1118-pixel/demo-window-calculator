@@ -1,0 +1,85 @@
+.container {
+  padding: 24rpx;
+}
+
+.loading {
+  padding: 40rpx 0;
+  text-align: center;
+  color: #666;
+}
+
+.section {
+  background: #fff;
+  padding: 20rpx;
+  border-radius: 12rpx;
+  margin-bottom: 20rpx;
+}
+
+.section-title {
+  font-weight: 600;
+  margin-bottom: 12rpx;
+}
+
+.line {
+  display: block;
+  color: #222;
+  margin-bottom: 6rpx;
+}
+
+.muted {
+  color: #666;
+}
+
+.hit-item {
+  padding: 16rpx;
+  border-radius: 12rpx;
+  margin-bottom: 12rpx;
+}
+
+.hit-item.hard {
+  background: #fff2f0;
+  border-left: 8rpx solid #ff4d4f;
+}
+
+.hit-item.soft {
+  background: #fffbe6;
+  border-left: 8rpx solid #faad14;
+}
+
+.hit-id {
+  font-weight: 600;
+  margin-right: 10rpx;
+}
+
+.hit-text {
+  display: block;
+  margin-top: 8rpx;
+  color: #222;
+  font-size: 26rpx;
+  line-height: 36rpx;
+}
+
+.hit-note {
+  display: block;
+  margin-top: 8rpx;
+  color: #666;
+  font-size: 24rpx;
+}
+
+.footer {
+  display: flex;
+  gap: 16rpx;
+  padding: 12rpx 0 40rpx;
+}
+
+.back-btn {
+  flex: 1;
+  background: #fff;
+  border: 1px solid #eaeaea;
+}
+
+.confirm-btn {
+  flex: 1;
+  background: #07c160;
+  color: #fff;
+}
