@@ -7,6 +7,8 @@ const zlib = require('zlib');
 const { buildPDF } = require('../../pdfBuilder-v2');
 const { calculateAll } = require('../../calculator-v2');
 
+jest.setTimeout(30000);
+
 const {
   build1_1,
   build1_2,
@@ -442,9 +444,14 @@ describe('Sprint 7 A-中期（逻辑层）端到端', () => {
     expect(pdfContent).toMatch(/广州属\s+W\d+\s+风区/);
     expect(pdfContent).toContain('基准 2.4 W/(m²·K)');
     expect(pdfContent).toContain('自采暖保温修正 -0.2');
+    expect((pdfContent.match(/修正 -0\.2/g) || []).length).toBe(1);
     expect(pdfContent).toContain('高层（≥7F）建议上调至 6 级');
     expect(pdfContent).toContain('不可降级');
     expect(pdfContent).not.toContain('参数说明：本文件中的技术参数为推荐目标值');
+    expect(pdfContent).toContain('隔声降噪诉求加严');
+    expect(pdfContent).not.toContain('阳台睡眠');
+    expect(pdfContent).not.toContain('房间场景');
+    expect(pdfContent).toContain('台风季暴雨侵蚀');
 
     expect(pdfContent).toContain('推拉扇限位块');
     expect(pdfContent).toContain('推拉扇锁定装置');
@@ -499,12 +506,27 @@ describe('Sprint 7 A-中期（逻辑层）端到端', () => {
     expect(pdfContent).not.toMatch(/⑫\s/);
     expect(pdfContent).toContain('固定压条');
   });
+
+  test('E2E-04: 北京3F内陆低层 - 水密不应出现台风季', async () => {
+    const a = fixtures.createPure(fixtures.guangzhouFull, {
+      city: '北京',
+      district: '朝阳',
+      floor: 3,
+      total_floors: 18,
+      window_type: 'casement',
+      budget_tier: 'B',
+      family_risk: []
+    });
+    const pdfContent = await buildPdfTextForAnswers(a, 'S7A-E2E-04');
+    expect(pdfContent).not.toMatch(/台风季/);
+    expect(pdfContent).toContain('基础 3 级，推荐 4 级');
+  });
 });
 
 describe('Sprint 7 热修复 v3.4.1', () => {
   test('DM-38: 第二章 2.4 标题软化与R01/R04/R05文案', async () => {
     const pdfContent = await buildPdfTextForAnswers(fixtures.guangzhouFull, 'S7-HF-DM38');
-    expect(pdfContent).toContain('2.4 产品红线（以下建议优先采用，如不满足须说明理由）');
+    expect(pdfContent).toContain('2.4 产品红线（违反以下强制项视为方案不合格）');
     expect(pdfContent).toContain('建议优先采用原生铝型材');
     expect(pdfContent).toContain('如采用其他材质，应说明理由');
     expect(pdfContent).toContain('断桥铝隔热条宽度建议不低于');

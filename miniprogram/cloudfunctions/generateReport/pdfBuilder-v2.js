@@ -496,7 +496,7 @@ function renderChapter2(doc, c2) {
   doc.y = renderMetricBlock(mThermal, doc.y);
 
   // 产品红线
-  drawSectionTitle(doc, "2.4 产品红线（以下建议优先采用，如不满足须说明理由）");
+  drawSectionTitle(doc, "2.4 产品红线（违反以下强制项视为方案不合格）");
   renderRedLines(doc, c2.redLines);
   doc.y += 18;
 }
