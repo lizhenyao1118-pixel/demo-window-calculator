@@ -67,7 +67,7 @@ function getTierLabel(tier) {
   return map[tier] || tier;
 }
 
-const { GLASS_LEVELS, BUDGET_SPEC, getNextTier } = require('./shared/budgetSpec.js');
+const { GLASS_LEVELS, BUDGET_SPEC, getNextTier, BUDGET_TIER_GLASS_BASE } = require('./shared/budgetSpec.js');
 const { getInsulationBarRequirement } = require('./shared/thermalSpec.js');
 const { resolveGlassConfig } = require('./arbitrator.js');
 const { getClimateZone } = require('./shared/climateSpec.js');
@@ -159,12 +159,48 @@ const ACCEPTANCE_NODES = {
   }
 };
 
+const ACCEPTANCE_ITEMS = {
+  common: [
+    { id: '1', text: '型材品牌、系列、壁厚与约定一致，提供合格证及质检报告' },
+    { id: '2', text: '玻璃规格、中空层厚度、Low-E 位置与约定一致，3C 标识完整' },
+    { id: '3', text: '五金配件型号与承载等级与约定一致，多点锁点完整咬合' },
+    { id: '4', text: '胶条/毛条安装完整，无明显缺口；等压腔排水通畅' },
+    { id: '5', text: '窗框与墙体连接：膨胀螺丝/化学锚栓间距合规，注胶饱满' },
+    { id: '6', text: '开启扇四周缝隙均匀，闭合后无明显渗风渗水' },
+    { id: '7', text: '玻璃压线/压条牢固，无松动、无外观缺陷' },
+    { id: '8', text: '排水孔/导流槽无堵塞，模拟淋水后无积水' },
+    { id: '9', text: '角码/组角工艺检查：注胶完整，无开裂' },
+    { id: '10', text: '表面划痕/磕碰检查，重要部位有保护' },
+    { id: '11', text: '每扇窗反复开合5-10次，胶条压实，无异响卡阻' }
+  ],
+  casement: {
+    '12': '外开窗确认防坠绳安装牢固，最大开启角度处限位器有效锁定',
+    '13': '限位器开启角度≤100mm 或固定扇确保儿童无法整体开启；大面积玻璃确认夹胶构造'
+  },
+  sliding: {
+    '12': '推拉扇限位块安装牢固，防止扇体脱轨飞出；滑轮推拉顺畅无卡阻，轨道水平度偏差≤2mm/m（高层必查）',
+    '13': '儿童安全配件：推拉扇锁定装置安装牢固，锁定后扇体不可被儿童推开；大面积安全玻璃确认夹胶构造，碰撞后无脱落'
+  },
+  fixed: {
+    '12': null,
+    '13': '大面积安全玻璃确认夹胶构造，碰撞后无脱落；固定压条牢固无松动'
+  },
+  tilt_turn: {
+    '12': '五金系统切换顺畅，防误操作器有效；关闭状态下锁点完整咬合',
+    '13': '内倒开启角度限制功能正常，儿童可触及区域无尖锐角部'
+  },
+  door_window: {
+    '12': '门扇与地面间隙符合设计要求（通常≤5mm），门框垂直度≤2mm/m',
+    '13': '门扇限位器或地吸安装牢固，儿童可触及区域配置防夹手装置'
+  }
+};
+
 const REDLINE_REGISTRY = [
-  { id: 'R01', text: '禁止使用回收铝型材，须提供原生铝材质检报告', level: 'mandatory', trigger: () => true },
+  { id: 'R01', text: '本项目建议优先采用原生铝型材，并提供材质检验证明；如采用其他材质，应说明理由并提供检测依据。', level: 'mandatory', trigger: () => true },
   { id: 'R02', text: '禁止单玻或无Low-E膜的普通中空玻璃', level: 'mandatory', trigger: () => true },
   { id: 'R03', text: '禁止普通密封胶代替结构胶（须用中性硅酮结构胶）', level: 'mandatory', trigger: () => true },
-  { id: 'R04', text: '断桥铝隔热条宽度须≥要求值（K值驱动）', level: 'mandatory', trigger: () => true },
-  { id: 'R05', text: '型材主受力壁厚须≥1.5mm，提供截面检测报告', level: 'mandatory', trigger: () => true },
+  { id: 'R04', text: '断桥铝隔热条宽度建议不低于本项目所需的热工要求（如常规穿条式≥28mm），不建议使用明显低于要求的仿断桥产品。', level: 'mandatory', trigger: () => true },
+  { id: 'R05', text: '型材主受力壁厚建议不低于 1.5mm，并提供截面检测报告；如提议采用更薄型材，应说明承载与风压校核依据。', level: 'mandatory', trigger: () => true },
   { id: 'R06', text: '', level: 'mandatory', trigger: () => true },
   { id: 'R07', text: '安全玻璃：夹胶构造强制', level: 'mandatory', trigger: (a, r) => !!(r && r.safetyForced) },
   { id: 'R08', text: '执手操作力≤25N + 门槛≤15mm', level: 'mandatory', trigger: (a) => {
@@ -397,12 +433,46 @@ function build1_2(answers, resolved) {
     sealGrades = null;
   }
 
+  const parameterNote = buildParameterNote({
+    windPressure: {
+      value: getField(resolved, 'P3'),
+      windZone: resolved.wind_zone || 'W?',
+      factors: []
+    },
+    soundInsulation: {
+      base: 30,
+      value: getField(resolved, 'Rw')
+    },
+    thermal: {
+      kValue: getField(resolved, 'K'),
+      kBase: resolved.kBase || null,
+      climateZone: resolved.climateZoneCN || '',
+      corrections: Array.isArray(resolved.corrections) ? resolved.corrections : []
+    },
+    shgc: { value: getField(resolved, 'SHGC') },
+    safety: {},
+    sealGrades: sealGrades ? { airRec: sealGrades.airRec, airMin: sealGrades.airMin, waterRec: sealGrades.waterRec, waterMin: sealGrades.waterMin } : null,
+    inputs: {
+      city: answers.city,
+      floor: answers.floor,
+      heightRatio: (Number(answers.floor) / Number(answers.total_floors || 1)).toFixed(2),
+      noiseType: answers.noise_type,
+      roomType: Array.isArray(answers.room_type) ? answers.room_type : [],
+      facing: answers.orientation,
+      isHighFloor: Number(answers.floor) >= 7,
+      isCoastal: false,
+      hasBigWindow: Array.isArray(answers.family_risk) && answers.family_risk.includes('large_fixed'),
+      hasChild: Array.isArray(answers.family_risk) && (answers.family_risk.includes('child') || answers.family_risk.includes('children'))
+    }
+  });
+
   return {
     needsTable: buildNeedsTable(resolved, answers, sealGrades),
     coreTension: buildCoreTension(answers, resolved),
     disclaimer: buildParamDisclaimer(),
     budgetFitnessNote: budgetFitnessNote,
-    sealGrades
+    sealGrades,
+    parameterNote
   };
 }
 
@@ -460,8 +530,12 @@ function buildNeedsTable(resolved, answers, sealGrades) {
 
   const sg = sealGrades || { airMin: 4, airRec: 4, airGap: 0, waterMin: 3, waterRec: 4, waterGap: 1, isFixed: false };
   const fixedNote = sg.isFixed ? '（固定窗推荐值+1级）' : '';
-  const airValue = `≥ ${sg.airRec}级${sg.airGap > 0 ? `（最低${sg.airMin}级）` : ''}`;
-  const waterValue = `≥ ${sg.waterRec}级${sg.waterGap > 0 ? `（最低${sg.waterMin}级）` : ''}`;
+  const airValue = sg.airGap > 0
+    ? `推荐目标值：≥${sg.airRec}级（最低可接受值：${sg.airMin}级，需业主书面确认）`
+    : `推荐目标值：≥${sg.airRec}级`;
+  const waterValue = sg.waterGap > 0
+    ? `推荐目标值：≥${sg.waterRec}级（最低可接受值：${sg.waterMin}级，需业主书面确认）`
+    : `推荐目标值：≥${sg.waterRec}级`;
 
   return [
     {
@@ -502,6 +576,40 @@ function buildNeedsTable(resolved, answers, sealGrades) {
   ];
 }
 
+/**
+ * 构建参数说明脚注（三块结构）
+ */
+function buildParameterNote({ windPressure, soundInsulation, thermal, shgc, safety, sealGrades, inputs }) {
+  const block1 = '本表各项参数综合三类信息确定：① 国家/行业标准的基准值；② 您填写的项目信息（城市、楼层、窗型、噪声环境等）；③ 李Sir 基于工程案例的专业修正。';
+  const lines = [];
+  lines.push(`${inputs.city}属 ${windPressure.windZone} 风区，第 ${inputs.floor} 层高度比 ${Math.round(Number(inputs.heightRatio) * 100)}%，按 GB/T 7106 推荐等级取 ≥${windPressure.value} kPa。`);
+  lines.push(`${inputs.noiseType === 'main_road' ? '主干道 <20m' : '噪声源已评估'}，按 GB/T 8485 分类取 Rw≥${soundInsulation.base} dB，结合${inputs.roomType.includes('bedroom') ? '卧室睡眠场景' : '房间场景'}加严至 ${soundInsulation.value} dB。`);
+  const factorStr = Array.isArray(thermal.corrections) && thermal.corrections.length > 0
+    ? thermal.corrections
+      .filter(f => Number(f.value) !== 0)
+      .map(f => {
+        if (f.factor === 'heating' && Number(f.value) < 0) return '自采暖保温修正 -0.2';
+        if (f.factor === 'westSun' && Number(f.value) < 0) return '西晒修正 -0.1';
+        if (f.factor === 'bigWindow' && Number(f.value) < 0) return '落地窗修正 -0.2';
+        return '';
+      })
+      .filter(Boolean)
+      .join('，')
+    : '';
+  lines.push(`${inputs.city}属 ${thermal.climateZone}，基准 ${thermal.kBase || '2.4'} W/(m²·K)${factorStr ? '，' + factorStr : ''}，取 K≤${thermal.kValue}。`);
+  lines.push(`${inputs.facing === 'west' ? '西向无遮阳' : '方位已评估'}，按 GB/T 2680 标准取 SHGC≤${shgc.value}。`);
+  if (sealGrades) {
+    lines.push(`住宅基础线为 ${sealGrades.airMin} 级${inputs.isHighFloor ? `，高层（≥7F）建议上调至 ${sealGrades.airRec} 级，以减轻风噪和渗风感` : ''}。`);
+    lines.push(`${inputs.isCoastal ? '沿海城市 + ' : ''}${inputs.isHighFloor ? '高层' : '普通楼层'}，由基础 ${sealGrades.waterMin} 级上调至推荐 ${sealGrades.waterRec} 级，以应对台风季暴雨侵蚀。`);
+  }
+  if (inputs.hasBigWindow || inputs.hasChild) {
+    lines.push(`${inputs.hasBigWindow ? '落地窗 + ' : ''}${inputs.hasChild ? '儿童家庭' : ''}，依据 GB 15763.3 强制要求夹胶安全玻璃构造。`);
+  }
+  const block2 = lines.join('\n');
+  const block3 = '其中安全等级依据 GB 15763.3 强制条款，不可降级。即使为控制成本，亦不建议放宽安全配置。';
+  return { block1, block2, block3 };
+}
+
 function buildParamDisclaimer() {
   return {
     type: 'disclaimer',
@@ -539,7 +647,7 @@ function buildCoreTension(answers, resolved) {
     sentences.push(`${conflicts.hardest}与${conflicts.secondHardest}存在配置重合，导致本案成本高于同档位普通场景。`);
   }
 
-  sentences.push(`基于以上分析，以下指标为本项目的${TERM.paramLabel}，作为商家方案的最低准入标准——低于任一项的，${TERM.excludeSoft}。`);
+  sentences.push('基于以上分析，本表各项为本项目的推荐目标值。商家方案如仅能满足最低可接受值，应在报价中说明原因，并由业主确认是否接受；低于最低值的方案，建议不予优先考虑。');
 
   return sentences.join('');
 }
@@ -591,13 +699,21 @@ function buildChapter3ConflictAlert(budgetSpec, resolved) {
   const notes = Array.isArray(resolved.conflict_notes) ? resolved.conflict_notes : [];
   const hasConflicts = notes.length > 0;
   const conflictMeta = budgetSpec && budgetSpec.conflict ? budgetSpec.conflict : null;
+  const label = String(budgetSpec.label || '');
+  const tierMatch = label.match(/[ABCD]/);
+  const tier = tierMatch ? tierMatch[0] : 'B';
+  const base = BUDGET_TIER_GLASS_BASE[tier] || BUDGET_TIER_GLASS_BASE.B;
 
   return {
     title: hasConflicts ? '配置升级提醒' : '配置兼容性检查',
     items: hasConflicts ? notes : [],
     noConflictText: hasConflicts ? null : '经分析，您的需求配置与所选预算档位无明显冲突。',
     severity: (conflictMeta && conflictMeta.severity) ? conflictMeta.severity : 'warning',
-    cost_estimate: hasConflicts ? `预计玻璃成本增加：${budgetSpec.cost_delta}元/㎡` : null
+    cost_estimate: hasConflicts
+      ? (Number(budgetSpec.cost_delta) === 0
+        ? `预计玻璃成本增加：视实际玻璃配置而定（请商家在报价中单独列出玻璃部分的加价幅度）；相对于 ${tier} 档标准配置（${base.config}）`
+        : `预计玻璃成本增加：${budgetSpec.cost_delta}元/㎡（相对于 ${tier} 档标准配置：${base.config}）`)
+      : null
   };
 }
 
@@ -610,19 +726,18 @@ function buildRedlineChecklist(answers, resolved) {
     const item = { ...r, text: (typeof r.text === 'function' ? r.text(answers, resolved) : r.text) };
     if (r.id === 'R06') {
       const sealGrades = calcSealGrades({ city: answers.city, floor: answers.floor, windowType: answers.window_type });
-      let desc = `提供整窗淋水及气密性测试报告（气密≥${sealGrades.airRec}级，水密≥${sealGrades.waterRec}级，GB/T 7106）`;
-      if (sealGrades.waterGap >= 1) {
-        desc += `。若水密仅达${sealGrades.waterMin}级，需说明具体构造、排水与密封加强措施，由业主确认是否接受`;
-      }
-      if (sealGrades.airGap >= 1) {
-        desc += `。若气密仅达${sealGrades.airMin}级，需说明理由并由业主确认`;
-      }
+      const desc = `提供整窗淋水及气密性测试报告（推荐：气密≥${sealGrades.airRec}级、水密≥${sealGrades.waterRec}级，GB/T 7106）。若方案仅能达到水密 5 级或气密 4~5 级，应说明具体构造、排水与密封加强措施，并由业主确认是否接受；该类方案不建议作为首选。`;
       item.text = desc;
       item._sealGrades = { airMin: sealGrades.airMin, airRec: sealGrades.airRec, waterMin: sealGrades.waterMin, waterRec: sealGrades.waterRec };
     }
     if (r.level === 'mandatory') mandatory.push(item);
     else recommended.push(item);
   });
+
+  // 连续化编号：displayId
+  let displayCounter = 1;
+  mandatory.forEach(it => { it.displayId = `R${String(displayCounter).padStart(2, '0')}`; displayCounter++; });
+  recommended.forEach(it => { it.displayId = `R${String(displayCounter).padStart(2, '0')}`; displayCounter++; });
 
   return { mandatory, recommended };
 }
@@ -639,7 +754,7 @@ function buildPerformanceChecks(answers) {
     checks.push({
       id: 'perf_sound_compare',
       num: '⑭',
-      text: '关窗前后分别在室内录制一段环境音（10秒即可），对比主观感受差异。如感知差异不明显，要求商家说明原因或补救措施。'
+      text: '关窗前后分别在室内录制一段环境音（约 10 秒），对比主观感受差异（仅作为居住体验参考，不等同于实验室检测）。如感知差异不明显，可要求商家说明原因或提出改进方案。'
     });
     checks.push({
       id: 'perf_sound_report',
@@ -711,7 +826,7 @@ function buildChapter4Data(answers, budgetSpec, resolved, riskTrigger, isRisk) {
       },
       section2: {
         title: '── 第二段：技术答题表 ────────────────────────────',
-        hint: '请填写完整；写不出来就空着，业主会看得很清楚',
+        hint: '请尽量完整填写；未填写项将影响方案的可比性和业主的优先选择。',
         columns: ['品牌及系列', '型材壁厚(mm)', '玻璃配置', '检测报告编号', '含税报价(元/㎡)', '工期(天)', '质保(年)', '签名确认'],
         note: '若贵司认为在当前预算档位内难以满足某项关键指标，请在"配置建议与说明"栏中提出具体升级方案及差价估算，而非省略或模糊填写。'
       },
@@ -724,8 +839,8 @@ function buildChapter4Data(answers, budgetSpec, resolved, riskTrigger, isRisk) {
         ]
       },
       signature: {
-        text: '签名代表对上述填写内容的确认；如进入签约，请将关键指标写入合同',
-        fields: ['商家签名（无需公章）', '日期', '回传方式：扫描/拍照发送至业主微信']
+        text: '下列签名表示填写人已确认上述内容的真实性；如进入签约，建议将关键指标写入合同。填写人确认：__________',
+        fields: []
       }
     },
     l2_entry: {
@@ -735,7 +850,7 @@ function buildChapter4Data(answers, budgetSpec, resolved, riskTrigger, isRisk) {
       action: '预约深度审计 →'
     },
     risks: { title: '4.3 风险提示', items: isRisk ? getRiskWarnings(answers, resolved, riskTrigger) : [] },
-    acceptance: { title: '4.4 验收节点', nodes: buildAcceptanceNodes(family_risk) },
+    acceptance: { title: '4.4 验收节点', nodes: buildAcceptanceNodes(family_risk, answers.window_type) },
     performanceChecks,
     redlineChecklist
   };
@@ -750,9 +865,8 @@ function getBudgetSpec(tier) {
 }
 
 function estimateCostDelta(glassKey, tier) {
-  const spec = BUDGET_SPEC[tier] || BUDGET_SPEC.B;
-  const baseKey = spec.glass_max_level;
-  const baseCost = (GLASS_LEVELS[baseKey] && GLASS_LEVELS[baseKey].base_cost) ? GLASS_LEVELS[baseKey].base_cost : 0;
+  const base = BUDGET_TIER_GLASS_BASE[tier] || BUDGET_TIER_GLASS_BASE.B;
+  const baseCost = base.pricePerSqm || 0;
   const targetCost = (GLASS_LEVELS[glassKey] && GLASS_LEVELS[glassKey].base_cost) ? GLASS_LEVELS[glassKey].base_cost : 0;
   return Math.max(0, Math.round(targetCost - baseCost));
 }
@@ -760,6 +874,7 @@ function estimateCostDelta(glassKey, tier) {
 function buildBudgetSpecView(resolved, answers) {
   const tier = answers.budget_tier || 'B';
   const spec = BUDGET_SPEC[tier] || BUDGET_SPEC.B;
+  const tierStandardGlass = BUDGET_TIER_GLASS_BASE[tier] || BUDGET_TIER_GLASS_BASE.B;
   const bar = getInsulationBarRequirement(Number(getField(resolved, 'K')));
 
   const familyRisk = Array.isArray(answers.family_risk) ? answers.family_risk : [];
@@ -795,6 +910,7 @@ function buildBudgetSpecView(resolved, answers) {
     price_range: spec.price_range,
     price_hint: spec.price_hint,
     bar_ratio: spec.bar_ratio,
+    tierStandardGlass,
     profile: `壁厚≥${spec.profile.min_wall_thickness}mm；隔热条≥${bar.min_mm}mm（${bar.process}）`,
     glass: config_table.glass,
     glass_reason: glass_result.reason || null,
@@ -877,17 +993,37 @@ function buildNode13(family_risk) {
   return items.length > 0 ? items.join('；') : null;
 }
 
-function buildAcceptanceNodes(family_risk) {
+function buildAcceptanceNodes(family_risk, window_type) {
   const base = getAcceptanceNodes();
-  const node13 = buildNode13(family_risk);
-  if (!node13) return base;
-
   const final = base[2];
-  const items = Array.isArray(final.items) ? [...final.items] : [];
-  const idx = items.findIndex(x => typeof x === 'string' && x.startsWith('⑬'));
-  if (idx >= 0) items[idx] = `⑬ ${node13}`;
-  else items.push(`⑬ ${node13}`);
-
+  let items = Array.isArray(final.items) ? [...final.items] : [];
+  const map = ACCEPTANCE_ITEMS[window_type] || null;
+  if (map) {
+    // ⑫
+    const idx12 = items.findIndex(x => typeof x === 'string' && x.startsWith('⑫'));
+    const t12 = map['12'];
+    if (t12 === null) {
+      if (idx12 >= 0) items.splice(idx12, 1);
+    } else if (typeof t12 === 'string') {
+      if (idx12 >= 0) items[idx12] = `⑫ ${t12}`; else items.push(`⑫ ${t12}`);
+    }
+    // ⑬
+    const idx13 = items.findIndex(x => typeof x === 'string' && x.startsWith('⑬'));
+    const t13 = map['13'];
+    if (typeof t13 === 'string') {
+      if (idx13 >= 0) items[idx13] = `⑬ ${t13}`; else items.push(`⑬ ${t13}`);
+    }
+  }
+  const node13 = buildNode13(family_risk);
+  if (node13) {
+    const i13 = items.findIndex(x => typeof x === 'string' && x.startsWith('⑬'));
+    if (i13 >= 0) {
+      const baseText = String(items[i13]).replace(/^⑬\s*/, '');
+      const merged = baseText ? `${baseText}；${node13}` : node13;
+      items[i13] = `⑬ ${merged}`;
+    }
+    else items.push(`⑬ ${node13}`);
+  }
   return [base[0], base[1], { ...final, items }];
 }
 

@@ -193,6 +193,7 @@ function calculateAll(assessment) {
     kRange: thermalResult.kRange,
     appliedFactor: thermalResult.appliedFactor,
     appliedLabel: thermalResult.appliedLabel,
+    corrections: thermalResult.corrections,
     wind_zone: cityConfig.wind_zone,
     floor, total_floors, height_ratio: floor / Math.max(total_floors, 1),
     P3: p3Result.value,

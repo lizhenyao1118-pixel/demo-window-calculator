@@ -190,7 +190,16 @@ function renderCover(doc, cover) {
   
   // 签发人
   doc.fillColor("#FFFFFF").fontSize(10.5)
-    .text("签发人：李Sir · 门窗技术顾问", 55, 278, { width: 485, align: "right" });
+    .text("李Sir · 独立门窗技术顾问（不销售、不代理）", 55, 278, { width: 485, align: "right" });
+
+  doc.fillColor(COLORS.text_body).fontSize(10)
+    .text("本文件基于您的实际需求，将生活诉求转化为可量化的技术采购标准——帮您用数据选窗，不凭感觉、不靠话术。", 55, 304, { width: 485, align: "left", lineGap: 4 });
+
+  const guideY = 348;
+  const guideText = "📋 业主：第一章了解需求转化逻辑；第三章确认预算；第四章直接发给商家。\n🏭 商家：请重点阅读第二章技术指标，并完整填写第四章答题表后回传业主。";
+  doc.roundedRect(55, guideY, 485, 54, 6).fill("#F0F7FF").stroke(COLORS.border);
+  doc.fillColor(COLORS.text_body).fontSize(10)
+    .text(guideText, 69, guideY + 10, { width: 457, align: "left", lineGap: 4 });
 }
 
 function renderChapter1(doc, c1) {
@@ -279,11 +288,13 @@ function renderChapter1(doc, c1) {
       colX = startX;
       values.forEach((val, colIdx) => {
         const textColor = colIdx === 2 ? COLORS.text_secondary : COLORS.text_body;
-        const fontSize = colIdx === 2 ? 9 : 10;
+        const fontSize = (rowIdx >= 5 && colIdx === 1) ? 8.5 : (colIdx === 2 ? 9 : 10);
+        const lineGap = (rowIdx >= 5 && colIdx === 1) ? 1 : undefined;
         doc.fillColor(textColor).fontSize(fontSize)
-          .text(String(val || ""), colX + 5, y + 8, {
+          .text(String(val || ""), colX + 5, y + 6, {
             width: colWidths[colIdx] - 10,
-            align: colIdx === 0 ? "center" : "left"
+            align: colIdx === 0 ? "center" : "left",
+            lineGap: lineGap
           });
         colX += colWidths[colIdx];
       });
@@ -295,6 +306,30 @@ function renderChapter1(doc, c1) {
         .text('注：固定窗因无可开启部件，密封性能天然更高，可按更高一档理解（气密、水密推荐值已+1级）', 55, doc.y, { width: 485, align: 'left', lineGap: 2 });
       doc.fillColor(COLORS.text_body);
       doc.y += 18;
+    }
+
+    if (c1.needsAnalysis.parameterNote) {
+      const pn = c1.needsAnalysis.parameterNote;
+      // block1
+      doc.fillColor(COLORS.text_body).fontSize(10).text(String(pn.block1 || ''), 55, doc.y, { width: 485, lineGap: 2 });
+      doc.y += 18;
+      // block2 lines
+      const lines = String(pn.block2 || '').split('\n').filter(Boolean);
+      lines.forEach((ln) => {
+        doc.fillColor(COLORS.text_secondary).fontSize(9.5).text(`· ${ln}`, 55, doc.y, { width: 485, lineGap: 2 });
+        doc.y += 14;
+      });
+      doc.y += 6;
+      // block3 emphasis
+      if (String(pn.block3 || '').trim()) {
+        const y0 = doc.y;
+        const txt = String(pn.block3);
+        const h = doc.heightOfString(txt, { width: 485, lineGap: 2 });
+        doc.rect(55, y0 - 2, 485, h + 6).fill('#FEF9E7').stroke(COLORS.border);
+        doc.fillColor("#8A6D3B").fontSize(9.5).text(txt, 59, y0, { width: 477, lineGap: 2 });
+        doc.fillColor(COLORS.text_body);
+        doc.y = y0 + h + 14;
+      }
     }
 
     if (c1.needsAnalysis.disclaimer && c1.needsAnalysis.disclaimer.type === 'disclaimer') {
@@ -631,11 +666,11 @@ function renderRedlineChecklist(doc, checklist) {
   doc.y += 16;
 
   if (mandatory.length > 0) {
-    doc.fillColor(COLORS.risk_red).fontSize(10.5).text("⚠️ 强制红线（以下任一项未满足，方案即视为不合格）", 55, doc.y, { width: 485 });
+    doc.fillColor(COLORS.risk_red).fontSize(10.5).text("⚠ 强制红线（以下任一项未满足，方案原则上不建议采用）", 55, doc.y, { width: 485 });
     doc.y += 16;
 
     mandatory.forEach((item) => {
-      const id = item.id ? String(item.id) : "";
+      const id = item.displayId ? String(item.displayId) : (item.id ? String(item.id) : "");
       const text = item.text ? String(item.text) : "";
       const line1 = `□ ${id} ${text}`.trimEnd();
       const confirmLine = "    商家确认：□ 满足  □ 不满足（请说明原因：__________）";
@@ -659,7 +694,7 @@ function renderRedlineChecklist(doc, checklist) {
     doc.y += 14;
 
     recommended.forEach((item) => {
-      const id = item.id ? String(item.id) : "";
+      const id = item.displayId ? String(item.displayId) : (item.id ? String(item.id) : "");
       const text = item.text ? String(item.text) : "";
       const line1 = `□ ${id} ${text}`.trimEnd();
       const confirmLine = "    商家确认：□ 知悉并同意  □ 不适用";
@@ -711,25 +746,6 @@ function renderChapter4(doc, c4) {
       doc.y += 18;
     }
   }
-
-  if (c4.acceptance && c4.acceptance.nodes && c4.acceptance.nodes.length > 0) {
-    drawSectionTitle(doc, c4.acceptance.title || "4.4 验收节点");
-    const nodes = c4.acceptance.nodes;
-    nodes.forEach((node) => {
-      const nodeTitle = node.title || (node.stage ? `【${node.stage}】` : "【验收节点】");
-      doc.fillColor(COLORS.brand_mid).fontSize(11).text(nodeTitle, 55, doc.y);
-      doc.y += 15;
-      (node.items || []).forEach((item) => {
-        doc.fillColor(COLORS.text_body).fontSize(10).text(` · ${item}`, 65, doc.y, { width: 475 });
-        doc.y += 12;
-      });
-      doc.y += 5;
-      if (842 - doc.y < 80) doc.addPage();
-    });
-    doc.y += 6;
-  }
-
-  renderPerformanceChecks(doc, c4.performanceChecks);
 
   const mq = c4.merchantQuestionnaire || {};
   if (mq.title) {
@@ -866,6 +882,25 @@ function renderChapter4(doc, c4) {
       doc.y += boxH + 10;
     });
   }
+  
+  if (c4.acceptance && c4.acceptance.nodes && c4.acceptance.nodes.length > 0) {
+    drawSectionTitle(doc, c4.acceptance.title || "4.4 验收节点");
+    const nodes = c4.acceptance.nodes;
+    nodes.forEach((node) => {
+      const nodeTitle = node.title || (node.stage ? `【${node.stage}】` : "【验收节点】");
+      doc.fillColor(COLORS.brand_mid).fontSize(11).text(nodeTitle, 55, doc.y);
+      doc.y += 15;
+      (node.items || []).forEach((item) => {
+        doc.fillColor(COLORS.text_body).fontSize(10).text(` · ${item}`, 65, doc.y, { width: 475 });
+        doc.y += 12;
+      });
+      doc.y += 5;
+      if (842 - doc.y < 80) doc.addPage();
+    });
+    doc.y += 6;
+  }
+  
+  renderPerformanceChecks(doc, c4.performanceChecks);
 }
 
 function renderAttachments(doc, attachments) {

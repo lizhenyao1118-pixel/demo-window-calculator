@@ -1,5 +1,11 @@
 const dm = require('../../documentMapper');
 const fixtures = require('../fixtures/testAnswers');
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
+const zlib = require('zlib');
+const { buildPDF } = require('../../pdfBuilder-v2');
+const { calculateAll } = require('../../calculator-v2');
 
 const {
   build1_1,
@@ -216,8 +222,8 @@ describe('B-14 C短期 红线文案动态化', () => {
     const r06 = (checklist.mandatory || []).find(r => r.id === 'R06');
     expect(r06.text).toContain('气密≥6级');
     expect(r06.text).toContain('水密≥6级');
-    expect(r06.text).toContain('若水密仅达5级');
-    expect(r06.text).toContain('若气密仅达4级');
+    expect(r06.text).toContain('若方案仅能达到水密 5 级或气密 4~5 级');
+    expect(r06.text).toContain('该类方案不建议作为首选');
   });
 
   test('DM-22: 成都3F固定窗 - 气密5级水密5级（固定窗+1）', () => {
@@ -226,6 +232,7 @@ describe('B-14 C短期 红线文案动态化', () => {
     const r06 = (checklist.mandatory || []).find(r => r.id === 'R06');
     expect(r06.text).toContain('气密≥5级');
     expect(r06.text).toContain('水密≥5级');
+    expect(r06.text).toContain('若方案仅能达到水密 5 级或气密 4~5 级');
   });
 
   test('DM-23: 北京20F开启窗 - 气密6级水密4级（高层内陆）', () => {
@@ -234,6 +241,7 @@ describe('B-14 C短期 红线文案动态化', () => {
     const r06 = (checklist.mandatory || []).find(r => r.id === 'R06');
     expect(r06.text).toContain('气密≥6级');
     expect(r06.text).toContain('水密≥4级');
+    expect(r06.text).toContain('若方案仅能达到水密 5 级或气密 4~5 级');
   });
 
   test('DM-24: 沈阳3F开启窗 - 气密6级（严寒推高）含降级条款', () => {
@@ -241,7 +249,7 @@ describe('B-14 C短期 红线文案动态化', () => {
     const checklist = buildRedlineChecklist(answers, { safetyForced: false });
     const r06 = (checklist.mandatory || []).find(r => r.id === 'R06');
     expect(r06.text).toContain('气密≥6级');
-    expect(r06.text).toContain('若气密仅达4级');
+    expect(r06.text).toContain('若方案仅能达到水密 5 级或气密 4~5 级');
   });
 
   test('DM-25: 上海10F开启窗 - 气密6级水密6级（近海+高层）', () => {
@@ -250,6 +258,7 @@ describe('B-14 C短期 红线文案动态化', () => {
     const r06 = (checklist.mandatory || []).find(r => r.id === 'R06');
     expect(r06.text).toContain('气密≥6级');
     expect(r06.text).toContain('水密≥6级');
+    expect(r06.text).toContain('若方案仅能达到水密 5 级或气密 4~5 级');
   });
 });
 
@@ -269,8 +278,8 @@ describe('B-14 A中期 七维参数表与结构化等级', () => {
     const resolved = { P3_required: 2.6, Rw_required: 30, K_target: 2.3, SHGC_target: 0.35, kRange: '2.3~2.5', climateZoneCN: '夏热冬冷', appliedFactor: null };
     const r = build1_2(a, resolved);
     const airRow = (r.needsTable || []).find(x => x.dimension === '气密性') || {};
-    expect(String(airRow.value || '')).toContain('≥ 4级');
-    expect(String(airRow.value || '')).not.toContain('最低');
+    expect(String(airRow.value || '')).toContain('推荐目标值：≥4级');
+    expect(String(airRow.value || '')).not.toContain('最低可接受值');
   });
 
   test('DM-28: R06新增结构化_sealGrades字段', () => {
@@ -287,5 +296,178 @@ describe('B-14 A中期 七维参数表与结构化等级', () => {
     const resolved = { P3_required: 2.6, Rw_required: 30, K_target: 2.3, SHGC_target: 0.35, kRange: '2.3~2.5', climateZoneCN: '夏热冬冷', appliedFactor: null };
     const r = build1_2(a, resolved);
     expect(r.sealGrades && r.sealGrades.isFixed).toBe(true);
+  });
+});
+
+async function buildPdfForAnswers(answers, pdfNo) {
+  const assessment = {
+    city: answers.city,
+    floor: answers.floor,
+    total_floors: answers.total_floors,
+    noise_type: answers.noise_type,
+    noise_dist: answers.noise_dist,
+    orientation: answers.orientation,
+    west_shading: answers.west_shading,
+    pain_point: answers.pain_point,
+    heating_type: answers.heating_type,
+    family_risk: answers.family_risk,
+    budget_tier: answers.budget_tier
+  };
+  const resolved = calculateAll(assessment);
+  const sections = dm.mapToSections(resolved, { ...answers, photos: [] }, pdfNo);
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'generateReport-s7-'));
+  const out = path.join(dir, `${pdfNo}.pdf`);
+  await buildPDF(sections, out);
+  return out;
+}
+
+async function buildPdfTextForAnswers(answers, pdfNo) {
+  const PDFDocument = require('pdfkit');
+  const texts = [];
+  const originalText = PDFDocument.prototype.text;
+  PDFDocument.prototype.text = function (text, ...args) {
+    texts.push(String(text || ""));
+    return originalText.call(this, text, ...args);
+  };
+  try {
+    await buildPdfForAnswers(answers, pdfNo);
+  } finally {
+    PDFDocument.prototype.text = originalText;
+  }
+  return texts.join('\n');
+}
+
+describe('Sprint 7 C-短期文案优化', () => {
+  test('DM-29: 封面应包含价值主张与签发人', async () => {
+    const pdfContent = await buildPdfTextForAnswers(fixtures.guangzhouFull, 'S7-DM29');
+    expect(pdfContent).toContain('帮您用数据选窗，不凭感觉、不靠话术');
+    expect(pdfContent).toContain('李Sir · 独立门窗技术顾问（不销售、不代理）');
+    expect(pdfContent).toContain('📋 业主：第一章了解需求转化逻辑；第三章确认预算；第四章直接发给商家。');
+    expect(pdfContent).toContain('🏭 商家：请重点阅读第二章技术指标，并完整填写第四章答题表后回传业主。');
+  });
+
+  test('DM-30: 参数表气密水密格式应为推荐/最低分层', async () => {
+    const pdfContent = await buildPdfTextForAnswers(fixtures.guangzhouFull, 'S7-DM30');
+    expect(pdfContent).toContain('推荐目标值：≥6级（最低可接受值：4级，需业主书面确认）');
+    expect(pdfContent).toContain('推荐目标值：≥6级（最低可接受值：5级，需业主书面确认）');
+  });
+
+  test('DM-31: 1.2节叙述段应包含弹性文案', async () => {
+    const pdfContent = await buildPdfTextForAnswers(fixtures.guangzhouFull, 'S7-DM31');
+    expect(pdfContent).toContain('商家方案如仅能满足最低可接受值，应在报价中说明原因');
+    expect(pdfContent).toContain('低于最低值的方案，建议不予优先考虑');
+  });
+
+  test('DM-32: 玻璃差价提示应标明档位标准配置基准', async () => {
+    const a = fixtures.createPure(fixtures.guangzhouFull, {
+      noise_type: 'quiet',
+      noise_dist: 'gt50',
+      pain_point: 'price',
+      pain_points: ['economy'],
+      window_type: 'casement'
+    });
+    const pdfContent = await buildPdfTextForAnswers(a, 'S7-DM32');
+    expect(pdfContent).toContain('相对于 A 档标准配置');
+  });
+
+  test('DM-33: R06降级条款应覆盖气密4~5级区间', async () => {
+    const pdfContent = await buildPdfTextForAnswers(fixtures.guangzhouFull, 'S7-DM33');
+    expect(pdfContent).toContain('若方案仅能达到水密 5 级或气密 4~5 级');
+    expect(pdfContent).toContain('该类方案不建议作为首选');
+  });
+
+  test('DM-34: 红线强制区标题应软化，R01/R04/R05应建议优先', async () => {
+    const pdfContent = await buildPdfTextForAnswers(fixtures.guangzhouFull, 'S7-DM34');
+    expect(pdfContent).toContain('方案原则上不建议采用');
+    expect(pdfContent).toContain('建议优先采用原生铝型材');
+    expect(pdfContent).toContain('如采用其他材质，应说明理由');
+    expect(pdfContent).toContain('隔热条宽度建议不低于');
+    expect(pdfContent).toContain('壁厚建议不低于 1.5mm');
+    expect(pdfContent).toContain('禁止单玻或无Low-E膜');
+    expect(pdfContent).toContain('禁止普通密封胶代替结构胶');
+    expect(pdfContent).toContain('夹胶构造强制');
+  });
+
+  test('DM-35: 商家答题表引导语应软化', async () => {
+    const pdfContent = await buildPdfTextForAnswers(fixtures.guangzhouFull, 'S7-DM35');
+    expect(pdfContent).toContain('请尽量完整填写；未填写项将影响方案的可比性和业主的优先选择。');
+    expect(pdfContent).not.toContain('写不出来就空着');
+  });
+
+  test('DM-36: 商家签名行应包含合同建议', async () => {
+    const pdfContent = await buildPdfTextForAnswers(fixtures.guangzhouFull, 'S7-DM36');
+    expect(pdfContent).toContain('下列签名表示填写人已确认上述内容的真实性');
+    expect(pdfContent).toContain('建议将关键指标写入合同');
+    expect(pdfContent).not.toContain('商家签名（无需公章）');
+  });
+
+  test('DM-37: 验收⑭应包含免责声明', async () => {
+    const pdfContent = await buildPdfTextForAnswers(fixtures.guangzhouFull, 'S7-DM37');
+    expect(pdfContent).toContain('仅作为居住体验参考，不等同于实验室检测');
+    expect(pdfContent).toContain('如感知差异不明显，可要求商家说明原因或提出改进方案');
+  });
+});
+
+describe('Sprint 7 A-中期（逻辑层）端到端', () => {
+  test('E2E-01: 广州8F推拉窗A档 - 三块脚注 + ⑫/⑬推拉适配 + 4.1~4.4顺序', async () => {
+    const a = fixtures.createPure(fixtures.guangzhouFull, { heating_type: 'self', heatingType: 'self' });
+    const pdfContent = await buildPdfTextForAnswers(a, 'S7A-E2E-01');
+    expect(pdfContent).toContain('本表各项参数综合三类信息确定');
+    expect(pdfContent).toMatch(/广州属\s+W\d+\s+风区/);
+    expect(pdfContent).toContain('基准 2.4 W/(m²·K)');
+    expect(pdfContent).toContain('自采暖保温修正 -0.2');
+    expect(pdfContent).toContain('高层（≥7F）建议上调至 6 级');
+    expect(pdfContent).toContain('不可降级');
+
+    expect(pdfContent).toContain('推拉扇限位块');
+    expect(pdfContent).toContain('推拉扇锁定装置');
+
+    const idx41 = pdfContent.indexOf('4.1 给商家的说明');
+    const idx42 = pdfContent.indexOf('4.2 商家答题表');
+    const idx43 = pdfContent.indexOf('4.3 风险提示');
+    const idx44 = pdfContent.indexOf('4.4 验收节点');
+    expect(idx41).toBeGreaterThanOrEqual(0);
+    expect(idx42).toBeGreaterThanOrEqual(0);
+    expect(idx43).toBeGreaterThanOrEqual(0);
+    expect(idx44).toBeGreaterThanOrEqual(0);
+    expect(idx41).toBeLessThan(idx42);
+    expect(idx42).toBeLessThan(idx43);
+    expect(idx43).toBeLessThan(idx44);
+  });
+
+  test('E2E-02: 北京15F平开窗C档 - ⑫平开适配（防坠绳）', async () => {
+    const a = fixtures.createPure(fixtures.shanghaiThermal, {
+      city: '北京',
+      district: '朝阳',
+      floor: 15,
+      total_floors: 30,
+      window_type: 'casement',
+      windowType: 'casement',
+      budget_tier: 'C',
+      budgetTier: 'C',
+      room_type: ['bedroom'],
+      noise_type: 'main_road',
+      noise_dist: 'lt20',
+      family_risk: [],
+      familyRisk: []
+    });
+    const pdfContent = await buildPdfTextForAnswers(a, 'S7A-E2E-02');
+    expect(pdfContent).toContain('防坠绳安装牢固');
+  });
+
+  test('E2E-03: 深圳3F固定窗B档 - 固定窗无⑫且⑬含固定压条', async () => {
+    const a = fixtures.createPure(fixtures.shenzhenSafety, {
+      floor: 3,
+      total_floors: 32,
+      window_type: 'fixed',
+      windowType: 'fixed',
+      budget_tier: 'B',
+      budgetTier: 'B',
+      family_risk: [],
+      familyRisk: []
+    });
+    const pdfContent = await buildPdfTextForAnswers(a, 'S7A-E2E-03');
+    expect(pdfContent).not.toMatch(/⑫\s/);
+    expect(pdfContent).toContain('固定压条');
   });
 });

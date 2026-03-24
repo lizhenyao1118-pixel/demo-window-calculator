@@ -180,7 +180,7 @@ function main() {
       const tension = String(((sections.chapter1 || {}).needsAnalysis || {}).coreTension || '');
       if (!/保温节能是本案的主要技术制约/.test(tension)) throw new Error('S-C2 subject mismatch');
       const tensionLines = tension.split('。').filter(s => s.trim());
-      if (tensionLines.length !== 2) throw new Error('S-C2 should be 2 sentences');
+      if (tensionLines.length !== 3) throw new Error('S-C2 should be 3 sentences');
     }
   );
 
