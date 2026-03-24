@@ -2,11 +2,11 @@
 // 变更：A档 800→900（壁厚1.4→1.5），B档 800-1200→900-1400，C档 1200-1800→1400-2000，D档 1800+→2000+
 
 const GLASS_LEVELS = {
-  basic_hollow: { level: 1, rw_max: 33, k_max: 2.8, base_cost: 0, name: '普通中空玻璃（5+9A+5）' },
-  low_e_hollow: { level: 2, rw_max: 33, k_max: 2.4, base_cost: 80, name: 'Low-E中空玻璃（5Low-E+12A+5）' },
-  low_e_argon: { level: 3, rw_max: 36, k_max: 2.0, base_cost: 120, name: 'Low-E充氩中空（5Low-E+12Ar+5）' },
-  laminated_hollow: { level: 4, rw_max: 42, k_max: 2.0, base_cost: 150, name: '夹胶中空玻璃（6+0.76PVB+6+12Ar+5）' },
-  triple_pane: { level: 5, rw_max: 45, k_max: 1.4, base_cost: 400, name: '三玻两腔（5+9A+5+9A+5Low-E）' }
+  basic_hollow: { level: 1, rw_max: 33, k_max: 2.8, base_cost: 150, name: '普通中空玻璃（5+9A+5）' },
+  low_e_hollow: { level: 2, rw_max: 33, k_max: 2.4, base_cost: 180, name: 'Low-E中空玻璃（5Low-E+12A+5）' },
+  low_e_argon: { level: 3, rw_max: 36, k_max: 2.0, base_cost: 220, name: 'Low-E充氩中空（5Low-E+12Ar+5）' },
+  laminated_hollow: { level: 4, rw_max: 42, k_max: 2.0, base_cost: 320, name: '夹胶中空玻璃（6+0.76PVB+6+12Ar+5）' },
+  triple_pane: { level: 5, rw_max: 45, k_max: 1.4, base_cost: 500, name: '三玻两腔（5+9A+5+9A+5Low-E）' }
 };
 
 const BUDGET_SPEC = {

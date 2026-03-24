@@ -447,12 +447,7 @@ function build1_2(answers, resolved) {
       kValue: getField(resolved, 'K'),
       kBase: resolved.kBase || null,
       climateZone: resolved.climateZoneCN || '',
-      factors: (function () {
-        const arr = [];
-        if (resolved.appliedFactor === 'heating') arr.push({ type: 'heating', adjustment: -0.2 });
-        if (resolved.appliedFactor === 'westSun') arr.push({ type: 'westSun', adjustment: -0.1 });
-        return arr;
-      })()
+      corrections: Array.isArray(resolved.corrections) ? resolved.corrections : []
     },
     shgc: { value: getField(resolved, 'SHGC') },
     safety: {},
@@ -589,8 +584,17 @@ function buildParameterNote({ windPressure, soundInsulation, thermal, shgc, safe
   const lines = [];
   lines.push(`${inputs.city}属 ${windPressure.windZone} 风区，第 ${inputs.floor} 层高度比 ${Math.round(Number(inputs.heightRatio) * 100)}%，按 GB/T 7106 推荐等级取 ≥${windPressure.value} kPa。`);
   lines.push(`${inputs.noiseType === 'main_road' ? '主干道 <20m' : '噪声源已评估'}，按 GB/T 8485 分类取 Rw≥${soundInsulation.base} dB，结合${inputs.roomType.includes('bedroom') ? '卧室睡眠场景' : '房间场景'}加严至 ${soundInsulation.value} dB。`);
-  const factorStr = Array.isArray(thermal.factors) && thermal.factors.length > 0
-    ? thermal.factors.map(f => (f.type === 'heating' ? '自采暖保温修正 -0.2' : (f.type === 'westSun' ? '西晒修正 -0.1' : ''))).filter(Boolean).join('，')
+  const factorStr = Array.isArray(thermal.corrections) && thermal.corrections.length > 0
+    ? thermal.corrections
+      .filter(f => Number(f.value) !== 0)
+      .map(f => {
+        if (f.factor === 'heating' && Number(f.value) < 0) return '自采暖保温修正 -0.2';
+        if (f.factor === 'westSun' && Number(f.value) < 0) return '西晒修正 -0.1';
+        if (f.factor === 'bigWindow' && Number(f.value) < 0) return '落地窗修正 -0.2';
+        return '';
+      })
+      .filter(Boolean)
+      .join('，')
     : '';
   lines.push(`${inputs.city}属 ${thermal.climateZone}，基准 ${thermal.kBase || '2.4'} W/(m²·K)${factorStr ? '，' + factorStr : ''}，取 K≤${thermal.kValue}。`);
   lines.push(`${inputs.facing === 'west' ? '西向无遮阳' : '方位已评估'}，按 GB/T 2680 标准取 SHGC≤${shgc.value}。`);
@@ -870,6 +874,7 @@ function estimateCostDelta(glassKey, tier) {
 function buildBudgetSpecView(resolved, answers) {
   const tier = answers.budget_tier || 'B';
   const spec = BUDGET_SPEC[tier] || BUDGET_SPEC.B;
+  const tierStandardGlass = BUDGET_TIER_GLASS_BASE[tier] || BUDGET_TIER_GLASS_BASE.B;
   const bar = getInsulationBarRequirement(Number(getField(resolved, 'K')));
 
   const familyRisk = Array.isArray(answers.family_risk) ? answers.family_risk : [];
@@ -905,6 +910,7 @@ function buildBudgetSpecView(resolved, answers) {
     price_range: spec.price_range,
     price_hint: spec.price_hint,
     bar_ratio: spec.bar_ratio,
+    tierStandardGlass,
     profile: `壁厚≥${spec.profile.min_wall_thickness}mm；隔热条≥${bar.min_mm}mm（${bar.process}）`,
     glass: config_table.glass,
     glass_reason: glass_result.reason || null,
@@ -1011,7 +1017,11 @@ function buildAcceptanceNodes(family_risk, window_type) {
   const node13 = buildNode13(family_risk);
   if (node13) {
     const i13 = items.findIndex(x => typeof x === 'string' && x.startsWith('⑬'));
-    if (i13 >= 0) items[i13] = `⑬ ${node13}`;
+    if (i13 >= 0) {
+      const baseText = String(items[i13]).replace(/^⑬\s*/, '');
+      const merged = baseText ? `${baseText}；${node13}` : node13;
+      items[i13] = `⑬ ${merged}`;
+    }
     else items.push(`⑬ ${node13}`);
   }
   return [base[0], base[1], { ...final, items }];
