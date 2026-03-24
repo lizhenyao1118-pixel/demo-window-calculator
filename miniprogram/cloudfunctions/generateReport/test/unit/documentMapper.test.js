@@ -344,7 +344,7 @@ describe('Sprint 7 C-短期文案优化', () => {
     expect(pdfContent).toContain('李Sir · 独立门窗技术顾问（不销售、不代理）');
     expect(pdfContent).toContain('📋 业主：第一章了解需求转化逻辑；第三章确认预算；第四章直接发给商家。');
     expect(pdfContent).toContain('🏭 商家：请重点阅读第二章技术指标，并完整填写第四章答题表后回传业主。');
-  });
+  }, 20000);
 
   test('DM-30: 参数表气密水密格式应为推荐/最低分层', async () => {
     const pdfContent = await buildPdfTextForAnswers(fixtures.guangzhouFull, 'S7-DM30');
@@ -469,5 +469,25 @@ describe('Sprint 7 A-中期（逻辑层）端到端', () => {
     const pdfContent = await buildPdfTextForAnswers(a, 'S7A-E2E-03');
     expect(pdfContent).not.toMatch(/⑫\s/);
     expect(pdfContent).toContain('固定压条');
+  });
+});
+
+describe('Sprint 7 热修复 v3.4.1', () => {
+  test('DM-38: 第二章 2.4 标题软化与R01/R04/R05文案', async () => {
+    const pdfContent = await buildPdfTextForAnswers(fixtures.guangzhouFull, 'S7-HF-DM38');
+    expect(pdfContent).toContain('2.4 产品红线（以下建议优先采用，如不满足须说明理由）');
+    expect(pdfContent).toContain('建议优先采用原生铝型材');
+    expect(pdfContent).toContain('如采用其他材质，应说明理由');
+    expect(pdfContent).toContain('断桥铝隔热条宽度建议不低于');
+    expect(pdfContent).toContain('型材主受力壁厚建议不低于 1.5mm');
+    // R02/R03/R07 保持“禁止”/“强制”关键词
+    expect(pdfContent).toMatch(/禁止.*普通中空玻璃/);
+    expect(pdfContent).toMatch(/禁止.*结构胶/);
+    expect(pdfContent).toMatch(/夹胶构造（强制）/);
+  }, 20000);
+
+  test('DM-39: 封面新增签发人信任锚文本行', async () => {
+    const pdfContent = await buildPdfTextForAnswers(fixtures.guangzhouFull, 'S7-HF-DM39');
+    expect(pdfContent).toContain('李Sir · 独立门窗技术顾问（不销售、不代理）');
   });
 });

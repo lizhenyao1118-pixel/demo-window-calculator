@@ -195,6 +195,10 @@ function renderCover(doc, cover) {
   doc.fillColor(COLORS.text_body).fontSize(10)
     .text("本文件基于您的实际需求，将生活诉求转化为可量化的技术采购标准——帮您用数据选窗，不凭感觉、不靠话术。", 55, 304, { width: 485, align: "left", lineGap: 4 });
 
+  // 签发人信任锚（封面主体区域独立一行）
+  doc.fillColor(COLORS.text_body).fontSize(12)
+    .text("李Sir · 独立门窗技术顾问（不销售、不代理）", 55, 330, { width: 485, align: "left" });
+
   const guideY = 348;
   const guideText = "📋 业主：第一章了解需求转化逻辑；第三章确认预算；第四章直接发给商家。\n🏭 商家：请重点阅读第二章技术指标，并完整填写第四章答题表后回传业主。";
   doc.roundedRect(55, guideY, 485, 54, 6).fill("#F0F7FF").stroke(COLORS.border);
@@ -474,7 +478,7 @@ function renderChapter2(doc, c2) {
   doc.y = renderMetricBlock(mThermal, doc.y);
 
   // 产品红线
-  drawSectionTitle(doc, "2.4 产品红线");
+  drawSectionTitle(doc, "2.4 产品红线（以下建议优先采用，如不满足须说明理由）");
   renderRedLines(doc, c2.redLines);
   doc.y += 18;
 }
