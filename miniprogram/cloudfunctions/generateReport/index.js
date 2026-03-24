@@ -9,7 +9,7 @@ const { calculateAll } = require('./calculator-v2');
 const cloud = require('wx-server-sdk');
 const fs = require('fs');
 
-cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
+cloud.init({ env: 'cloud1-7grn8mcy176fcc2b' });
 
 // 数据字段映射适配（前端数据 -> calculator-v2格式）
 function adaptAssessmentData(data) {
@@ -223,8 +223,9 @@ exports.main = async (event, context) => {
     
     // 6. 写入数据库（保留原有逻辑）
     const db = cloud.database();
+    let reportId = null;
     try {
-      await db.collection('assessments').add({
+      const addRes = await db.collection('assessments').add({
         data: {
           openid: OPENID, 
           formData: assessmentData,
@@ -238,9 +239,40 @@ exports.main = async (event, context) => {
           updatedAt: db.serverDate()
         }
       });
+      reportId = addRes && addRes._id ? addRes._id : null;
       console.log('[Cloud] 数据库写入成功');
     } catch (dbErr) {
       console.error('[Cloud] 数据库写入失败（非阻断）：', dbErr);
+    }
+
+    let tenderId = null;
+    try {
+      const tenderSections = {
+        parameterTable: sections && sections.chapter1 ? sections.chapter1.needsTable : null,
+        budgetTier: sections && sections.chapter3 && sections.chapter3.budgetComparison ? sections.chapter3.budgetComparison.currentTier : null,
+        climateZone: computed && (computed.climateZone || computed.climate_zone || computed.climateZoneCN) ? (computed.climateZone || computed.climate_zone || computed.climateZoneCN) : null
+      };
+
+      const tenderAnswers = {
+        ...assessmentData,
+        Q1: assessmentData && (assessmentData.Q1 || assessmentData.city) ? (assessmentData.Q1 || assessmentData.city) : adaptedData.city,
+        Q3: assessmentData && (assessmentData.Q3 || assessmentData.floor) ? (assessmentData.Q3 || assessmentData.floor) : adaptedData.floor,
+        Q7: assessmentData && (assessmentData.Q7 || assessmentData.window_type || assessmentData.windowType) ? (assessmentData.Q7 || assessmentData.window_type || assessmentData.windowType) : adaptedData.window_type
+      };
+
+      const createTenderRes = await cloud.callFunction({
+        name: 'createTender',
+        data: {
+          reportId: reportId || pdfNo,
+          answers: tenderAnswers,
+          sections: tenderSections,
+          ownerOpenId: OPENID
+        }
+      });
+      tenderId = createTenderRes && createTenderRes.result ? createTenderRes.result.tenderId : null;
+    } catch (e) {
+      console.error('[Cloud] createTender 失败（非阻断）：', e);
+      tenderId = null;
     }
     
     // 7. 返回成功（保留原有逻辑）
@@ -250,6 +282,8 @@ exports.main = async (event, context) => {
       fileName: fileName,
       fileSize: stats.size,
       isDisclaimer: sections.cover.isRisk,
+      reportId,
+      tenderId,
       warnings: computed.warnings || []
     };
     
