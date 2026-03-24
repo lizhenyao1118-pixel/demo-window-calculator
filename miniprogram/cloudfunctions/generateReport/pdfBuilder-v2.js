@@ -308,6 +308,30 @@ function renderChapter1(doc, c1) {
       doc.y += 18;
     }
 
+    if (c1.needsAnalysis.parameterNote) {
+      const pn = c1.needsAnalysis.parameterNote;
+      // block1
+      doc.fillColor(COLORS.text_body).fontSize(10).text(String(pn.block1 || ''), 55, doc.y, { width: 485, lineGap: 2 });
+      doc.y += 18;
+      // block2 lines
+      const lines = String(pn.block2 || '').split('\n').filter(Boolean);
+      lines.forEach((ln) => {
+        doc.fillColor(COLORS.text_secondary).fontSize(9.5).text(`· ${ln}`, 55, doc.y, { width: 485, lineGap: 2 });
+        doc.y += 14;
+      });
+      doc.y += 6;
+      // block3 emphasis
+      if (String(pn.block3 || '').trim()) {
+        const y0 = doc.y;
+        const txt = String(pn.block3);
+        const h = doc.heightOfString(txt, { width: 485, lineGap: 2 });
+        doc.rect(55, y0 - 2, 485, h + 6).fill('#FEF9E7').stroke(COLORS.border);
+        doc.fillColor("#8A6D3B").fontSize(9.5).text(txt, 59, y0, { width: 477, lineGap: 2 });
+        doc.fillColor(COLORS.text_body);
+        doc.y = y0 + h + 14;
+      }
+    }
+
     if (c1.needsAnalysis.disclaimer && c1.needsAnalysis.disclaimer.type === 'disclaimer') {
       const note = c1.needsAnalysis.disclaimer;
       const text = String(note.text || '');
@@ -646,7 +670,7 @@ function renderRedlineChecklist(doc, checklist) {
     doc.y += 16;
 
     mandatory.forEach((item) => {
-      const id = item.id ? String(item.id) : "";
+      const id = item.displayId ? String(item.displayId) : (item.id ? String(item.id) : "");
       const text = item.text ? String(item.text) : "";
       const line1 = `□ ${id} ${text}`.trimEnd();
       const confirmLine = "    商家确认：□ 满足  □ 不满足（请说明原因：__________）";
@@ -670,7 +694,7 @@ function renderRedlineChecklist(doc, checklist) {
     doc.y += 14;
 
     recommended.forEach((item) => {
-      const id = item.id ? String(item.id) : "";
+      const id = item.displayId ? String(item.displayId) : (item.id ? String(item.id) : "");
       const text = item.text ? String(item.text) : "";
       const line1 = `□ ${id} ${text}`.trimEnd();
       const confirmLine = "    商家确认：□ 知悉并同意  □ 不适用";
@@ -722,25 +746,6 @@ function renderChapter4(doc, c4) {
       doc.y += 18;
     }
   }
-
-  if (c4.acceptance && c4.acceptance.nodes && c4.acceptance.nodes.length > 0) {
-    drawSectionTitle(doc, c4.acceptance.title || "4.4 验收节点");
-    const nodes = c4.acceptance.nodes;
-    nodes.forEach((node) => {
-      const nodeTitle = node.title || (node.stage ? `【${node.stage}】` : "【验收节点】");
-      doc.fillColor(COLORS.brand_mid).fontSize(11).text(nodeTitle, 55, doc.y);
-      doc.y += 15;
-      (node.items || []).forEach((item) => {
-        doc.fillColor(COLORS.text_body).fontSize(10).text(` · ${item}`, 65, doc.y, { width: 475 });
-        doc.y += 12;
-      });
-      doc.y += 5;
-      if (842 - doc.y < 80) doc.addPage();
-    });
-    doc.y += 6;
-  }
-
-  renderPerformanceChecks(doc, c4.performanceChecks);
 
   const mq = c4.merchantQuestionnaire || {};
   if (mq.title) {
@@ -877,6 +882,25 @@ function renderChapter4(doc, c4) {
       doc.y += boxH + 10;
     });
   }
+  
+  if (c4.acceptance && c4.acceptance.nodes && c4.acceptance.nodes.length > 0) {
+    drawSectionTitle(doc, c4.acceptance.title || "4.4 验收节点");
+    const nodes = c4.acceptance.nodes;
+    nodes.forEach((node) => {
+      const nodeTitle = node.title || (node.stage ? `【${node.stage}】` : "【验收节点】");
+      doc.fillColor(COLORS.brand_mid).fontSize(11).text(nodeTitle, 55, doc.y);
+      doc.y += 15;
+      (node.items || []).forEach((item) => {
+        doc.fillColor(COLORS.text_body).fontSize(10).text(` · ${item}`, 65, doc.y, { width: 475 });
+        doc.y += 12;
+      });
+      doc.y += 5;
+      if (842 - doc.y < 80) doc.addPage();
+    });
+    doc.y += 6;
+  }
+  
+  renderPerformanceChecks(doc, c4.performanceChecks);
 }
 
 function renderAttachments(doc, attachments) {

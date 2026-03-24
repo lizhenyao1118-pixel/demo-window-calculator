@@ -53,10 +53,16 @@ const BUDGET_SPEC = {
   }
 };
 
+const BUDGET_TIER_GLASS_BASE = {
+  A: { config: '双白玻中空（5+12A+5）', pricePerSqm: 180 },
+  B: { config: '双白玻中空（5+9A+5）', pricePerSqm: 150 },
+  C: { config: '单玻或简易双玻', pricePerSqm: 120 },
+  D: { config: '定制玻璃组合', pricePerSqm: 260 }
+};
 function getNextTier(current) {
   const tiers = ['A', 'B', 'C', 'D'];
   const idx = tiers.indexOf(current);
   return idx < tiers.length - 1 ? tiers[idx + 1] : null;
 }
 
-module.exports = { GLASS_LEVELS, BUDGET_SPEC, getNextTier };
+module.exports = { GLASS_LEVELS, BUDGET_SPEC, getNextTier, BUDGET_TIER_GLASS_BASE };
