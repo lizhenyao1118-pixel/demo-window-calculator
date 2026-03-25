@@ -772,6 +772,7 @@ function renderChapter4(doc, c4, opts) {
   // 插入小程序码区块（在 4.2 前方）
   const tenderId = opts && opts.tenderId ? String(opts.tenderId) : null;
   const qrCodeBuffer = opts && opts.qrCodeBuffer ? opts.qrCodeBuffer : null;
+  console.log('[PDF] renderChapter4 opts:', { tenderId, hasQrCodeBuffer: !!qrCodeBuffer });
   if (tenderId) {
     if (842 - doc.y < 280) doc.addPage();
     doc.fillColor(COLORS.brand_mid).fontSize(16).text('在线响应入口', 55, doc.y, { width: 485, align: 'center' });

@@ -123,6 +123,8 @@ exports.main = async (event, context) => {
     const fileName = `LSA-${timestamp}-${randomStr}.pdf`;
     const tempPath = `/tmp/${fileName}`;
     const pdfNo = `LSA-${timestamp}-${randomStr}`;
+    const db = cloud.database();
+    let reportId = null;
     
     // 2. 数据适配与计算（保留原有逻辑）
     const adaptedData = adaptAssessmentData(assessmentData);
@@ -200,51 +202,7 @@ exports.main = async (event, context) => {
     };
     */
     
-    // 3. 生成PDF（Phase 1：使用新的 buildPDF）
-    console.log('[Cloud] 开始生成 PDF（Phase 1 新引擎）...');
-    await buildPDF(sections, tempPath, { tenderId, qrCodeBuffer });
-    
-    // 4. 验证文件（保留原有逻辑）
-    const stats = fs.statSync(tempPath);
-    console.log('[Cloud] 文件大小:', stats.size, 'bytes');
-    
-    if (stats.size < 1000) {
-      throw new Error(`PDF文件生成异常，大小仅${stats.size}字节`);
-    }
-    
-    // 5. 上传到云存储（保留原有逻辑）
-    const fileContent = fs.readFileSync(tempPath);
-    const uploadRes = await cloud.uploadFile({
-      cloudPath: `reports/${fileName}`,
-      fileContent: fileContent,
-    });
-    
-    console.log('[Cloud] 上传成功：', uploadRes.fileID);
-    
-    // 6. 写入数据库（保留原有逻辑）
-    const db = cloud.database();
-    let reportId = null;
-    try {
-      const addRes = await db.collection('assessments').add({
-        data: {
-          openid: OPENID, 
-          formData: assessmentData,
-          computedData: computed,
-          fileID: uploadRes.fileID,
-          fileName: fileName,
-          fileSize: stats.size,
-          isDisclaimer: sections.cover.isRisk, // 使用新结构中的 isRisk
-          status: sections.cover.isRisk ? 'risk_pending_review' : 'normal',
-          createdAt: db.serverDate(),
-          updatedAt: db.serverDate()
-        }
-      });
-      reportId = addRes && addRes._id ? addRes._id : null;
-      console.log('[Cloud] 数据库写入成功');
-    } catch (dbErr) {
-      console.error('[Cloud] 数据库写入失败（非阻断）：', dbErr);
-    }
-
+    // 3. 招标与小程序码（先创建招标以便在 PDF 中嵌入二维码）
     let tenderId = null;
     let qrCodeBuffer = null;
     try {
@@ -271,6 +229,8 @@ exports.main = async (event, context) => {
         }
       });
       tenderId = createTenderRes && createTenderRes.result ? createTenderRes.result.tenderId : null;
+      console.log('[Cloud] createTender 返回：', createTenderRes && createTenderRes.result ? createTenderRes.result : null);
+      console.log('[Cloud] tenderId：', tenderId);
       if (tenderId) {
         try {
           const qrRes = await cloud.openapi.wxacode.getUnlimited({
@@ -279,6 +239,7 @@ exports.main = async (event, context) => {
             width: 280
           });
           qrCodeBuffer = qrRes && qrRes.buffer ? qrRes.buffer : null;
+          console.log('[Cloud] 小程序码生成成功，buffer长度：', qrCodeBuffer ? qrCodeBuffer.length : 0);
         } catch (qrErr) {
           console.error('[Cloud] 小程序码生成失败（非阻断）：', qrErr);
           qrCodeBuffer = null;
@@ -287,9 +248,60 @@ exports.main = async (event, context) => {
     } catch (e) {
       console.error('[Cloud] createTender 失败（非阻断）：', e);
       tenderId = null;
+      qrCodeBuffer = null;
+    }
+
+    // 4. 生成PDF（Phase 1：使用新的 buildPDF）
+    console.log('[Cloud] 开始生成 PDF（Phase 1 新引擎）...');
+    console.log('[Cloud] PDF小程序码透传参数：', { tenderId, hasQrCodeBuffer: !!qrCodeBuffer });
+    await buildPDF(sections, tempPath, { tenderId, qrCodeBuffer });
+    
+    // 5. 验证文件（保留原有逻辑）
+    const stats = fs.statSync(tempPath);
+    console.log('[Cloud] 文件大小:', stats.size, 'bytes');
+    
+    if (stats.size < 1000) {
+      throw new Error(`PDF文件生成异常，大小仅${stats.size}字节`);
     }
     
-    // 7. 返回成功（保留原有逻辑）
+    // 6. 上传到云存储（保留原有逻辑）
+    const fileContent = fs.readFileSync(tempPath);
+    const uploadRes = await cloud.uploadFile({
+      cloudPath: `reports/${fileName}`,
+      fileContent: fileContent,
+    });
+    
+    console.log('[Cloud] 上传成功：', uploadRes.fileID);
+    
+    // 7. 写入数据库（保留原有逻辑）
+    try {
+      const addRes = await db.collection('assessments').add({
+        data: {
+          openid: OPENID, 
+          formData: assessmentData,
+          computedData: computed,
+          fileID: uploadRes.fileID,
+          fileName: fileName,
+          fileSize: stats.size,
+          isDisclaimer: sections.cover.isRisk, // 使用新结构中的 isRisk
+          status: sections.cover.isRisk ? 'risk_pending_review' : 'normal',
+          createdAt: db.serverDate(),
+          updatedAt: db.serverDate()
+        }
+      });
+      reportId = addRes && addRes._id ? addRes._id : null;
+      console.log('[Cloud] 数据库写入成功');
+    } catch (dbErr) {
+      console.error('[Cloud] 数据库写入失败（非阻断）：', dbErr);
+    }
+    if (tenderId && reportId) {
+      try {
+        await db.collection('tenders').where({ tenderId }).update({ data: { reportId } });
+      } catch (e) {
+      }
+    }
+
+    // 8. 返回成功（保留原有逻辑）
     return {
       success: true,
       fileID: uploadRes.fileID,
