@@ -1,3 +1,4 @@
+console.log('VERSION: 8A-FINAL');
 // Phase 1 测试：新 PDF 渲染引擎（新增）
 const { mapToSections } = require('./documentMapper');
 const { buildPDF } = require('./pdfBuilder-v2');
