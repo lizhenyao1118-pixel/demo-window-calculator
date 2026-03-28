@@ -1,0 +1,3 @@
+<view class="btn-secondary {{disabled ? 'disabled' : ''}}" bindtap="onTap">
+  <slot></slot>
+</view>

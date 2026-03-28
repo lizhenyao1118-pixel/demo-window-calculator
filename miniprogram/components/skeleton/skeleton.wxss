@@ -1,0 +1,41 @@
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* 骨架屏文本 */
+.skeleton-text {
+  height: 32rpx;
+  border-radius: 4rpx;
+  margin-bottom: 16rpx;
+}
+
+.skeleton-text.title {
+  height: 48rpx;
+  width: 60%;
+  margin-bottom: 24rpx;
+}
+
+/* 骨架屏卡片 */
+.skeleton-card {
+  height: 200rpx;
+  border-radius: var(--radius);
+  margin-bottom: var(--spacing-module);
+}
+
+/* 骨架屏头像 */
+.skeleton-avatar {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+}

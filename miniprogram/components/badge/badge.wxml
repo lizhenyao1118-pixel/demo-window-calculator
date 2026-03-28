@@ -1,0 +1,3 @@
+<view class="badge {{type}}">
+  <slot></slot>
+</view>

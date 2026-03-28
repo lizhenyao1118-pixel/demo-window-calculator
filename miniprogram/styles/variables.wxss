@@ -1,0 +1,31 @@
+/* 门窗技术招标文件系统 - 设计规范变量 */
+
+page {
+  /* 主题色 */
+  --color-primary: #1F4E79;
+  --color-primary-light: #E3F2FD;
+
+  /* 文字颜色 */
+  --color-text: #333333;
+  --color-text-secondary: #666666;
+  --color-text-hint: #999999;
+
+  /* 背景色 */
+  --color-bg: #F5F5F5;
+  --color-card: #FFFFFF;
+
+  /* 状态色 */
+  --color-danger: #E53935;
+  --color-warning: #F9A825;
+  --color-success: #43A047;
+
+  /* 圆角 */
+  --radius: 8rpx;
+
+  /* 阴影 */
+  --shadow: 0 2rpx 12rpx rgba(0,0,0,0.06);
+
+  /* 间距 */
+  --spacing-module: 40rpx;
+  --spacing-inner: 32rpx;
+}

@@ -1,0 +1,10 @@
+<view class="empty-state">
+  <view class="empty-icon">
+    <slot name="icon">
+      <image src="/images/empty.png" mode="aspectFit"></image>
+    </slot>
+  </view>
+  <view class="empty-text">
+    <slot></slot>
+  </view>
+</view>
