@@ -1,45 +1,62 @@
 <view class="container">
-  <!-- 品牌头部 -->
-  <view class="brand-header">
-    <image class="logo" src="/assets/logo.png" mode="aspectFit"></image>
-    <view class="brand-title">李Sir门窗标准制定</view>
-    <view class="brand-subtitle">30秒生成专业招标文件，拒绝智商税</view>
-  </view>
-
-  <!-- 核心价值点 -->
-  <view class="value-props">
-    <view class="prop-item">
-      <text class="prop-icon">🛡️</text>
-      <text class="prop-text">抗风压计算\n安全合规</text>
+  <!-- Hero区：深蓝底白字 -->
+  <view class="hero-section">
+    <view class="page-title">门窗诊断与标准</view>
+    <view class="identity">
+      <text class="expert-name">李Sir</text>
+      <text class="expert-role"> · 独立门窗技术顾问</text>
     </view>
-    <view class="prop-item">
-      <text class="prop-icon">📊</text>
-      <text class="prop-text">预算分级\n精准匹配</text>
+    <view class="stamp">不销售 · 不代理</view>
+    <view class="promise">让三家商家用同一份标准报价，不懂门窗也能看出谁在偷工减料。</view>
+  </view>
+
+  <!-- 主CTA -->
+  <view class="cta-section">
+    <button class="btn-primary" bindtap="startAssessment">开始定制我的门窗标准</button>
+  </view>
+
+  <!-- 说明区 -->
+  <view class="info-section">
+    <!-- 三步流程 -->
+    <view class="process-steps">
+      <view class="step-title">使用流程</view>
+      <view class="step-list">
+        <view class="step-item">
+          <view class="step-number">1</view>
+          <view class="step-content">
+            <text class="step-text">回答9个问题</text>
+            <text class="step-desc">关于您家房屋和需求</text>
+          </view>
+        </view>
+        <view class="step-item">
+          <view class="step-number">2</view>
+          <view class="step-content">
+            <text class="step-text">获得招标文件</text>
+            <text class="step-desc">专业PDF技术规范</text>
+          </view>
+        </view>
+        <view class="step-item">
+          <view class="step-number">3</view>
+          <view class="step-content">
+            <text class="step-text">发给商家报价</text>
+            <text class="step-desc">用同一标准对比价格</text>
+          </view>
+        </view>
+      </view>
     </view>
-    <view class="prop-item">
-      <text class="prop-icon">⚡</text>
-      <text class="prop-text">30秒生成\nPDF招标文件</text>
+  </view>
+
+  <!-- 历史招标文件快捷卡片 -->
+  <view class="history-section" wx:if="{{historyList.length > 0}}">
+    <view class="history-title">最近生成的招标文件</view>
+    <view class="history-list">
+      <view class="history-item" wx:for="{{historyList}}" wx:key="id" bindtap="viewReport" data-id="{{item.id}}">
+        <view class="history-info">
+          <text class="history-city">{{item.city}}</text>
+          <text class="history-date">{{item.date}}</text>
+        </view>
+        <view class="history-arrow">→</view>
+      </view>
     </view>
-  </view>
-
-  <!-- 主行动按钮（CTA） -->
-  <view class="action-area">
-    <button class="btn-primary" bindtap="startAssessment">
-      立即测评（免费）
-    </button>
-    <button class="btn-secondary" bindtap="viewHistory">
-      查看历史报告
-    </button>
-  </view>
-
-  <!-- 信任背书 -->
-  <view class="trust-badges">
-    <view class="badge">✓ 符合 GB/T 7106 标准</view>
-    <view class="badge">✓ 已服务 10,000+ 业主</view>
-  </view>
-
-  <!-- 底部 L2 入口（弱引导） -->
-  <view class="footer-link" bindtap="showExpertQR">
-    <text>已有方案需要审核？预约李Sir专家咨询 →</text>
   </view>
 </view>
