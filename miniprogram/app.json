@@ -2,6 +2,8 @@
   "pages": [
     "pages/index/index",
     "pages/survey/survey",
+    "pages/generate-loading/generate-loading",
+    "pages/result-summary/result-summary",
     "pages/result/result",
     "pages/history/history",
     "pages/question/question",
@@ -9,12 +11,45 @@
     "pages/vendor/confirm",
     "pages/vendor/success",
     "pages/tender/list",
-    "pages/tender/detail"
+    "pages/tender/detail",
+    "pages/profile/index"
   ],
   "window": {
-    "navigationBarTitleText": "极简门窗测评",
-    "navigationBarBackgroundColor": "#07c160",
+    "navigationBarTitleText": "门窗招标文件",
+    "navigationBarBackgroundColor": "#1F4E79",
     "navigationBarTextStyle": "white",
-    "backgroundColor": "#f5f5f5"
+    "backgroundColor": "#F5F5F5"
+  },
+  "tabBar": {
+    "color": "#999999",
+    "selectedColor": "#1F4E79",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "首页",
+        "iconPath": "images/tab/home.png",
+        "selectedIconPath": "images/tab/home-active.png"
+      },
+      {
+        "pagePath": "pages/history/history",
+        "text": "招标文件",
+        "iconPath": "images/tab/doc.png",
+        "selectedIconPath": "images/tab/doc-active.png"
+      },
+      {
+        "pagePath": "pages/tender/list",
+        "text": "招标管理",
+        "iconPath": "images/tab/tender.png",
+        "selectedIconPath": "images/tab/tender-active.png"
+      },
+      {
+        "pagePath": "pages/profile/index",
+        "text": "我的",
+        "iconPath": "images/tab/profile.png",
+        "selectedIconPath": "images/tab/profile-active.png"
+      }
+    ]
   }
 }

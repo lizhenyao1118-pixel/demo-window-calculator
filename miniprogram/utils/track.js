@@ -74,7 +74,7 @@ const trackPage = (pageName, additionalProps = {}) => {
   });
 };
 
-// 问卷步骤埋点（节流版，300ms防抖）
+// 需求定制步骤埋点（节流版，300ms防抖）
 let lastStepTime = 0;
 const trackStep = (stepNumber, props = {}) => {
   const now = Date.now();
