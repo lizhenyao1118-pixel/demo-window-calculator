@@ -1,0 +1,225 @@
+@import "../../styles/variables.wxss";
+
+/* ── 页面容器 ── */
+.page-wrap {
+  min-height: 100vh;
+  background: var(--color-bg);
+  padding-bottom: 120rpx;
+}
+
+/* ── 顶部风险条 ── */
+.risk-bar {
+  height: 112rpx;
+  background: var(--color-bg);
+  display: flex;
+  align-items: center;
+  padding: 0 var(--spacing-inner);
+}
+
+.risk-bar--high  { background: #FFEBEE; }
+.risk-bar--medium { background: #FFF8E1; }
+.risk-bar--low   { background: #E8F5E9; }
+
+.risk-bar__inner {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  width: 100%;
+}
+
+.risk-badge {
+  flex-shrink: 0;
+  font-size: 24rpx;
+  font-weight: 600;
+  padding: 6rpx 18rpx;
+  border-radius: 40rpx;
+  color: #FFFFFF;
+}
+
+.risk-badge--high   { background: var(--color-danger); }
+.risk-badge--medium { background: var(--color-warning); }
+.risk-badge--low    { background: var(--color-success); }
+
+.risk-reason {
+  font-size: 26rpx;
+  color: var(--color-text-secondary);
+  flex: 1;
+  line-height: 1.5;
+}
+
+/* ── 页头 ── */
+.page-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48rpx var(--spacing-inner) 32rpx;
+  gap: 16rpx;
+}
+
+.check-icon {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  background: var(--color-success);
+  color: #FFFFFF;
+  font-size: 44rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+
+.page-title {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+/* ── 通用区块 ── */
+.section {
+  padding: 0 var(--spacing-inner);
+  margin-bottom: var(--spacing-module);
+}
+
+.section-title {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  margin-bottom: 20rpx;
+  letter-spacing: 1rpx;
+}
+
+/* ── 参数卡片网格 ── */
+.param-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20rpx;
+}
+
+.param-card {
+  flex: 1 1 180rpx;
+  min-width: 180rpx;
+  border-radius: var(--radius);
+  padding: 24rpx 16rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4rpx;
+  box-shadow: var(--shadow);
+}
+
+.param-prefix {
+  font-size: 22rpx;
+  color: inherit;
+  opacity: 0.7;
+  line-height: 1;
+}
+
+.param-value {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: inherit;
+  line-height: 1.2;
+}
+
+.param-unit {
+  font-size: 20rpx;
+  color: inherit;
+  opacity: 0.75;
+  line-height: 1;
+}
+
+.param-label {
+  font-size: 24rpx;
+  font-weight: 500;
+  color: inherit;
+  margin-top: 6rpx;
+}
+
+/* c-* 色系类名（自动适配浅/深背景） */
+.c-blue   { background: #E3F2FD; color: #1565C0; }
+.c-green  { background: #E8F5E9; color: #2E7D32; }
+.c-amber  { background: #FFF8E1; color: #E65100; }
+.c-purple { background: #EDE7F6; color: #6A1B9A; }
+.c-pink   { background: #FCE4EC; color: #AD1457; }
+
+/* ── 反向映射列表 ── */
+.mapping-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.mapping-item {
+  background: var(--color-card);
+  border-radius: var(--radius);
+  padding: 24rpx 24rpx 24rpx 28rpx;
+  box-shadow: var(--shadow);
+}
+
+/* 数据类：蓝色左边框 */
+.mapping-item--data {
+  border-left: 6rpx solid #1E88E5;
+}
+
+/* 行动类：黄色左边框 */
+.mapping-item--action {
+  border-left: 6rpx solid var(--color-warning);
+}
+
+.mapping-title {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 8rpx;
+  line-height: 1.5;
+}
+
+.mapping-desc {
+  display: block;
+  font-size: 26rpx;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+/* ── 空态提示 ── */
+.empty-hint {
+  padding: 40rpx 0;
+  text-align: center;
+}
+
+.empty-text {
+  font-size: 26rpx;
+  color: var(--color-text-hint);
+}
+
+/* ── CTA 按钮 ── */
+.cta-wrap {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 24rpx var(--spacing-inner);
+  background: var(--color-card);
+  box-shadow: 0 -2rpx 12rpx rgba(0, 0, 0, 0.06);
+}
+
+.btn-primary {
+  width: 100%;
+  height: 96rpx;
+  background: var(--color-primary);
+  color: #FFFFFF;
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30rpx;
+  font-weight: 600;
+  letter-spacing: 1rpx;
+}
+
+.btn-primary:active {
+  opacity: 0.85;
+}

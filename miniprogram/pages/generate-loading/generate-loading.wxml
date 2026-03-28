@@ -1,0 +1,9 @@
+<view class="loading-container">
+  <view class="loading-content">
+    <view class="spinner">
+      <view class="spinner-circle"></view>
+    </view>
+    <text class="loading-title">正在根据您的需求生成专属招标文件...</text>
+    <text class="loading-subtitle">预计需要 5~10 秒</text>
+  </view>
+</view>

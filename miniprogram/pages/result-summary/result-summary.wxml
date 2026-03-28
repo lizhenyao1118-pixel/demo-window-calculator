@@ -1,0 +1,60 @@
+<view class="page-wrap">
+
+  <!-- 顶部风险条 -->
+  <view class="risk-bar risk-bar--{{riskClass}}" wx:if="{{riskLevel}}">
+    <view class="risk-bar__inner">
+      <view class="risk-badge risk-badge--{{riskClass}}">{{riskLevel}}风险</view>
+      <text class="risk-reason">{{riskReason}}</text>
+    </view>
+  </view>
+
+  <!-- 页头 -->
+  <view class="page-header">
+    <view class="check-icon">✓</view>
+    <text class="page-title">您的门窗标准已生成</text>
+  </view>
+
+  <!-- 参数卡片区 -->
+  <view class="section">
+    <text class="section-title">关键参数指标</text>
+    <view class="param-grid" wx:if="{{paramCards.length}}">
+      <view
+        wx:for="{{paramCards}}"
+        wx:key="label"
+        class="param-card {{item.colorClass}}"
+      >
+        <text class="param-prefix">{{item.prefix}}</text>
+        <text class="param-value">{{item.value}}</text>
+        <text class="param-unit">{{item.unit}}</text>
+        <text class="param-label">{{item.label}}</text>
+      </view>
+    </view>
+    <view class="empty-hint" wx:else>
+      <text class="empty-text">参数数据加载中...</text>
+    </view>
+  </view>
+
+  <!-- 反向映射区 -->
+  <view class="section" wx:if="{{reverseMappings.length}}">
+    <text class="section-title">这些标准是怎么来的</text>
+    <view class="mapping-list">
+      <view
+        wx:for="{{reverseMappings}}"
+        wx:key="index"
+        class="mapping-item mapping-item--{{item.mappingType}}"
+      >
+        <text class="mapping-title">{{item.title}}</text>
+        <text class="mapping-desc">{{item.description}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- CTA 按钮 -->
+  <view class="cta-wrap">
+    <view class="btn-primary" bindtap="onGeneratePDF">
+      <text wx:if="{{isVerificationPhase}}">免费生成招标文件（限时，原价¥39）</text>
+      <text wx:else>生成招标文件（¥39）</text>
+    </view>
+  </view>
+
+</view>
