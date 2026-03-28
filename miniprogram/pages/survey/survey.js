@@ -1,19 +1,13 @@
 // 引入埋点SDK
 const { track, trackStep, trackAbandon, trackPDF } = require('../../utils/track');
+const { getClimateSpec } = require('../../shared/climateSpec');
 
-// 10城硬编码数据（零云函数调用）
-const CITY_DB = {
-  '北京': { p3: '≥3.5', rw: '≥35', k: '≤1.8', note: '严寒地区，高层需抗风压4.0+' },
-  '上海': { p3: '≥3.0', rw: '≥35', k: '≤2.0', note: '冬冷夏热，注意隔热' },
-  '广州': { p3: '≥3.0', rw: '≥35', k: '≤2.8', note: '台风区，高层需注意风压' },
-  '深圳': { p3: '≥4.0', rw: '≥35', k: '≤2.8', note: '台风区（W5），高层风压要求高' },
-  '成都': { p3: '≥2.5', rw: '≥35', k: '≤2.5', note: '温和地区，注意隔声' },
-  '武汉': { p3: '≥2.5', rw: '≥35', k: '≤2.5', note: '夏热冬冷，注意遮阳' },
-  '西安': { p3: '≥2.5', rw: '≥35', k: '≤2.0', note: '寒冷地区，注意保温' },
-  '杭州': { p3: '≥3.0', rw: '≥35', k: '≤2.2', note: '夏热冬冷，注意隔声' },
-  '南京': { p3: '≥3.0', rw: '≥35', k: '≤2.2', note: '夏热冬冷，注意遮阳' },
-  '沈阳': { p3: '≥3.0', rw: '≥40', k: '≤1.5', note: '严寒地区，保温要求高' }
-};
+// 三组分组配置
+const GROUPS = [
+  { name: '房屋与诉求', context: '先告诉我您的房子情况和最关心的问题', steps: [0, 1, 2] },
+  { name: '环境与条件', context: '再了解一下您家的环境条件', steps: [3, 4, 5] },
+  { name: '窗户与安全', context: '最后确认窗户类型、安全需求和预算', steps: [6, 7, 8] }
+];
 
 const BUDGET_OPTIONS = [
   { value: 'A', label: '经济实用 A档', hint: '600-900元/㎡（断桥铝入门，壁厚≥1.5mm）' },
@@ -32,7 +26,7 @@ const FAMILY_RISK_OPTIONS = [
 Page({
   data: {
     currentStep: 0,
-    totalSteps: 9,
+    totalSteps: 10,
     cityList: ['北京', '上海', '广州', '深圳', '成都', '武汉', '西安', '杭州', '南京', '沈阳'],
     family_risk: [],
     formData: {
@@ -98,14 +92,75 @@ Page({
     showRatio: false,
     showHeightRatio: false,
     showConflictWarning: false,
+    // Q2: 风压警示分级
+    windPressureLevel: '', // 'strong', 'weak', ''
+    // 城市 K 值数据（用于动态提示）
+    currentCityKBase: 0,
+    currentCityKMin: 0,
+    // Q6: 供暖 K 值提示
+    heatingCentralKTip: '',
+    heatingSelfKTip: '',
+    heatingNoneKTip: '',
+    // 确认页预计算的label值
+    confirmRoomTypeLabels: '',
+    confirmFirstPainPointLabel: '',
+    confirmWindowTypeLabel: '',
+    confirmFamilyRiskLabels: '',
     conflictType: '',
     conflictMessage: '',
     forceContinue: false,
-    hasSubmitted: false  // 新增：标记是否已提交
+    hasSubmitted: false,
+    // S5：预算选中显示
+    selectedBudgetLabel: '',
+    selectedBudgetHint: '',
+    // S4：分组进度数据
+    groupIndex: 0,
+    stepInGroup: 0,
+    groupName: '房屋与诉求',
+    groupContext: '先告诉我您的房子情况和最关心的问题',
+    groupProgress: [
+      { state: 'active', percent: 33 },
+      { state: 'pending', percent: 0 },
+      { state: 'pending', percent: 0 }
+    ]
   },
 
   // 页面开始时间（用于计算总时长）
   startTime: 0,
+
+  // S4：计算分组进度数据
+  computeGroupData(step) {
+    const groupIdx = Math.floor(step / 3);
+    const stepInGroup = step % 3;
+    const groupProgress = [0, 1, 2].map(i => {
+      if (i < groupIdx || (step === 9 && i <= 2)) return { state: 'done', percent: 100 };
+      if (i === groupIdx) return { state: 'active', percent: Math.round((stepInGroup + 1) / 3 * 100) };
+      return { state: 'pending', percent: 0 };
+    });
+
+    // 确认页（step 9）显示特殊状态
+    if (step === 9) {
+      return {
+        groupIndex: 3,
+        stepInGroup: 0,
+        groupName: '全部完成',
+        groupContext: '请确认信息无误后生成',
+        groupProgress: [
+          { state: 'done', percent: 100 },
+          { state: 'done', percent: 100 },
+          { state: 'done', percent: 100 }
+        ]
+      };
+    }
+
+    return {
+      groupIndex: groupIdx,
+      stepInGroup: stepInGroup,
+      groupName: GROUPS[groupIdx].name,
+      groupContext: GROUPS[groupIdx].context,
+      groupProgress: groupProgress
+    };
+  },
 
   onReady() {
     console.log('=== Survey 页面就绪 ===');
@@ -124,7 +179,7 @@ Page({
     const draft = wx.getStorageSync('survey_draft_v1');
     if (draft && draft.data && (Date.now() - draft.timestamp) < 7 * 24 * 3600 * 1000) {
       wx.showModal({
-        title: '发现未完成测评',
+        title: '发现未完成的需求定制',
         content: '是否继续上次进度？',
         confirmText: '继续',
         cancelText: '重新开始',
@@ -148,8 +203,9 @@ Page({
   initSurvey() {
     this.setData({
       currentStep: 0,
-      totalSteps: 9,
+      totalSteps: 10,
       hasSubmitted: false,
+      ...this.computeGroupData(0),
       family_risk: [],
       cityList: ['北京', '上海', '广州', '深圳', '成都', '武汉', '西安', '杭州', '南京', '沈阳'],
       formData: {
@@ -216,9 +272,21 @@ Page({
       heightRatio: 0,
       showHeightRatio: false,
       showConflictWarning: false,
+      windPressureLevel: '',
+      currentCityKBase: 0,
+      currentCityKMin: 0,
+      heatingCentralKTip: '',
+      heatingSelfKTip: '',
+      heatingNoneKTip: '',
       conflictType: '',
+      confirmRoomTypeLabels: '',
+      confirmFirstPainPointLabel: '',
+      confirmWindowTypeLabel: '',
+      confirmFamilyRiskLabels: '',
       conflictMessage: '',
-      forceContinue: false
+      forceContinue: false,
+      selectedBudgetLabel: '',
+      selectedBudgetHint: ''
     });
   },
 
@@ -228,6 +296,7 @@ Page({
     const painPoint = Array.isArray(raw.painPoint) ? raw.painPoint : [];
     const roomType = Array.isArray(raw.room_type) ? raw.room_type : [];
 
+    const step = Number.isFinite(draft.step) ? draft.step : (draft.step || 0);
     this.setData({
       formData: {
         ...this.data.formData,
@@ -237,13 +306,32 @@ Page({
         room_type: roomType
       },
       family_risk: familyRisk,
-      currentStep: Number.isFinite(draft.step) ? draft.step : (draft.step || 0)
+      currentStep: step,
+      ...this.computeGroupData(step)
     }, () => {
       if (raw.city) this.setCityHint(raw.city);
       this.updateSelectedMaps();
       this.updateRoomTypeSelectedMap();
       this.calculateHeightRatio();
       this.checkBudgetConflict();
+      if (raw.budgetTier) {
+        const tier = BUDGET_OPTIONS.find(o => o.value === raw.budgetTier);
+        if (tier) this.setData({ selectedBudgetLabel: tier.label, selectedBudgetHint: tier.hint });
+      }
+      // calculateHeightRatio会自动设置windPressureLevel
+      // 如果恢复的是确认页（step 9），需要计算确认页label值
+      if (step === 9) {
+        const roomTypeLabels = this.getRoomTypeLabels();
+        const firstPainPointLabel = this.getFirstPainPointLabel();
+        const windowTypeLabel = this.getWindowTypeLabel();
+        const familyRiskLabels = this.getFamilyRiskLabels();
+        this.setData({
+          confirmRoomTypeLabels: roomTypeLabels,
+          confirmFirstPainPointLabel: firstPainPointLabel,
+          confirmWindowTypeLabel: windowTypeLabel,
+          confirmFamilyRiskLabels: familyRiskLabels
+        });
+      }
     });
   },
 
@@ -301,11 +389,40 @@ Page({
   },
 
   setCityHint(city) {
-    const hint = CITY_DB[city] || { 
-      p3: '≥2.5', rw: '≥35', k: '≤2.5', 
-      note: '当前城市暂未精确收录，以下参数基于保守标准推算' 
-    };
-    this.setData({ cityHint: hint });
+    const spec = getClimateSpec(city);
+    if (spec) {
+      const hint = {
+        p3: spec.isCoastal ? '≥3.5' : '≥3.0',
+        rw: '≥35',
+        k: `${spec.kMin}~${spec.kBase}（最终值受供暖方式、朝向等影响）`,
+        note: spec.climateZoneCN + '地区' + (spec.typhoonRisk ? '，台风区，高层需注意风压' : '')
+      };
+      this.setData({
+        cityHint: hint,
+        currentCityKBase: spec.kBase,
+        currentCityKMin: spec.kMin
+      });
+      this.updateHeatingKTips(spec.kBase, spec.kMin);
+    } else {
+      this.setData({
+        cityHint: {
+          p3: '≥2.5', rw: '≥35', k: '2.3~2.5（最终值受供暖方式、朝向等影响）',
+          note: '当前城市暂未精确收录，以下参数基于保守标准推算'
+        },
+        currentCityKBase: 2.5,
+        currentCityKMin: 2.3
+      });
+      this.updateHeatingKTips(2.5, 2.3);
+    }
+  },
+
+  updateHeatingKTips(kBase, kMin) {
+    const selfK = (kBase - 0.2).toFixed(1);
+    this.setData({
+      heatingCentralKTip: `集中供暖地区，K值保持城市基线 ${kMin}~${kBase}`,
+      heatingSelfKTip: `自采暖地区，K值加严至 ${kMin}~${selfK}`,
+      heatingNoneKTip: `无集中供暖，K值保持城市基线 ${kMin}~${kBase}`
+    });
   },
 
   // Q2: 楼层
@@ -351,9 +468,28 @@ Page({
     const t = parseInt(totalFloors, 10);
     if (f > 0 && t > 0) {
       const ratio = Math.round((f / t) * 100);
-      this.setData({ heightRatio: ratio, showHeightRatio: true, showRatio: true });
+      const ratioDecimal = f / t;
+
+      // 风压警示分级逻辑
+      let windPressureLevel = '';
+      if (f >= 16 && ratioDecimal >= 0.8) {
+        windPressureLevel = 'strong'; // 强警示
+      } else if ((f >= 11 && f < 16) || (f >= 16 && ratioDecimal < 0.8)) {
+        windPressureLevel = 'weak'; // 弱提示
+      }
+
+      this.setData({
+        heightRatio: ratio,
+        showHeightRatio: true,
+        showRatio: true,
+        windPressureLevel: windPressureLevel
+      });
     } else {
-      this.setData({ showHeightRatio: false, showRatio: false });
+      this.setData({
+        showHeightRatio: false,
+        showRatio: false,
+        windPressureLevel: ''
+      });
     }
   },
 
@@ -374,6 +510,42 @@ Page({
       roomTypeSelectedMap: map
     });
     this.saveDraft();
+  },
+
+  // S5: Q3 痛点 tap交互（替代checkbox-group原生控件，formData字段不变）
+  onPainPointTap(e) {
+    const value = e.currentTarget.dataset.value;
+    const current = Array.isArray(this.data.formData.painPoint) ? this.data.formData.painPoint : [];
+    const next = current.includes(value) ? current.filter(v => v !== value) : [...current, value];
+    const map = {};
+    next.forEach(v => { map[v] = true; });
+    this.setData({ 'formData.painPoint': next, painPointSelectedMap: map });
+    this.saveDraft();
+    trackStep(3, { pain_point: next });
+  },
+
+  // S5: Q5 西晒遮阳 tap交互
+  onShadingTap(e) {
+    const shading = e.currentTarget.dataset.value === 'true';
+    this.setData({ 'formData.westShading': shading });
+    this.saveDraft();
+    trackStep(5, { west_shading: shading });
+  },
+
+  // S5: Q8 家庭风险 tap交互（formData字段不变）
+  onFamilyRiskTap(e) {
+    const value = e.currentTarget.dataset.value;
+    const current = Array.isArray(this.data.formData.family_risk) ? this.data.formData.family_risk : [];
+    const next = current.includes(value) ? current.filter(v => v !== value) : [...current, value];
+    const map = {};
+    next.forEach(v => { map[v] = true; });
+    this.setData({
+      family_risk: next,
+      'formData.family_risk': next,
+      familyRiskSelectedMap: map
+    });
+    this.saveDraft();
+    trackStep(8, { family_risk: next });
   },
 
   // Q3: 困扰问题（多选）
@@ -437,7 +609,14 @@ Page({
     const heating = this.data.heatingTypes[e.detail.value];
     this.setData({ 'formData.heatingType': heating });
     this.saveDraft();
-    
+
+    // 更新K值提示
+    const kBase = this.data.currentCityKBase;
+    const kMin = this.data.currentCityKMin;
+    if (kBase > 0) {
+      this.updateHeatingKTips(kBase, kMin);
+    }
+
     // 埋点：步骤完成（Q6）
     trackStep(6, { heating_type: heating });
   },
@@ -484,9 +663,12 @@ Page({
   // Q9: 预算（冲突预警核心）
   onBudgetChange(e) {
     const index = e.detail.value;
-    const budget = this.data.budgetTiers[index].value;
-    this.setData({ 
+    const tier = this.data.budgetTiers[index];
+    const budget = tier.value;
+    this.setData({
       'formData.budgetTier': budget,
+      selectedBudgetLabel: tier.label,
+      selectedBudgetHint: tier.hint,
       forceContinue: false
     });
     this.checkBudgetConflict();
@@ -535,6 +717,7 @@ Page({
   adjustFloor() {
     this.setData({
       currentStep: 1,
+      ...this.computeGroupData(1),
       showConflictWarning: false,
       conflictType: '',
       conflictMessage: '',
@@ -548,14 +731,14 @@ Page({
       forceContinue: true
     });
     this.saveDraft();
-    this.submit();
+    this.goToConfirm();
   },
 
   nextQuestion() {
     this.nextStep();
   },
 
-  // Q9 专用：软阻断检查
+  // Q9 专用：跳转到确认页
   nextStepWithCheck() {
     if (this.data.currentStep === 8 && this.data.showConflictWarning) {
       wx.showModal({
@@ -567,29 +750,182 @@ Page({
         confirmColor: '#ff4d4f',
         success: (res) => {
           if (res.confirm) {
-            this.setData({ 
-              forceContinue: true
-            });
+            this.setData({ forceContinue: true });
             this.saveDraft();
-            this.submit();
+            this.goToConfirm();
           }
         }
       });
     } else {
-      this.nextStep();
+      this.goToConfirm();
     }
+  },
+
+  // S6: 跳转到确认页（step 9）
+  goToConfirm() {
+    // 预计算确认页所需的label值
+    const roomTypeLabels = this.getRoomTypeLabels();
+    const firstPainPointLabel = this.getFirstPainPointLabel();
+    const windowTypeLabel = this.getWindowTypeLabel();
+    const familyRiskLabels = this.getFamilyRiskLabels();
+
+    this.setData({
+      currentStep: 9,
+      ...this.computeGroupData(9),
+      confirmRoomTypeLabels: roomTypeLabels,
+      confirmFirstPainPointLabel: firstPainPointLabel,
+      confirmWindowTypeLabel: windowTypeLabel,
+      confirmFamilyRiskLabels: familyRiskLabels
+    });
+    this.saveDraft();
+  },
+
+  // S6: 返回到Q9
+  backToStep8() {
+    this.setData({ currentStep: 8, ...this.computeGroupData(8) });
+    this.saveDraft();
+  },
+
+  // S6: 提交并进入等待页
+  submitWithLoading() {
+    if (!this.validateCurrentStep()) return;
+
+    // 标记已提交
+    this.setData({ hasSubmitted: true });
+
+    const totalTime = Date.now() - (this.startTime || Date.now());
+
+    // 埋点：问卷提交
+    track('survey_submitted', {
+      total_time_ms: totalTime,
+      has_photos: false,
+      city: this.data.formData.city,
+      budget_tier: this.data.formData.budgetTier,
+      is_risk: !!(this.data.showConflictWarning && this.data.forceContinue),
+      has_conflict: !!this.data.showConflictWarning,
+      floor: this.data.formData.floor,
+      total_floors: this.data.formData.totalFloors
+    });
+
+    // 最终校验
+    if (this.data.formData.floor && this.data.formData.totalFloors) {
+      if (parseInt(this.data.formData.floor, 10) > parseInt(this.data.formData.totalFloors, 10)) {
+        wx.showToast({ title: '所在楼层不能高于总楼层数', icon: 'none' });
+        return;
+      }
+    }
+
+    // 调用云函数，等待页将自定义显示
+    this.callGenerateReportWithLoading(this.data.forceContinue);
+  },
+
+  // S6: 带等待页的云函数调用
+  callGenerateReportWithLoading(isDisclaimer) {
+    const { formData } = this.data;
+    if (!formData || !formData.budgetTier) {
+      wx.showToast({ title: '请选择预算档位（Q9）', icon: 'none' });
+      return;
+    }
+    if (!Array.isArray(formData.family_risk) || formData.family_risk.length === 0) {
+      wx.showModal({
+        title: '数据不完整',
+        content: 'Q8家庭风险未选择，是否返回补充？',
+        confirmText: '返回Q8',
+        showCancel: true,
+        success: (res) => {
+          if (res.confirm) this.setData({ currentStep: 7 });
+        }
+      });
+      return;
+    }
+
+    // 埋点：PDF生成请求
+    trackPDF.request({
+      budget_tier: this.data.formData.budgetTier,
+      is_risk: isDisclaimer,
+      city: this.data.formData.city
+    });
+
+    // 准备数据
+    const windowFeatures = this.buildWindowFeatures(this.data.family_risk);
+    const primaryPainPoint = this.getPrimaryPainPoint(this.data.formData.painPoint);
+    const payload = {
+      ...this.data.formData,
+      painPoint: primaryPainPoint,
+      pain_points: Array.isArray(this.data.formData.painPoint) ? this.data.formData.painPoint : [],
+      family_risk: this.data.family_risk || [],
+      window_features: windowFeatures,
+      isDisclaimer: isDisclaimer,
+      timestamp: Date.now(),
+      cityStandard: this.data.cityHint
+    };
+
+    console.log('[S6] 调用云函数参数：', payload);
+
+    // 用 storage 传递大对象，避免 URL 长度限制（~1024字符）
+    wx.setStorageSync('generatePayload', payload);
+
+    // 跳转到等待页，只传轻量标记
+    wx.navigateTo({
+      url: `/pages/generate-loading/generate-loading?source=survey&isDisclaimer=${isDisclaimer}`
+    });
+  },
+
+  // S6: 获取第一个关注点的标签
+  getFirstPainPointLabel() {
+    const painPoint = this.data.formData.painPoint || [];
+    if (painPoint.length === 0) return '';
+
+    const firstValue = painPoint[0];
+    const option = this.data.painPoints.find(p => p.value === firstValue);
+    return option ? option.label : '';
+  },
+
+  // S6: 获取窗型标签
+  getWindowTypeLabel() {
+    const windowType = this.data.formData.window_type;
+    if (!windowType) return '';
+
+    const option = this.data.windowTypes.find(w => w.value === windowType);
+    return option ? option.label : '';
+  },
+
+  // S6: 获取使用场景标签
+  getRoomTypeLabels() {
+    const roomTypes = this.data.roomTypeOptions || [];
+    const selected = this.data.formData.room_type || [];
+    return selected
+      .map(v => {
+        const opt = roomTypes.find(o => o.value === v);
+        return opt ? opt.label : v;
+      })
+      .join('、') || '-';
+  },
+
+  // S6: 获取家庭风险标签
+  getFamilyRiskLabels() {
+    const risks = this.data.familyRiskOptions || [];
+    const selected = this.data.family_risk || [];
+    return selected
+      .map(v => {
+        const opt = risks.find(o => o.value === v);
+        return opt ? opt.label : v;
+      })
+      .join('、') || '-';
   },
 
   // 通用导航
   nextStep() {
     if (this.validateCurrentStep()) {
-      this.setData({ currentStep: this.data.currentStep + 1 });
+      const nextStepNum = this.data.currentStep + 1;
+      this.setData({ currentStep: nextStepNum, ...this.computeGroupData(nextStepNum) });
       this.saveDraft();
     }
   },
 
   prevStep() {
-    this.setData({ currentStep: this.data.currentStep - 1 });
+    const prevStepNum = this.data.currentStep - 1;
+    this.setData({ currentStep: prevStepNum, ...this.computeGroupData(prevStepNum) });
     this.saveDraft();
   },
 
@@ -655,7 +991,7 @@ Page({
     
     const totalTime = Date.now() - (this.startTime || Date.now());
     
-    // 埋点：问卷提交（北极星指标）
+    // 埋点：需求定制提交（北极星指标）
     track('survey_submitted', {
       total_time_ms: totalTime,
       has_photos: false, // 当前版本无照片
@@ -740,58 +1076,6 @@ Page({
       cityStandard: this.data.cityHint
     };
 
-    console.log('[Day 4] 调用云函数参数：', payload);
-
-    // 调用云函数
-    wx.cloud.callFunction({
-      name: 'generateReport',
-      data: {
-        assessmentData: payload
-      },
-      success: (res) => {
-        wx.hideLoading();
-        console.log('[Day 4] 云函数返回：', res.result);
-        
-        if (res.result.success) {
-          // 埋点：PDF生成成功
-          trackPDF.success({
-            file_size: res.result.fileSize,
-            is_risk: isDisclaimer,
-            duration_ms: Date.now() - this.startTime
-          });
-          
-          // 保存文件ID到本地，供result页使用
-          wx.setStorageSync('last_pdf_fileid', res.result.fileID);
-          
-          // 跳转到结果页
-          wx.navigateTo({
-            url: `/pages/result/result?type=${isDisclaimer ? 'disclaimer' : 'normal'}&fileID=${res.result.fileID}`
-          });
-        } else {
-          // 埋点：PDF生成失败
-          trackPDF.fail(res.result.error || 'unknown_error');
-          
-          wx.showModal({
-            title: '生成失败',
-            content: res.result.error || '请稍后重试',
-            showCancel: false
-          });
-        }
-      },
-      fail: (err) => {
-        wx.hideLoading();
-        console.error('[Day 4] 云函数调用失败：', err);
-        
-        // 埋点：PDF生成失败（网络错误）
-        trackPDF.fail(err.errMsg || 'network_error');
-        
-        wx.showModal({
-          title: '网络错误',
-          content: '无法连接到生成服务，请检查网络后重试',
-          showCancel: false
-        });
-      }
-    });
   },
 
   saveDraft() {
