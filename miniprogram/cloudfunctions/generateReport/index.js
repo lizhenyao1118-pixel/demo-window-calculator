@@ -311,7 +311,18 @@ exports.main = async (event, context) => {
       isDisclaimer: sections.cover.isRisk,
       reportId,
       tenderId,
-      warnings: computed.warnings || []
+      warnings: computed.warnings || [],
+      computed: {
+        K_target: computed.K_target,
+        Rw_required: computed.Rw_required,
+        SHGC_target: computed.SHGC_target,
+        P3_required: computed.P3_required,
+        safety_items: computed.safety_items,
+        hasSafetyClause: computed.hasSafetyClause,
+        risk_flags: computed.risk_flags,
+        conflict_notes: computed.conflict_notes,
+        corrections: computed.corrections
+      }
     };
     
   } catch (err) {
