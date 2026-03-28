@@ -41,6 +41,10 @@ survey.js → setStorageSync('generatePayload') → generate-loading.js
 4. 低风险任务（UI/样式）可交 GLM-4.7
 5. 先建议后决策，有歧义立即问
 6. 启动高风险任务前读本文件
+7. 每次会话结束前，Claude 主动输出文档更新的 Claude Code 执行指令：
+   - CHANGELOG.md 追加当次改动段
+   - PLAYBOOK.md 追加新认知条目（如有）
+   - 状态块更新（供下次对话恢复）
 
 ## 测试要求
 - 单元测试路径：cloudfunctions/generateReport/test/
