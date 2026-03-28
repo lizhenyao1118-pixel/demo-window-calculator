@@ -6,19 +6,19 @@
       <text class="id">{{tenderId}}</text>
       <text class="meta">{{snapshot.city}} · {{snapshot.floor}}层 · {{snapshot.windowType}} · {{status}}</text>
     </view>
-    <block wx:for="{{responses}}" wx:key="_id">
+    <block wx:for="{{responses}}" wx:for-item="response" wx:key="_id">
       <view class="card">
         <view class="vendor">
-          <text class="brand">{{item.vendorInfo.brandName}}</text>
-          <text class="contact">{{item.vendorInfo.contactName}} · {{item.vendorInfo.contactPhone}}</text>
-          <text class="time">{{formatTime(item.submittedAt)}}</text>
+          <text class="brand">{{response.vendorInfo.brandName}}</text>
+          <text class="contact">{{response.vendorInfo.contactName}} · {{response.vendorInfo.contactPhone}}</text>
+          <text class="time">{{formatTime(response.submittedAt)}}</text>
         </view>
         <view class="redlines">
           <view class="rl-title">红线响应</view>
-          <block wx:for="{{snapshot.redlines}}" wx:key="displayId">
-            <view class="redline-item {{isHit(item.displayId, ../item.redlineHits)?'hit':''}}">
-              <text>{{item.displayId}} {{item.text}}</text>
-              <text wx:if="{{isHit(item.displayId, ../item.redlineHits)}}" class="hit-tag">未满足</text>
+          <block wx:for="{{snapshot.redlines}}" wx:for-item="answer" wx:key="displayId">
+            <view class="redline-item {{isHit(answer.displayId, response.redlineHits)?'hit':''}}">
+              <text>{{answer.displayId}} {{answer.text}}</text>
+              <text wx:if="{{isHit(answer.displayId, response.redlineHits)}}" class="hit-tag">未满足</text>
             </view>
           </block>
         </view>

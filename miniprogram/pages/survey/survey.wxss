@@ -1,338 +1,676 @@
 .container {
-  padding: 20px;
-  background: #f5f5f5;
+  padding-bottom: 40rpx;
+  background: #F5F5F5;
   min-height: 100vh;
 }
 
-.progress-bar {
-  height: 4px;
-  background: #e0e0e0;
-  border-radius: 2px;
-  margin-bottom: 30px;
-  position: relative;
+/* ===================== S4: 三段分组进度条 ===================== */
+.group-progress-wrap {
+  padding: 40rpx 32rpx 28rpx;
+  background: #FFFFFF;
+  margin-bottom: 20rpx;
 }
 
-.progress-fill {
-  height: 100%;
-  background: #07c160;
-  border-radius: 2px;
-  transition: width 0.3s;
-}
-
-.progress-text {
-  position: absolute;
-  right: 0;
-  top: -20px;
-  font-size: 12px;
-  color: #999;
-}
-
-.step {
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  margin-bottom: 20px;
-}
-
-.question-title {
-  font-size: 18px;
-  font-weight: bold;
-  margin-bottom: 20px;
-  color: #333;
-}
-
-.picker, .input {
-  padding: 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  margin-bottom: 15px;
-  background: white;
-}
-
-.input.short {
-  width: 100px;
-  display: inline-block;
-}
-
-.city-hint {
-  background: #e6f7f0;
-  border-left: 4px solid #07c160;
-  padding: 15px;
-  margin-top: 20px;
-  border-radius: 4px;
-}
-
-.hint-title {
-  font-weight: bold;
-  color: #07c160;
-  margin-bottom: 10px;
-}
-
-.hint-item {
-  font-size: 14px;
-  color: #666;
-  margin: 5px 0;
-}
-
-.hint-note {
-  font-size: 12px;
-  color: #999;
-  margin-top: 10px;
-  font-style: italic;
-}
-
-.pain-points {
+.seg-bar {
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  gap: 10rpx;
+  margin-bottom: 20rpx;
 }
 
-.pain-point-item {
-  padding: 12px 20px;
-  border: 1px solid #ddd;
-  border-radius: 20px;
-  background: white;
-  transition: all 0.2s;
-}
-
-.pain-point-item.selected {
-  background: #07c160;
-  color: white;
-  border-color: #07c160;
-}
-
-.nav-buttons {
-  display: flex;
-  gap: 10px;
-  margin-top: 30px;
-}
-
-.btn-next, .btn-submit {
-  background: #07c160;
-  color: white;
+.seg {
   flex: 1;
+  height: 8rpx;
+  border-radius: 4rpx;
+  overflow: hidden;
 }
 
-.btn-prev {
-  background: #f0f0f0;
-  color: #666;
-  width: 100px;
+.seg-pending {
+  background: #E0E0E0;
+}
+.seg-pending .seg-fill { width: 0; height: 100%; background: #1F4E79; }
+
+.seg-active {
+  background: #E3F2FD;
+}
+.seg-active .seg-fill {
+  height: 100%;
+  background: #1F4E79;
+  transition: width 0.3s ease;
 }
 
-.draft-tip {
-  text-align: center;
-  color: #999;
-  font-size: 12px;
-  margin-top: 20px;
+.seg-done {
+  background: #1F4E79;
 }
+.seg-done .seg-fill { width: 100%; height: 100%; background: #1F4E79; }
 
-/* 冲突预警（红色警告） */
-.conflict-warning {
-  background: #fff2f0;
-  border: 1px solid #ffccc7;
-  color: #cf1322;
-  padding: 12px;
-  border-radius: 4px;
-  margin-top: 15px;
-  font-size: 14px;
-  line-height: 1.5;
-}
-
-/* 单选组样式 */
-.radio-group {
-  margin-top: 15px;
-  padding: 10px;
-  background: #f9f9f9;
-  border-radius: 4px;
-}
-
-.radio-group label {
-  display: block;
-  margin: 8px 0;
-  font-size: 14px;
-}
-
-/* 危险/警告按钮样式 */
-.btn-danger {
-  background: #ff4d4f !important;
-  color: white !important;
-  animation: shake 0.5s; /* 可选：抖动动画提醒 */
-}
-
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-5px); }
-  75% { transform: translateX(5px); }
-}
-
-.risk-option {
-  display: block;
-  margin: 10px 0;
-}
-
-.btn-primary {
-  background: #07c160;
-  color: white;
-  margin-top: 30px;
-  width: 100%;
-}
-
-.btn-primary.disabled {
-  background: #ccc !important;
-  color: #fff !important;
-}
-
-.conflict-card { background:#fff5f5; border:2rpx solid #ffcece; border-radius:16rpx; padding:32rpx; margin-top:32rpx; }
-.conflict-header { display:flex; align-items:center; margin-bottom:16rpx; }
-.conflict-title { color:#fa5151; font-size:32rpx; font-weight:600; margin-left:12rpx; }
-.conflict-desc { color:#333; font-size:28rpx; line-height:1.6; display:block; margin-bottom:8rpx; }
-.conflict-std { color:#999; font-size:24rpx; display:block; margin-bottom:24rpx; }
-.suggestion-item { padding:16rpx 0; border-bottom:1rpx solid #f0f0f0; color:#07c160; }
-.btn-risk { background:#fa5151; color:white; margin-top:32rpx; border-radius:8rpx; }
-
-.options-list {
+.group-meta {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
+  align-items: center;
+  gap: 16rpx;
+  margin-bottom: 8rpx;
 }
 
-.option {
+.group-step-label {
+  font-size: 24rpx;
+  color: #999999;
+}
+
+.group-name-tag {
+  font-size: 26rpx;
+  color: #1F4E79;
+  font-weight: 600;
+}
+
+.group-context {
+  font-size: 26rpx;
+  color: #666666;
+  line-height: 1.5;
+  display: block;
+}
+
+/* ===================== S5: 题目卡片 ===================== */
+.step {
+  background: #FFFFFF;
+  padding: 36rpx 32rpx 28rpx;
+  border-radius: 8rpx;
+  margin: 0 20rpx 20rpx;
+}
+
+/* ①标题 */
+.q-title {
+  display: block;
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #333333;
+  line-height: 1.4;
+  margin-bottom: 12rpx;
+}
+
+/* ②辅助说明 */
+.q-hint {
+  display: block;
+  font-size: 26rpx;
+  color: #999999;
+  line-height: 1.5;
+  margin-bottom: 32rpx;
+}
+
+/* ③输入区外包 */
+.input-area {
+  /* 无额外样式，作为语义分层 */
+}
+
+/* ===================== 表单基础元素 ===================== */
+.field-label {
+  font-size: 28rpx;
+  color: #333333;
+  font-weight: 500;
+  margin-bottom: 12rpx;
+}
+
+.field-opt {
+  font-size: 24rpx;
+  color: #999999;
+  font-weight: 400;
+}
+
+.req {
+  color: #E53935;
+  margin-left: 4rpx;
+}
+
+.mt24 { margin-top: 24rpx; }
+
+.field-tip {
+  display: block;
+  font-size: 24rpx;
+  color: #999999;
+  margin-top: 12rpx;
+}
+
+/* Picker */
+.picker {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 16px;
-  border: 1px solid #e5e5e5;
-  border-radius: 8px;
-  background: #ffffff;
+  padding: 24rpx 20rpx;
+  border: 2rpx solid #E0E0E0;
+  border-radius: 8rpx;
+  background: #FFFFFF;
+  color: #999999;
+  font-size: 28rpx;
 }
 
-.option.selected {
-  border-color: #07c160;
-  background: #e6f7f0;
+.picker-filled {
+  border-color: #1F4E79;
+  color: #333333;
 }
 
-.warning-hint {
-  margin-top: 12px;
-  color: #fa5151;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
+.picker-arrow {
+  font-size: 36rpx;
+  color: #CCCCCC;
+  line-height: 1;
 }
 
-.form-section {
-  margin-top: 16px;
+/* Text input */
+.text-input {
+  display: block;
+  width: 100%;
+  padding: 24rpx 20rpx;
+  border: 2rpx solid #E0E0E0;
+  border-radius: 8rpx;
+  font-size: 28rpx;
+  color: #333333;
+  background: #FFFFFF;
+  box-sizing: border-box;
 }
 
-.section-label {
-  font-size: 14px;
-  color: #333;
-  margin-bottom: 8px;
+.input-placeholder {
+  color: #CCCCCC;
 }
 
-.required {
-  color: #fa5151;
-  margin-left: 4px;
-}
-
-.checkbox-group {
+/* ===================== S5: 标签多选组 ===================== */
+.tag-group {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 16rpx;
 }
 
-.checkbox-icon {
-  width: 18px;
-  text-align: center;
-  margin-right: 6px;
-  color: #07c160;
+.tag-group-wrap {
+  flex-wrap: wrap;
 }
 
-.checkbox-label {
-  font-size: 15px;
-  color: #333;
+.tag-item {
+  padding: 14rpx 28rpx;
+  border: 2rpx solid #E0E0E0;
+  border-radius: 40rpx;
+  font-size: 28rpx;
+  color: #666666;
+  background: #FFFFFF;
+  transition: all 0.15s;
 }
 
-.hint-text {
-  margin-top: 8px;
-  font-size: 12px;
-  color: #999;
+.tag-lg {
+  padding: 16rpx 36rpx;
+  font-size: 30rpx;
 }
 
-.height-ratio-display {
-  margin-top: 12px;
-  padding: 10px 12px;
-  background: #f5f5f5;
-  border-radius: 8px;
-  font-size: 14px;
-}
-
-.ratio-value {
-  color: #07c160;
+.tag-selected {
+  border-color: #1F4E79;
+  background: #E3F2FD;
+  color: #1F4E79;
   font-weight: 600;
-  margin: 0 4px;
 }
 
-.ratio-hint {
-  color: #fa5151;
-  font-size: 12px;
+/* ===================== S5: Q2 楼层行 ===================== */
+.floor-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 12rpx;
+  margin-bottom: 0;
 }
 
-.checkbox-item {
+.floor-field {
+  flex: 1;
+}
+
+.floor-sep {
+  font-size: 40rpx;
+  color: #CCCCCC;
+  padding-bottom: 16rpx;
+  line-height: 1;
+}
+
+.ratio-badge {
   display: flex;
   align-items: center;
-  padding: 12px;
-  margin-bottom: 8px;
-  background: #fff;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  transition: all 0.2s;
+  gap: 16rpx;
+  margin-top: 16rpx;
+  padding: 12rpx 20rpx;
+  background: #F5F5F5;
+  border-radius: 8rpx;
+  font-size: 26rpx;
+  color: #666666;
 }
 
-.checkbox-item.unselected {
-  background: #fff;
-  border-color: #e0e0e0;
+.ratio-warn {
+  color: #F9A825;
+  font-size: 24rpx;
 }
 
-.checkbox-item.selected {
-  border-color: #07c160;
-  background: #f0fff4;
+/* ===================== Q2: 风压警示 ===================== */
+.wind-press-card {
+  margin-top: 24rpx;
+  padding: 24rpx;
+  border-radius: 12rpx;
+  border: 2rpx solid;
 }
 
-.checkbox-item checkbox {
-  margin-right: 8px;
+.wind-press-strong {
+  background: #FFF5F5;
+  border-color: #FFCECE;
 }
 
-.checkbox-text {
-  font-size: 15px;
-  color: #333;
-}
-
-.risk-option {
+.wind-press-header {
   display: flex;
   align-items: center;
-  padding: 12px;
-  margin-bottom: 8px;
-  background: #fff;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
+  gap: 12rpx;
+  margin-bottom: 16rpx;
 }
 
-.risk-option.unselected {
-  background: #fff;
-  border-color: #e0e0e0;
+.wind-press-icon {
+  font-size: 32rpx;
+  color: #E53935;
 }
 
-.risk-option.selected {
-  border-color: #07c160;
-  background: #f0fff4;
+.wind-press-title {
+  font-size: 28rpx;
+  color: #E53935;
+  font-weight: 600;
 }
 
-.risk-option checkbox {
-  margin-right: 8px;
+.wind-press-text {
+  display: block;
+  font-size: 26rpx;
+  color: #333333;
+  line-height: 1.5;
 }
 
-.option-text {
-  font-size: 15px;
-  color: #333;
+.wind-press-hint {
+  display: block;
+  margin-top: 24rpx;
+  padding: 16rpx 20rpx;
+  background: #F5F5F5;
+  border-radius: 8rpx;
+  font-size: 26rpx;
+  color: #999999;
+  line-height: 1.5;
+}
+
+/* ===================== S5: Q5 遮阳卡片 ===================== */
+.shading-block {
+  margin-top: 24rpx;
+}
+
+.radio-card-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+  margin-top: 12rpx;
+}
+
+.radio-card {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 20rpx 24rpx;
+  border: 2rpx solid #E0E0E0;
+  border-radius: 8rpx;
+  font-size: 28rpx;
+  color: #666666;
+  background: #FFFFFF;
+}
+
+.radio-selected {
+  border-color: #1F4E79;
+  background: #E3F2FD;
+  color: #1F4E79;
+  font-weight: 600;
+}
+
+.radio-card-icon {
+  font-size: 28rpx;
+  color: #1F4E79;
+}
+
+/* ===================== S5: Q7 窗型卡片 ===================== */
+.window-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.window-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx 28rpx;
+  border: 2rpx solid #E0E0E0;
+  border-radius: 8rpx;
+  background: #FFFFFF;
+  font-size: 30rpx;
+  color: #333333;
+}
+
+.window-card-selected {
+  border-color: #1F4E79;
+  background: #E3F2FD;
+  color: #1F4E79;
+  font-weight: 600;
+}
+
+.window-card-label {
+  flex: 1;
+}
+
+.window-card-check {
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 50%;
+  background: #1F4E79;
+  color: #FFFFFF;
+  font-size: 24rpx;
+  text-align: center;
+  line-height: 40rpx;
+}
+
+/* ===================== S5: Q8 勾选列表 ===================== */
+.check-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.check-item {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  padding: 20rpx 24rpx;
+  border: 2rpx solid #E0E0E0;
+  border-radius: 8rpx;
+  background: #FFFFFF;
+}
+
+.check-selected {
+  border-color: #1F4E79;
+  background: #E3F2FD;
+}
+
+.check-box {
+  width: 40rpx;
+  height: 40rpx;
+  border: 2rpx solid #CCCCCC;
+  border-radius: 8rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: #FFFFFF;
+}
+
+.check-selected .check-box {
+  background: #1F4E79;
+  border-color: #1F4E79;
+}
+
+.check-mark {
+  color: #FFFFFF;
+  font-size: 24rpx;
+  font-weight: 700;
+}
+
+.check-label {
+  font-size: 28rpx;
+  color: #333333;
+  flex: 1;
+  line-height: 1.4;
+}
+
+.check-selected .check-label {
+  color: #1F4E79;
+  font-weight: 500;
+}
+
+/* ===================== S5: Q9 预算档位提示 ===================== */
+.budget-hint-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12rpx;
+  margin-top: 16rpx;
+  padding: 20rpx 24rpx;
+  background: #E3F2FD;
+  border-radius: 8rpx;
+}
+
+.budget-hint-icon {
+  font-size: 28rpx;
+  flex-shrink: 0;
+}
+
+.budget-hint-text {
+  font-size: 26rpx;
+  color: #1F4E79;
+  line-height: 1.5;
+}
+
+/* ===================== 内联提示条 ===================== */
+.inline-tip {
+  display: block;
+  margin-top: 16rpx;
+  padding: 16rpx 20rpx;
+  border-radius: 8rpx;
+  font-size: 26rpx;
+  line-height: 1.5;
+}
+
+.warn-tip {
+  background: #FFF8E1;
+  color: #795548;
+  border-left: 6rpx solid #F9A825;
+}
+
+.info-tip {
+  background: #E3F2FD;
+  color: #1F4E79;
+  border-left: 6rpx solid #1F4E79;
+}
+
+/* ===================== Q1: 城市参数卡片 ===================== */
+.city-hint {
+  margin-top: 24rpx;
+  padding: 24rpx;
+  background: #E3F2FD;
+  border-left: 6rpx solid #1F4E79;
+  border-radius: 8rpx;
+}
+
+.city-hint-title {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #1F4E79;
+  margin-bottom: 16rpx;
+}
+
+.city-hint-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8rpx;
+}
+
+.city-hint-label {
+  font-size: 26rpx;
+  color: #666666;
+}
+
+.city-hint-value {
+  font-size: 26rpx;
+  color: #333333;
+  font-weight: 500;
+}
+
+.city-hint-note {
+  display: block;
+  font-size: 24rpx;
+  color: #999999;
+  margin-top: 12rpx;
+  font-style: italic;
+  line-height: 1.4;
+}
+
+/* ===================== Q9: 冲突预警 ===================== */
+.conflict-card {
+  background: #FFF5F5;
+  border: 2rpx solid #FFCECE;
+  border-radius: 12rpx;
+  padding: 28rpx;
+  margin-top: 24rpx;
+}
+
+.conflict-header {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 16rpx;
+}
+
+.conflict-icon {
+  font-size: 32rpx;
+}
+
+.conflict-title {
+  color: #E53935;
+  font-size: 32rpx;
+  font-weight: 600;
+}
+
+.conflict-desc {
+  display: block;
+  color: #333333;
+  font-size: 28rpx;
+  line-height: 1.6;
+  margin-bottom: 8rpx;
+}
+
+.conflict-std {
+  display: block;
+  color: #999999;
+  font-size: 24rpx;
+  margin-bottom: 24rpx;
+}
+
+.conflict-actions {
+  border-top: 1rpx solid #F0E0E0;
+}
+
+.conflict-action-item {
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #F0E0E0;
+  color: #1F4E79;
+  font-size: 28rpx;
+}
+
+.btn-risk {
+  background: #E53935;
+  color: #FFFFFF;
+  margin-top: 24rpx;
+  border-radius: 8rpx;
+  font-size: 28rpx;
+  width: 100%;
+  border: none;
+}
+
+/* ===================== S4: 底部导航栏 ===================== */
+.nav-bar {
+  display: flex;
+  gap: 20rpx;
+  padding: 24rpx 32rpx;
+  background: #FFFFFF;
+  margin: 0 20rpx 20rpx;
+  border-radius: 8rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.06);
+}
+
+.btn-prev-new {
+  flex: 1;
+  height: 88rpx;
+  line-height: 88rpx;
+  text-align: center;
+  background: #F5F5F5;
+  color: #666666;
+  border-radius: 8rpx;
+  font-size: 30rpx;
+  border: none;
+}
+
+.btn-next-new {
+  flex: 2;
+  height: 88rpx;
+  line-height: 88rpx;
+  text-align: center;
+  background: #1F4E79;
+  color: #FFFFFF;
+  border-radius: 8rpx;
+  font-size: 30rpx;
+  border: none;
+}
+
+.btn-disabled {
+  background: #CCCCCC !important;
+  color: #FFFFFF !important;
+}
+
+.btn-placeholder {
+  flex: 1;
+}
+
+/* ===================== 底部提示 ===================== */
+.draft-tip {
+  text-align: center;
+  color: #CCCCCC;
+  font-size: 24rpx;
+  margin: 8rpx 0 40rpx;
+}
+
+/* ===================== S6: 确认页 ===================== */
+.confirm-step {
+  background: #FFFFFF;
+}
+
+.confirm-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280rpx, 1fr));
+  gap: 24rpx;
+  margin-top: 32rpx;
+}
+
+.confirm-item {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+  padding: 24rpx;
+  background: #F5F5F5;
+  border-radius: 8rpx;
+}
+
+.confirm-label {
+  font-size: 26rpx;
+  color: #999999;
+  font-weight: 500;
+}
+
+.confirm-value {
+  font-size: 32rpx;
+  color: #333333;
+  font-weight: 600;
+}
+
+.confirm-tips {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-top: 32rpx;
+  padding: 20rpx 24rpx;
+  background: #FFF5F5;
+  border-left: 6rpx solid #E53935;
+  border-radius: 8rpx;
+}
+
+.confirm-tip-icon {
+  font-size: 32rpx;
+}
+
+.confirm-tip-text {
+  font-size: 28rpx;
+  color: #E53935;
+  font-weight: 500;
 }

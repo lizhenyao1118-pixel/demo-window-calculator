@@ -1,7 +1,7 @@
 <view class="container">
   <view class="header">
     <text class="title">我的招标文件</text>
-    <text class="subtitle">共 {{list.length}} 份报告</text>
+    <text class="subtitle">共 {{list.length}} 份招标文件</text>
   </view>
   
   <!-- 错误提示 -->
@@ -20,7 +20,7 @@
           data-risk="{{item.isDisclaimer}}">
       
       <view class="item-header">
-        <text class="file-name">{{item.formData.city || '未命名'}}报告</text>
+        <text class="file-name">{{item.formData.city || '未命名'}}招标文件</text>
         <text class="risk-tag" wx:if="{{item.isDisclaimer}}">风险提示</text>
         <text class="normal-tag" wx:else>正常</text>
       </view>
@@ -45,7 +45,7 @@
   <!-- 空状态 -->
   <view class="empty-state" wx:if="{{!loading && list.length === 0 && !errorMsg}}">
     <text class="empty-icon">📄</text>
-    <text class="empty-text">暂无历史报告</text>
-    <button class="btn-primary" bindtap="startNew">立即开始测评</button>
+    <text class="empty-text">暂无历史招标文件</text>
+    <button class="btn-primary" bindtap="startNew">立即开始定制</button>
   </view>
 </view>

@@ -1,225 +1,457 @@
 <view class="container">
-  <!-- 进度条 -->
-  <view class="progress-bar">
-    <view class="progress-fill" style="width: {{(currentStep+1)/totalSteps*100}}%"></view>
-    <text class="progress-text">第 {{currentStep+1}} / {{totalSteps}} 题</text>
+
+  <!-- S4: 三段分组进度条 + 组信息 -->
+  <view class="group-progress-wrap">
+    <view class="seg-bar">
+      <view
+        wx:for="{{groupProgress}}"
+        wx:key="index"
+        class="seg seg-{{item.state}}"
+      >
+        <view class="seg-fill" style="width: {{item.percent}}%"></view>
+      </view>
+    </view>
+    <view class="group-meta" wx:if="{{currentStep < 9}}">
+      <text class="group-step-label">第{{groupIndex+1}}组 · {{stepInGroup+1}}/3</text>
+      <text class="group-name-tag">{{groupName}}</text>
+    </view>
+    <view class="group-meta" wx:if="{{currentStep === 9}}">
+      <text class="group-name-tag">{{groupName}}</text>
+    </view>
+    <text class="group-context">{{groupContext}}</text>
   </view>
 
-  <!-- Q1: 城市 - 强制重新渲染 -->
-<view class="step" wx:if="{{currentStep === 0}}">
-  <view class="question-title">1. 您的房屋所在城市？</view>
-  
-  <!-- 关键修复：使用 wx:if 强制重新渲染 picker -->
-  <picker 
-    wx:if="{{cityList && cityList.length > 0}}" 
-    mode="selector" 
-    range="{{cityList}}" 
-    bindchange="onCityChange">
-    <view class="picker">{{formData.city || '请选择城市'}}</view>
-  </picker>
-  
-  <!-- 数据未加载时的占位（理论上不会显示） -->
-  <view wx:else class="picker-loading">数据加载中...</view>
-  
-  <input class="input" placeholder="请输入行政区（如朝阳区）" 
-         value="{{formData.district}}" bindinput="onDistrictInput" />
-         
-  <view class="city-hint" wx:if="{{cityHint}}">
-    <view class="hint-title">参考标准（{{formData.city}}）</view>
-    <view class="hint-item">抗风压 P3 {{cityHint.p3}} kPa</view>
-    <view class="hint-item">隔声量 Rw {{cityHint.rw}} dB</view>
-    <view class="hint-item">传热系数 K {{cityHint.k}}</view>
-    <view class="hint-note">{{cityHint.note}}</view>
+  <!-- Q1: 城市 -->
+  <view class="step" wx:if="{{currentStep === 0}}">
+    <!-- ①标题 -->
+    <text class="q-title">您的房子在哪个城市？</text>
+    <!-- ②辅助说明 -->
+    <text class="q-hint">不同城市气候和风压差异大，直接影响窗户参数标准</text>
+    <!-- ③输入区 -->
+    <view class="input-area">
+      <view class="field-label">所在城市 <text class="req">*</text></view>
+      <picker
+        wx:if="{{cityList && cityList.length > 0}}"
+        mode="selector"
+        range="{{cityList}}"
+        bindchange="onCityChange">
+        <view class="picker {{formData.city ? 'picker-filled' : ''}}">
+          <text>{{formData.city || '请选择城市'}}</text>
+          <text class="picker-arrow">›</text>
+        </view>
+      </picker>
+      <view wx:else class="picker">数据加载中...</view>
+
+      <view class="field-label mt24">所在行政区 <text class="field-opt">（选填）</text></view>
+      <input
+        class="text-input"
+        placeholder="如：朝阳区、南山区"
+        placeholder-class="input-placeholder"
+        value="{{formData.district}}"
+        bindinput="onDistrictInput"
+      />
+
+      <view class="city-hint" wx:if="{{cityHint}}">
+        <view class="city-hint-title">{{formData.city}} 参考基准</view>
+        <view class="city-hint-row">
+          <text class="city-hint-label">抗风压</text>
+          <text class="city-hint-value">P3 {{cityHint.p3}} kPa</text>
+        </view>
+        <view class="city-hint-row">
+          <text class="city-hint-label">隔声量</text>
+          <text class="city-hint-value">Rw {{cityHint.rw}} dB</text>
+        </view>
+        <view class="city-hint-row">
+          <text class="city-hint-label">传热系数</text>
+          <text class="city-hint-value">K {{cityHint.k}}</text>
+        </view>
+        <text class="city-hint-note">{{cityHint.note}}</text>
+      </view>
+    </view>
   </view>
-</view>
 
   <!-- Q2: 楼层 -->
   <view class="step" wx:if="{{currentStep === 1}}">
-    <view class="question-title">2. 您的楼层信息？</view>
-    <view class="input-group">
-      <text>所在楼层：</text>
-      <input type="number" class="input short" value="{{formData.floor}}" bindinput="onFloorChange" />
-    </view>
-    <view class="input-group">
-      <text>总楼层：</text>
-      <input type="number" class="input short" value="{{formData.totalFloors}}" bindinput="onTotalFloorsChange" />
-    </view>
-    <view wx:if="{{showHeightRatio}}" class="height-ratio-display">
-      <text class="ratio-label">当前位置占比：</text>
-      <text class="ratio-value">{{heightRatio}}%</text>
-      <text wx:if="{{heightRatio >= 80}}" class="ratio-hint">（顶楼区域）</text>
-    </view>
+    <!-- ①标题 -->
+    <text class="q-title">您住在几楼？窗户用在哪些房间？</text>
+    <!-- ②辅助说明 -->
+    <text class="q-hint">楼层越高风压越大，不同房间对隔音隔热要求不同</text>
+    <!-- ③输入区 -->
+    <view class="input-area">
+      <view class="floor-row">
+        <view class="floor-field">
+          <view class="field-label">所在楼层 <text class="req">*</text></view>
+          <input
+            type="number"
+            class="text-input"
+            placeholder="如 18"
+            placeholder-class="input-placeholder"
+            value="{{formData.floor}}"
+            bindinput="onFloorChange"
+          />
+        </view>
+        <view class="floor-sep">/</view>
+        <view class="floor-field">
+          <view class="field-label">总楼层 <text class="req">*</text></view>
+          <input
+            type="number"
+            class="text-input"
+            placeholder="如 33"
+            placeholder-class="input-placeholder"
+            value="{{formData.totalFloors}}"
+            bindinput="onTotalFloorsChange"
+          />
+        </view>
+      </view>
 
-    <view class="form-section">
-      <view class="section-label">使用场景<text class="required">*</text></view>
-      <view class="checkbox-group">
+      <view wx:if="{{showHeightRatio}}" class="ratio-badge">
+        <text>当前位置 {{heightRatio}}%</text>
+        <text wx:if="{{heightRatio >= 80}}" class="ratio-warn">高层区域，风压要求较高</text>
+      </view>
+
+      <!-- 强警示（红色卡片） -->
+      <view wx:if="{{windPressureLevel === 'strong'}}" class="wind-press-card wind-press-strong">
+        <view class="wind-press-header">
+          <text class="wind-press-icon">⚠</text>
+          <text class="wind-press-title">高区位置风压风险</text>
+        </view>
+        <text class="wind-press-text">您的楼层位于整栋楼的上部区域，高度比为{{heightRatio}}%，风荷载明显高于中低层。建议提高型材主受力壁厚或升级预算档位。</text>
+      </view>
+
+      <!-- 弱提示（灰色文字） -->
+      <view wx:if="{{windPressureLevel === 'weak'}}" class="wind-press-hint">
+        <text>您的楼层属于高层区，风压较中低层更大，建议优先选择抗风压性能更好的型材和玻璃配置。</text>
+      </view>
+
+      <view class="field-label mt24">使用场景 <text class="req">*</text></view>
+      <view class="tag-group">
         <view
           wx:for="{{roomTypeOptions}}"
           wx:for-item="item"
           wx:key="value"
-          class="checkbox-item {{roomTypeSelectedMap[item.value] ? 'selected' : 'unselected'}}"
+          class="tag-item {{roomTypeSelectedMap[item.value] ? 'tag-selected' : ''}}"
           bindtap="onRoomTypeChange"
           data-value="{{item.value}}"
-        >
-          <text class="checkbox-icon">{{roomTypeSelectedMap[item.value] ? '✓' : ''}}</text>
-          <text class="checkbox-label">{{item.label}}</text>
-        </view>
+        >{{item.label}}</view>
       </view>
-      <view class="hint-text">至少选择1项，可多选</view>
+      <text class="field-tip">可多选</text>
     </view>
   </view>
 
   <!-- Q3: 痛点 -->
   <view class="step" wx:if="{{currentStep === 2}}">
-    <view class="question-title required">3. 当前窗户最困扰您的问题？（可多选）</view>
-    <checkbox-group bindchange="onPainPointChange">
-      <view
-        class="checkbox-item {{painPointSelectedMap[item.value] ? 'selected' : 'unselected'}}"
-        wx:for="{{painPoints}}"
-        wx:for-item="item"
-        wx:key="value"
-      >
-        <checkbox
-          value="{{item.value}}"
-          checked="{{painPointSelectedMap[item.value]}}"
-          color="#07c160"
-        />
-        <text class="checkbox-text">{{item.label}}</text>
+    <!-- ①标题 -->
+    <text class="q-title">以下哪些问题最困扰您？</text>
+    <!-- ②辅助说明 -->
+    <text class="q-hint">您的关注点会影响参数的优先级和加严方向</text>
+    <!-- ③输入区 -->
+    <view class="input-area">
+      <view class="tag-group tag-group-wrap">
+        <view
+          wx:for="{{painPoints}}"
+          wx:for-item="item"
+          wx:key="value"
+          class="tag-item tag-lg {{painPointSelectedMap[item.value] ? 'tag-selected' : ''}}"
+          bindtap="onPainPointTap"
+          data-value="{{item.value}}"
+        >{{item.label}}</view>
       </view>
-    </checkbox-group>
+      <text class="field-tip">至少选1项，可多选</text>
+    </view>
   </view>
 
   <!-- Q4: 噪音 -->
   <view class="step" wx:if="{{currentStep === 3}}">
-    <view class="question-title">4. 主要噪音来源？</view>
-    <picker mode="selector" range="{{noiseTypeOptions}}" range-key="label" bindchange="onNoiseTypeChange">
-      <view class="picker">{{formData.noise_type_label || '请选择噪音来源'}}</view>
-    </picker>
+    <!-- ①标题 -->
+    <text class="q-title">您家附近有什么噪声源？</text>
+    <!-- ②辅助说明 -->
+    <text class="q-hint">噪声类型和距离决定隔音等级，直接影响玻璃配置</text>
+    <!-- ③输入区 -->
+    <view class="input-area">
+      <view class="field-label">噪声类型 <text class="req">*</text></view>
+      <picker mode="selector" range="{{noiseTypeOptions}}" range-key="label" bindchange="onNoiseTypeChange">
+        <view class="picker {{formData.noise_type ? 'picker-filled' : ''}}">
+          <text>{{formData.noise_type_label || '请选择噪声类型'}}</text>
+          <text class="picker-arrow">›</text>
+        </view>
+      </picker>
 
-    <picker mode="selector" range="{{noiseDistOptions}}" range-key="label" bindchange="onNoiseDistChange">
-      <view class="picker">{{formData.noise_dist_label || '请选择距离'}}</view>
-    </picker>
+      <view class="field-label mt24">与噪声源距离 <text class="req">*</text></view>
+      <picker mode="selector" range="{{noiseDistOptions}}" range-key="label" bindchange="onNoiseDistChange">
+        <view class="picker {{formData.noise_dist ? 'picker-filled' : ''}}">
+          <text>{{formData.noise_dist_label || '请选择距离范围'}}</text>
+          <text class="picker-arrow">›</text>
+        </view>
+      </picker>
 
-    <view class="hint" wx:if="{{formData.noise_type === 'main_road' && formData.noise_dist === 'lt20'}}">
-      主干道近距离建议Rw≥41dB
+      <view class="inline-tip warn-tip" wx:if="{{formData.noise_type === 'main_road' && formData.noise_dist === 'lt20'}}">
+        主干道近距离噪声强，建议隔声量 Rw ≥ 41 dB
+      </view>
     </view>
   </view>
 
   <!-- Q5: 朝向 -->
   <view class="step" wx:if="{{currentStep === 4}}">
-    <view class="question-title">5. 房屋朝向与遮阳？</view>
-    <picker mode="selector" range="{{orientations}}" bindchange="onOrientationChange">
-      <view class="picker">朝向：{{formData.orientation || '请选择'}}</view>
-    </picker>
-    <view class="radio-group" wx:if="{{formData.orientation}}">
-      <text>是否有西晒遮挡：</text>
-      <radio-group bindchange="onShadingChange">
-        <label><radio value="false" checked="{{!formData.westShading}}"/>无遮挡（西晒严重）</label>
-        <label><radio value="true" checked="{{formData.westShading}}"/>有遮挡/幕墙</label>
-      </radio-group>
-    </view>
-    <view class="hint" wx:if="{{formData.orientation === '西' && !formData.westShading}}">
-      ⚠️ 西向无遮挡房间，夏季空调负荷增加约30%
+    <!-- ①标题 -->
+    <text class="q-title">主要窗户朝哪个方向？</text>
+    <!-- ②辅助说明 -->
+    <text class="q-hint">西向/西南向窗户日晒强烈，需要考虑隔热和遮阳</text>
+    <!-- ③输入区 -->
+    <view class="input-area">
+      <view class="field-label">房屋朝向 <text class="req">*</text></view>
+      <picker mode="selector" range="{{orientations}}" bindchange="onOrientationChange">
+        <view class="picker {{formData.orientation ? 'picker-filled' : ''}}">
+          <text>{{formData.orientation || '请选择朝向'}}</text>
+          <text class="picker-arrow">›</text>
+        </view>
+      </picker>
+
+      <view wx:if="{{formData.orientation}}" class="shading-block">
+        <view class="field-label">是否有西晒遮挡？</view>
+        <view class="radio-card-group">
+          <view
+            class="radio-card {{!formData.westShading ? 'radio-selected' : ''}}"
+            bindtap="onShadingTap"
+            data-value="false"
+          >
+            <text class="radio-card-icon">{{!formData.westShading ? '●' : '○'}}</text>
+            <text>无遮挡（西晒严重）</text>
+          </view>
+          <view
+            class="radio-card {{formData.westShading ? 'radio-selected' : ''}}"
+            bindtap="onShadingTap"
+            data-value="true"
+          >
+            <text class="radio-card-icon">{{formData.westShading ? '●' : '○'}}</text>
+            <text>有遮挡 / 幕墙</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="inline-tip warn-tip" wx:if="{{(formData.orientation === '西' || formData.orientation === '西南') && !formData.westShading}}">
+        {{formData.orientation}}向无遮挡，夏季空调负荷增加约 30%，建议 SHGC ≤ 0.4
+      </view>
     </view>
   </view>
 
   <!-- Q6: 供暖 -->
   <view class="step" wx:if="{{currentStep === 5}}">
-    <view class="question-title">6. 冬季供暖方式？</view>
-    <picker mode="selector" range="{{heatingTypes}}" bindchange="onHeatingChange">
-      <view class="picker">{{formData.heatingType || '请选择供暖方式'}}</view>
-    </picker>
-    <view class="hint" wx:if="{{formData.heatingType === '集中供暖'}}">
-      集中供暖区域建议K值≤2.0，减少热量流失
+    <!-- ①标题 -->
+    <text class="q-title">您家冬天怎么取暖？</text>
+    <!-- ②辅助说明 -->
+    <text class="q-hint">取暖方式影响窗户保温要求，有供暖的房子 K 值标准会更严格</text>
+    <!-- ③输入区 -->
+    <view class="input-area">
+      <view class="field-label">取暖方式 <text class="req">*</text></view>
+      <picker mode="selector" range="{{heatingTypes}}" bindchange="onHeatingChange">
+        <view class="picker {{formData.heatingType ? 'picker-filled' : ''}}">
+          <text>{{formData.heatingType || '请选择取暖方式'}}</text>
+          <text class="picker-arrow">›</text>
+        </view>
+      </picker>
+      <view class="inline-tip info-tip" wx:if="{{formData.heatingType === '集中供暖'}}">
+        {{heatingCentralKTip}}
+      </view>
+      <view class="inline-tip info-tip" wx:if="{{formData.heatingType === '自采暖'}}">
+        {{heatingSelfKTip}}
+      </view>
+      <view class="inline-tip info-tip" wx:if="{{formData.heatingType === '无供暖'}}">
+        {{heatingNoneKTip}}
+      </view>
     </view>
   </view>
 
-  <!-- Q7: 窗型（新增） --> 
-  <view class="step" wx:if="{{currentStep === 6}}"> 
-    <view class="question-title required">7. 窗型类型?</view> 
-    <view class="options-list"> 
-      <view 
-        class="option {{formData.window_type === item.value ? 'selected' : ''}}" 
-        wx:for="{{windowTypes}}" 
-        wx:key="value" 
-        bindtap="selectWindowType" 
-        data-value="{{item.value}}" 
-      > 
-        <text>{{item.label}}</text> 
-        <icon wx:if="{{formData.window_type === item.value}}" type="success" size="20" color="#07c160"/> 
-      </view> 
-    </view> 
-    
-    <view wx:if="{{formData.window_type === 'sliding' || formData.window_type === 'door_window'}}" class="warning-hint"> 
-      <icon type="warn" size="16" color="#fa5151"/> 
-      <text>推拉窗/门联窗需提供整窗测试报告（GB/T 7106）</text> 
-    </view> 
+  <!-- Q7: 窗型 -->
+  <view class="step" wx:if="{{currentStep === 6}}">
+    <!-- ①标题 -->
+    <text class="q-title">您想用哪种窗户？</text>
+    <!-- ②辅助说明 -->
+    <text class="q-hint">不确定也没关系，不同窗型在隔音、通风、密封性上各有优劣</text>
+    <!-- ③输入区 -->
+    <view class="input-area">
+      <view class="window-card-list">
+        <view
+          wx:for="{{windowTypes}}"
+          wx:key="value"
+          class="window-card {{formData.window_type === item.value ? 'window-card-selected' : ''}}"
+          bindtap="selectWindowType"
+          data-value="{{item.value}}"
+        >
+          <text class="window-card-label">{{item.label}}</text>
+          <view class="window-card-check" wx:if="{{formData.window_type === item.value}}">✓</view>
+        </view>
+      </view>
+
+      <view class="inline-tip warn-tip" wx:if="{{formData.window_type === 'sliding' || formData.window_type === 'door_window'}}">
+        推拉窗/门联窗气密性较低，需提供整窗测试报告（GB/T 7106）
+      </view>
+    </view>
   </view>
 
   <!-- Q8: 家庭风险 -->
   <view class="step" wx:if="{{currentStep === 7}}">
-    <view class="question-title required">8. 家庭与窗型风险（可多选）</view>
-    <checkbox-group bindchange="onFamilyRiskChange">
-      <view
-        class="risk-option {{familyRiskSelectedMap[item.value] ? 'selected' : 'unselected'}}"
-        wx:for="{{riskOptions}}"
-        wx:for-item="item"
-        wx:key="value"
-      >
-        <checkbox 
-          value="{{item.value}}" 
-          checked="{{familyRiskSelectedMap[item.value]}}" 
-          color="#07c160" 
-        />
-        <text class="option-text">{{item.label}}</text>
-      </view> 
-    </checkbox-group>
+    <!-- ①标题 -->
+    <text class="q-title">您家有以下情况吗？</text>
+    <!-- ②辅助说明 -->
+    <text class="q-hint">这些信息关系到玻璃安全等级，涉及国标强制要求</text>
+    <!-- ③输入区 -->
+    <view class="input-area">
+      <view class="check-list">
+        <view
+          wx:for="{{riskOptions}}"
+          wx:for-item="item"
+          wx:key="value"
+          class="check-item {{familyRiskSelectedMap[item.value] ? 'check-selected' : ''}}"
+          bindtap="onFamilyRiskTap"
+          data-value="{{item.value}}"
+        >
+          <view class="check-box">
+            <text wx:if="{{familyRiskSelectedMap[item.value]}}" class="check-mark">✓</text>
+          </view>
+          <text class="check-label">{{item.label}}</text>
+        </view>
+      </view>
+      <text class="field-tip">可多选，至少选1项</text>
+
+      <view class="inline-tip warn-tip" wx:if="{{familyRiskSelectedMap['child'] && familyRiskSelectedMap['large_fixed']}}">
+        有儿童 + 落地窗，国标（GB 15763.3）强制使用夹胶安全玻璃
+      </view>
+    </view>
   </view>
 
-  <!-- Q9: 预算与冲突警告 -->
+  <!-- Q9: 预算 -->
   <view class="step" wx:if="{{currentStep === 8}}">
-    <view class="question-title">9. 预算档位？</view>
-    
-    <picker mode="selector" range="{{budgetTiers}}" range-key="label" bindchange="onBudgetChange">
-      <view class="picker">{{formData.budgetTier ? formData.budgetTier + '档已选择' : '请选择预算'}}</view>
-    </picker>
-    
-    <!-- 已选档位提示 -->
-    <view class="hint" wx:if="{{formData.budgetTier}}">已选择：{{formData.budgetTier}}档</view>
+    <!-- ①标题 -->
+    <text class="q-title">您的预算大概在什么范围？</text>
+    <!-- ②辅助说明 -->
+    <text class="q-hint">预算影响型材档次和玻璃配置的推荐方案</text>
+    <!-- ③输入区 -->
+    <view class="input-area">
+      <view class="field-label">预算档位 <text class="req">*</text></view>
+      <picker mode="selector" range="{{budgetTiers}}" range-key="label" bindchange="onBudgetChange">
+        <view class="picker {{formData.budgetTier ? 'picker-filled' : ''}}">
+          <text>{{selectedBudgetLabel || '请选择预算档位'}}</text>
+          <text class="picker-arrow">›</text>
+        </view>
+      </picker>
 
-    <view wx:if="{{showConflictWarning}}" class="conflict-card"> 
-      <view class="conflict-header"> 
-        <icon type="warn" size="20" color="#fa5151"/> 
-        <text class="conflict-title">配置不兼容</text> 
-      </view> 
-      <text class="conflict-desc">{{conflictMessage}}</text> 
-      <text class="conflict-std">GB/T 7106要求≥3.5kPa</text> 
-      
-      <view class="suggestion-list"> 
-        <view class="suggestion-item" bindtap="upgradeToTierB"> 
-          <text>① 升级至B档（推荐）</text> 
-        </view> 
-        <view class="suggestion-item" bindtap="adjustFloor"> 
-          <text>② 修改楼层数据</text> 
-        </view> 
-      </view> 
-      
-      <button class="btn-risk" bindtap="forceRisk">强制生成风险版</button> 
-    </view> 
-   
-    <button
-      wx:else
-      class="btn-primary {{!formData.budgetTier ? 'disabled' : ''}}"
-      bindtap="submit"
-      disabled="{{!formData.budgetTier}}"
-    >生成招标文件</button>
+      <view class="budget-hint-card" wx:if="{{selectedBudgetHint}}">
+        <text class="budget-hint-icon">💰</text>
+        <text class="budget-hint-text">{{selectedBudgetHint}}</text>
+      </view>
+
+      <view wx:if="{{showConflictWarning}}" class="conflict-card">
+        <view class="conflict-header">
+          <text class="conflict-icon">⚠️</text>
+          <text class="conflict-title">配置不兼容</text>
+        </view>
+        <text class="conflict-desc">{{conflictMessage}}</text>
+        <text class="conflict-std">GB/T 7106 要求抗风压 ≥ 3.5 kPa</text>
+
+        <view class="conflict-actions">
+          <view class="conflict-action-item" bindtap="upgradeToTierB">
+            ① 升级至 B 档（推荐）
+          </view>
+          <view class="conflict-action-item" bindtap="adjustFloor">
+            ② 修改楼层数据
+          </view>
+        </view>
+
+        <button class="btn-risk" bindtap="forceRisk">强制生成风险版</button>
+      </view>
+    </view>
   </view>
 
-  <!-- 通用导航（Q9 除外，Q9 在内部有自己的按钮组） -->
-  <view class="nav-buttons" wx:if="{{currentStep !== 8}}">
-    <button class="btn-prev" bindtap="prevStep" wx:if="{{currentStep > 0}}">上一题</button>
-    <button class="btn-next" bindtap="nextStep" wx:if="{{currentStep < totalSteps-1}}">下一题</button>
-    <button class="btn-submit" bindtap="submit" wx:if="{{currentStep === totalSteps-1}}">生成招标文件</button>
+  <!-- S6: 确认页（step 9） -->
+  <view class="step confirm-step" wx:if="{{currentStep === 9}}">
+    <text class="q-title">确认您的需求</text>
+    <text class="q-hint">请核对以下信息，确认无误后生成招标文件</text>
+
+    <view class="confirm-grid">
+      <view class="confirm-item">
+        <text class="confirm-label">城市</text>
+        <text class="confirm-value">{{formData.city}}</text>
+      </view>
+      <view class="confirm-item">
+        <text class="confirm-label">区域</text>
+        <text class="confirm-value">{{formData.district || '-'}}</text>
+      </view>
+      <view class="confirm-item">
+        <text class="confirm-label">楼层</text>
+        <text class="confirm-value">{{formData.floor}}/{{formData.totalFloors}}层</text>
+      </view>
+      <view class="confirm-item">
+        <text class="confirm-label">使用场景</text>
+        <text class="confirm-value">{{confirmRoomTypeLabels}}</text>
+      </view>
+      <view class="confirm-item">
+        <text class="confirm-label">最关注</text>
+        <text class="confirm-value">{{confirmFirstPainPointLabel}}</text>
+      </view>
+      <view class="confirm-item">
+        <text class="confirm-label">噪声源</text>
+        <text class="confirm-value">{{formData.noise_type_label}} · {{formData.noise_dist_label}}</text>
+      </view>
+      <view class="confirm-item">
+        <text class="confirm-label">朝向</text>
+        <text class="confirm-value">{{formData.orientation}}{{formData.westShading ? ' · 有遮挡' : ''}}</text>
+      </view>
+      <view class="confirm-item">
+      </view>
+      <view class="confirm-item">
+        <text class="confirm-label">取暖方式</text>
+        <text class="confirm-value">{{formData.heatingType}}</text>
+      </view>
+      <view class="confirm-item">
+        <text class="confirm-label">窗型</text>
+        <text class="confirm-value">{{confirmWindowTypeLabel}}</text>
+      </view>
+      <view class="confirm-item">
+        <text class="confirm-label">安全风险</text>
+        <text class="confirm-value">{{confirmFamilyRiskLabels}}</text>
+      </view>
+      <view class="confirm-item">
+        <text class="confirm-label">预算</text>
+        <text class="confirm-value">{{selectedBudgetLabel}}</text>
+      </view>
+    </view>
+
+    <view class="confirm-tips" wx:if="{{showConflictWarning}}">
+      <text class="confirm-tip-icon">⚠️</text>
+      <text class="confirm-tip-text">配置存在风险，将生成风险版文件</text>
+    </view>
+  </view>
+
+  <!-- S6: 底部导航栏 -->
+  <view class="nav-bar">
+    <button
+      wx:if="{{currentStep > 0 && currentStep <= 8}}"
+      class="btn-prev-new"
+      bindtap="prevStep"
+    >上一题</button>
+    <button
+      wx:if="{{currentStep === 9}}"
+      class="btn-prev-new"
+      bindtap="backToStep8"
+    >返回修改</button>
+    <view wx:else class="btn-placeholder"></view>
+
+    <button
+      wx:if="{{currentStep < 8}}"
+      class="btn-next-new"
+      bindtap="nextStep"
+    >下一题</button>
+    <button
+      wx:if="{{currentStep === 8 && !showConflictWarning}}"
+      class="btn-next-new {{!formData.budgetTier ? 'btn-disabled' : ''}}"
+      bindtap="goToConfirm"
+      disabled="{{!formData.budgetTier}}"
+    >下一步</button>
+    <button
+      wx:if="{{currentStep === 9}}"
+      class="btn-next-new"
+      bindtap="submitWithLoading"
+    >确认无误，生成招标文件</button>
   </view>
 
   <view class="draft-tip">已自动保存草稿</view>
