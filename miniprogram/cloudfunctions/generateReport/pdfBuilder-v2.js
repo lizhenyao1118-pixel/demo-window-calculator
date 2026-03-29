@@ -631,7 +631,11 @@ function renderChapter3(doc, c3) {
     }
   }
 
-  // 可选升级项
+  // 可选升级项 — 分页保护：三项卡片必须在同一页
+  const upgradeBlockHeight = 220;
+  if (doc.y + upgradeBlockHeight > doc.page.height - 80) {
+    doc.addPage();
+  }
   drawSectionTitle(doc, "3.4 可选升级项");
   doc.y += 6;
   
