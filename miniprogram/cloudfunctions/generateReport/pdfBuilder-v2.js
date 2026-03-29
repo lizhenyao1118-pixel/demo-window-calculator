@@ -406,7 +406,7 @@ function renderChapter1(doc, c1) {
       const bodyH = doc.heightOfString(bodyText, { width: bodyW, lineGap: 2 });
       const boxH = padding.top + titleH + 4 + bodyH + padding.bottom;
 
-      if (842 - doc.y < boxH + 40) doc.addPage();
+      doc.moveDown(1);
       const y = doc.y + 6;
       doc.rect(boxX, y, boxW, boxH).fill('#FFF8E1');
       doc.rect(boxX, y, boxW, boxH).lineWidth(1).strokeColor('#E0C36A').stroke();
