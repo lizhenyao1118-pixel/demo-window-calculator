@@ -298,15 +298,25 @@ function renderChapter1(doc, c1) {
       const values = [row.dimension, row.value, row.basis];
       colX = startX;
       values.forEach((val, colIdx) => {
-        const textColor = colIdx === 2 ? COLORS.text_secondary : COLORS.text_body;
-        const fontSize = (rowIdx >= 5 && colIdx === 1) ? 8.5 : (colIdx === 2 ? 9 : 10);
-        const lineGap = (rowIdx >= 5 && colIdx === 1) ? 1 : undefined;
-        doc.fillColor(textColor).fontSize(fontSize)
-          .text(String(val || ""), colX + 5, y + 6, {
-            width: colWidths[colIdx] - 10,
-            align: colIdx === 0 ? "center" : "left",
-            lineGap: lineGap
-          });
+        const valStr = String(val || "");
+        // 水密性单元格：值列拆为主值行+说明行
+        if (colIdx === 1 && String(row.dimension || '').includes('水密') && valStr.includes('\n')) {
+          const parts = valStr.split('\n');
+          doc.fillColor(COLORS.text_body).fontSize(10)
+            .text(parts[0], colX + 5, y + 4, { width: colWidths[colIdx] - 10, align: 'left' });
+          doc.fillColor('#888888').fontSize(7)
+            .text(parts.slice(1).join('\n'), colX + 5, y + 16, { width: colWidths[colIdx] - 10, align: 'left' });
+        } else {
+          const textColor = colIdx === 2 ? COLORS.text_secondary : COLORS.text_body;
+          const fontSize = (rowIdx >= 5 && colIdx === 1) ? 8.5 : (colIdx === 2 ? 9 : 10);
+          const lineGap = (rowIdx >= 5 && colIdx === 1) ? 1 : undefined;
+          doc.fillColor(textColor).fontSize(fontSize)
+            .text(valStr, colX + 5, y + 6, {
+              width: colWidths[colIdx] - 10,
+              align: colIdx === 0 ? "center" : "left",
+              lineGap: lineGap
+            });
+        }
         colX += colWidths[colIdx];
       });
     });
