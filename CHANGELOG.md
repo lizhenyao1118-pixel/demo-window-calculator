@@ -1,5 +1,33 @@
 # CHANGELOG
 
+## 2026-03-29 · v3.9.2 · 6卡参数展示 + 云函数完整化
+
+**改动：**
+- fix: 修复 createTender 云函数跨目录依赖（复制9个共享模块）
+- fix: 新建 tenders 数据库集合（tenderId生产就绪）
+- fix: generateReport 返回 computed 补充 airRec/waterRec/wind_zone
+- fix: tenderSections.parameterTable 从 computed 直接构建
+- fix: heatingAction 补充中文枚举值匹配（集中/自采暖/无供暖）
+- fix: sections fallback 补足3条默认文案（当corrections<3时）
+- feat: result-summary 合并至 result 页，消除重复 generateReport 调用
+- feat: 参数卡片升级为6卡3列布局（保温/隔音/遮阳/抗风压/密封性能/安全）
+- feat: 删除 AB 实验 Banner 和「在线预览」按钮
+- feat: CTA文案改为「¥99 限时免费，直接发给商家比价」
+- feat: CTA区块fixed底部定位，按钮与提示文字纵向排列
+- chore: arbitrary.params扩展为8字段（新增P3/windZone/airRec/waterRec）
+
+**Git Commits：**
+7fbe262, b65bddf, 70d9dd7, 9038281
+
+**测试：** 125/125 全绿
+
+**经验教训：**
+- 云函数跨目录引用需在目标函数内复制所有依赖，无法直接require其他函数
+- 二级依赖需递归检查，一次性复制完整（否则部署后仍报找不到模块）
+- Markdown删除线(~~text~~)在WXML中会竖排，改用原生双text + text-decoration实现
+
+---
+
 ## 2026-03-28 · v3.9.1 · 数据链路全修复
 
 **改动：**

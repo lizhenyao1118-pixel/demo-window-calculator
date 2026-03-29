@@ -5,7 +5,7 @@
 品牌："不卖窗的李sir"，中立第三方技术顾问。
 
 ## 产品结构
-- 免费层：5个参数徽章卡片（K/Rw/SHGC/气密/安全）
+- 免费层：6个参数卡片（保温/隔音/遮阳/抗风压/密封性能/安全）
 - 付费层：四章完整招标文件PDF（¥39/份，验证期限时免费）
 
 ## 技术架构
@@ -16,15 +16,21 @@
 - PDF生成：pdfBuilder-v2.js + documentMapper.js
 - 玻璃仲裁：arbitrator.js
 
-## 数据传递链路（v3.9.1 确定）
+## 数据传递链路（v3.9.2 确定）
 ```
 survey.js → setStorageSync('generatePayload') → generate-loading.js
 → callFunction({ data: { assessmentData: payload } })
-→ 云函数 { assessmentData } = event → adaptAssessmentData → calculateAll
-→ return { success, fileID, computed: { K_target, Rw_required, ... } }
-→ generate-loading 构建 arbitrator → setStorageSync('arbitrator')
-→ result-summary.js 读取并渲染
+→ 云函数 generateReport { assessmentData } = event
+  → adaptAssessmentData → calculateAll + calcSealGrades
+  → return { success, fileID, computed: { K_target, Rw_required, wind_zone, airRec, waterRec, ... } }
+→ generate-loading 构建 arbitrator(7字段) → setStorageSync('arbitrator')
+→ result.js 读取并渲染 6卡3列布局 + CTA区块固定底部
+→ cloudFunction createTender 写入 tenders 表，生成 tenderId
 ```
+
+**云函数部署状态（生产环境）：**
+- `generateReport`：已部署，返回 computed 补充 airRec/waterRec/wind_zone
+- `createTender`：已部署，tenders 集合已初始化，tenderId 生产环境已打通
 
 ## 代码红线（禁止违反）
 1. 不改 formData 结构

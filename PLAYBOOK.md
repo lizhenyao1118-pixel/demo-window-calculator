@@ -79,6 +79,14 @@
 **表现：** 结果随机——有时对有时错，取决于哪个调用先返回。
 **解法：** 新增调用路径前全局搜索函数名，确认唯一。
 
+### 3.5 云函数跨目录依赖
+**坑：** 云函数部署后每个函数是独立沙箱，无法 `require('../其他云函数/')` 跨函数引用。
+**表现：** 本地运行正常，部署后报 "Cannot find module" 或函数不生效。
+**解法：** 在目标云函数内建 `shared/` 目录，复制所有依赖文件，修改 require 路径为相对路径。
+**关键：** 被复制文件可能有二级依赖（如 shared/calculator-v2.js 依赖 PDF库），需递归检查后一次性复制完整，否则部署后仍报找不到模块。
+
+**案例：** v3.9.2 中 createTender 云函数需要 calculator-v2.js 和 PDF库。最初尝试 `require('../generateReport/shared/calculator-v2')` 失败，改为复制 shared/ 全目录（9个文件）到 createTender，同时修改所有 require 为相对路径 `require('./shared/calculator-v2')`，部署后生效。
+
 ---
 
 ## 四、行业知识（门窗领域）
