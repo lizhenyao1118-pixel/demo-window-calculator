@@ -3,7 +3,7 @@ console.log('VERSION: 8A-FINAL');
 const { mapToSections } = require('./documentMapper');
 const { buildPDF } = require('./pdfBuilder-v2');
 
-const { calculateAll } = require('./calculator-v2');
+const { calculateAll, calcSealGrades } = require('./calculator-v2');
 // 保留旧版以备回退（注释掉）
 // const { buildPDF } = require('./pdfBuilder');
 
@@ -133,6 +133,12 @@ exports.main = async (event, context) => {
     
     const computed = calculateAll(adaptedData);
     console.log('[Cloud] 计算结果：', computed);
+
+    // 调用 calcSealGrades 获取密封性能等级
+    const sealGrades = (typeof calcSealGrades === 'function')
+      ? calcSealGrades({ city: adaptedData.city, floor: adaptedData.floor, windowType: adaptedData.window_type })
+      : { airRec: 4, waterRec: 3 };
+    console.log('[Cloud] 密封性能等级：', sealGrades);
     
     // Phase 1 新流程：使用 documentMapper 构建 sections（替换原有 sections 构建逻辑）
     const sections = mapToSections(computed, adaptedData, pdfNo);
@@ -323,6 +329,9 @@ exports.main = async (event, context) => {
         Rw_required: computed.Rw_required,
         SHGC_target: computed.SHGC_target,
         P3_required: computed.P3_required,
+        wind_zone: computed.wind_zone,
+        airRec: sealGrades.airRec,
+        waterRec: sealGrades.waterRec,
         safety_items: computed.safety_items,
         hasSafetyClause: computed.hasSafetyClause,
         risk_flags: computed.risk_flags,

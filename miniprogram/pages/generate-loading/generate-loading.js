@@ -70,25 +70,37 @@ Page({
           'bigWindow': '落地窗/大面积玻璃，需符合安全玻璃强制要求'
         };
 
-        // 构建 sections[]（从 corrections）
-        const sections = (computed.corrections || []).map(item => ({
+        // 构建 sections[]（从 corrections）with fallback
+        const defaultSections = [
+          { severity: 'info', reason: '参数已根据您的房屋条件针对性调整', action: '将此文件发给至少3家商家，用同一标准比价' },
+          { severity: 'info', reason: '所在城市气候特征已纳入计算', action: '验收时逐项核对参数，避免商家偷换规格' },
+          { severity: 'info', reason: '楼层风压影响已计入抗风压等级', action: '高层建议要求商家提供检测报告' }
+        ];
+        const rawSections = (computed.corrections || []).map(item => ({
           severity: item.value < 0 ? 'warning' : 'info',
           reason: item.label,
           action: factor_to_action[item.factor] || '根据您的房屋条件调整参数'
         }));
+        const sections = [...rawSections];
+        for (let i = rawSections.length; i < 3; i++) {
+          sections.push(defaultSections[i]);
+        }
 
         // 推导 safety 等级（从 safety_items）
         const safety = computed.hasSafetyClause && computed.safety_items?.some(s => s.includes('夹胶玻璃'))
                      ? '强制夹胶'
                      : '常规';
 
-        // 构建完整 arbitrator 对象
+        // 构建完整 arbitrator 对象（7字段版本）
         const arbitrator = {
           params: {
             K: computed.K_target || 0,
             Rw: computed.Rw_required || 0,
             SHGC: computed.SHGC_target || 0,
-            airtight: computed.P3_required || 0,
+            P3: computed.P3_required || 0,
+            windZone: computed.wind_zone || '',
+            airRec: computed.airRec || 4,
+            waterRec: computed.waterRec || 3,
             safety: safety
           },
           riskLevel: riskLevel,

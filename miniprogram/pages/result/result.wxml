@@ -4,8 +4,6 @@
     ⚠️ 配置冲突提示版
   </view>
 
-  <view class="exp-banner" wx:if="{{expPosition === 'top'}}">{{expTitle}}</view>
-
   <!-- 顶部风险条 -->
   <view class="risk-bar risk-bar--{{riskClass}}" wx:if="{{riskLevel}}">
     <view class="risk-bar__inner">
@@ -14,18 +12,10 @@
     </view>
   </view>
 
-  <!-- 头部状态 -->
-  <view class="header {{isDisclaimer ? 'risk-header' : 'normal-header'}}">
-    <view class="status-icon">{{isDisclaimer ? '⚠️' : '✅'}}</view>
-    <view class="status-title">
-      {{isDisclaimer ? '招标文件已生成（风险提示版）' : '招标文件已生成'}}
-    </view>
-    <view class="progress-bar {{progressStyle}}">
-      <view class="progress-fill {{progressStyle}}"></view>
-    </view>
-    <view class="status-subtitle" wx:if="{{isDisclaimer}}">
-      检测到预算与楼层配置冲突，建议仅用于咨询
-    </view>
+  <!-- 页面头部 -->
+  <view class="page-header">
+    <text class="page-title">您的门窗标准</text>
+    <text class="page-subtitle">根据您的房屋条件定制生成</text>
   </view>
 
   <!-- 参数卡片区 -->
@@ -33,10 +23,14 @@
     <text class="section-title">关键参数指标</text>
     <view class="param-grid">
       <view wx:for="{{paramCards}}" wx:key="label" class="param-card {{item.colorClass}}">
-        <text class="param-prefix">{{item.prefix}}</text>
-        <text class="param-value">{{item.value}}</text>
-        <text class="param-unit">{{item.unit}}</text>
+        <text class="param-icon">{{item.icon}}</text>
         <text class="param-label">{{item.label}}</text>
+        <block wx:if="{{item.value}}">
+          <text class="param-prefix">{{item.prefix}}</text>
+          <text class="param-value">{{item.value}}</text>
+          <text class="param-unit">{{item.unit}}</text>
+        </block>
+        <text class="param-sublabel">{{item.sublabel}}</text>
       </view>
     </view>
   </view>
@@ -81,20 +75,13 @@
     </view>
   </view>
 
-  <view class="exp-banner" wx:if="{{expPosition === 'middle'}}">{{expTitle}}</view>
-
   <!-- 操作按钮区 -->
   <view class="action-area">
     <button class="btn-primary" bindtap="downloadPDF">
-      {{isDisclaimer ? '下载风险提示版' : '下载招标文件'}}
+      ~~¥99~~ 限时免费，直接发给商家比价
     </button>
-    
-    <button class="btn-secondary" bindtap="previewPDF">
-      在线预览
-    </button>
+    <text class="btn-hint">含完整技术参数与验收标准，商家看到就知道你懂行</text>
   </view>
-
-  <view class="exp-banner" wx:if="{{expPosition === 'bottom'}}">{{expTitle}}</view>
 
   <!-- L2入口：专家审核（风险版 - 强提示） -->
   <view class="l2-entry" wx:if="{{isDisclaimer}}">

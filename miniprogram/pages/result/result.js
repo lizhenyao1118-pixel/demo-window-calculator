@@ -252,11 +252,12 @@ Page({
 
   _buildParamCards(params) {
     return [
-      { label: 'K值', value: params.K != null ? params.K : '—', unit: 'W/(m²·K)', prefix: '≤', colorClass: 'c-blue' },
-      { label: 'Rw值', value: params.Rw != null ? params.Rw : '—', unit: 'dB', prefix: '≥', colorClass: 'c-green' },
-      { label: 'SHGC', value: params.SHGC != null ? params.SHGC : '—', unit: '', prefix: '≤', colorClass: 'c-amber' },
-      { label: '气密', value: params.airtight != null ? params.airtight : '—', unit: '级', prefix: '', colorClass: 'c-purple' },
-      { label: '安全', value: params.safety != null ? params.safety : '常规', unit: '', prefix: '', colorClass: 'c-pink' },
+      { label: '保温', sublabel: 'K值', value: params.K != null ? params.K : '—', unit: 'W/(m²·K)', prefix: '≤', colorClass: 'c-blue', icon: '🌡️' },
+      { label: '隔音', sublabel: 'Rw值', value: params.Rw != null ? params.Rw : '—', unit: 'dB', prefix: '≥', colorClass: 'c-green', icon: '🔊' },
+      { label: '遮阳', sublabel: 'SHGC', value: params.SHGC != null ? params.SHGC : '—', unit: '', prefix: '≤', colorClass: 'c-amber', icon: '☀️' },
+      { label: '抗风压', sublabel: params.windZone || '', value: params.P3 != null ? params.P3 : '—', unit: '级', prefix: '≥', colorClass: 'c-teal', icon: '💨' },
+      { label: '密封性能', sublabel: `气密${params.airRec || 4}级/水密${params.waterRec || 3}级`, value: '', unit: '', prefix: '', colorClass: 'c-purple', icon: '🔒' },
+      { label: '安全', sublabel: '', value: params.safety != null ? params.safety : '常规', unit: '', prefix: '', colorClass: 'c-pink', icon: '🛡️' },
     ];
   },
 
