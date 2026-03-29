@@ -1003,8 +1003,7 @@ function addFooters(doc, disclaimer) {
     short: (d) => `本文件由李Sir门窗技术顾问系统自动生成，仅供参考。生成时间：${d}`,
     full: (d) => [
       '以上价格区间基于一线城市市场水平，二三线城市实际采购成本可能降低15-25%。',
-      '玻璃配置推荐基于声学/热工/安全三维约束自动计算，商家可提供等效替代方案并附检测报告。',
-      `本文件生成时间：${d} 本文件由李Sir门窗技术顾问系统基于用户填写信息自动生成，仅供参考，不构成正式法律合同。`
+      '玻璃配置推荐基于声学/热工/安全三维约束自动计算，商家可提供等效替代方案并附检测报告。'
     ]
   };
   
@@ -1015,9 +1014,8 @@ function addFooters(doc, disclaimer) {
 
     if (isLast) {
       const lines = footerText.full(dateText);
-      doc.fillColor(COLORS.text_light).fontSize(7).text(lines[0], 55, 788, { width: 420 });
-      doc.fillColor(COLORS.text_light).fontSize(7).text(lines[1], 55, 798, { width: 420 });
-      doc.fillColor(COLORS.text_light).fontSize(7).text(lines[2], 55, 808, { width: 420 });
+      doc.fillColor(COLORS.text_light).fontSize(7).text(lines[0], 55, 793, { width: 420 });
+      doc.fillColor(COLORS.text_light).fontSize(7).text(lines[1], 55, 803, { width: 420 });
     } else {
       doc.fillColor(COLORS.text_light).fontSize(7).text(footerText.short(dateText), 55, 804, { width: 420 });
     }
