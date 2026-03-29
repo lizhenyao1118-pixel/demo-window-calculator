@@ -119,13 +119,13 @@ function renderRedLines(doc, redLines) {
 
   if (safetyItems.length > 0) {
     y += 6;
-    doc.fillColor(COLORS.risk_red).fontSize(11)
-      .text("◆ 安全专项条款", X, y);
+    doc.fillColor('#E6A817').fontSize(11)
+      .text("⚠ 安全专项条款", X, y);
     y += 16;
 
     safetyItems.forEach((item) => {
-      doc.fillColor(COLORS.risk_red).fontSize(11)
-        .text("◆ ", X, y, { continued: true });
+      doc.fillColor('#E6A817').fontSize(11)
+        .text("⚠ ", X, y, { continued: true });
       doc.fillColor(COLORS.text_body).fontSize(11)
         .text(String(item || ""), { width: 458 });
       y += 16;
