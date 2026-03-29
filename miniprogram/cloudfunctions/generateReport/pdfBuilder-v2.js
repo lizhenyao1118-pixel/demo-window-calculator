@@ -47,7 +47,18 @@ function getFontBuffer() {
   return _fontBuffer;
 }
 
-// ... 其余代码保持不变 ...
+// 免责声明段落
+const DISCLAIMER_PARAGRAPHS = [
+  '本招标文件由"不卖窗的李sir·门窗诊断系统"依据您填写的信息自动生成，仅供采购沟通与技术参考使用，不构成任何法律合同或承诺。',
+  '文中提及的标准条文引用、性能参数建议及预算区间，均基于生成时的现行规范和一般工程经验，不保证在任何时间、任何项目情形下均完全适用；如有差异，应以实际勘察及具有相应资质的专业机构意见为准。',
+  '本系统不代表任何品牌或商家利益，亦不参与具体采购、报价或施工，对商家报价及施工质量不承担保证或连带责任。',
+  '如需进一步了解本文件所涉技术内容，可通过"不卖窗的李sir"官方渠道咨询。'
+];
+
+// 免责声明布局常量
+const DISCLAIMER_LEFT = 55;
+const DISCLAIMER_RIGHT = 540;
+const DISCLAIMER_WIDTH = 485;
 
 // 颜色系统
 const COLORS = {
@@ -958,6 +969,25 @@ function renderAttachments(doc, attachments) {
     .text(`共 ${attachments.photos.length} 张照片（照片将在实现后显示）`, 55, doc.y);
 }
 
+function drawDisclaimerSection(doc) {
+  doc.moveDown(1.5);
+  const y = doc.y;
+  doc.moveTo(DISCLAIMER_LEFT, y)
+     .lineTo(DISCLAIMER_RIGHT, y)
+     .strokeColor('#CCCCCC')
+     .lineWidth(0.5)
+     .stroke();
+  doc.moveDown(0.5);
+  doc.font('SourceHanSans').fontSize(8).fillColor('#888888')
+     .text('【免责声明】', DISCLAIMER_LEFT, doc.y, { width: DISCLAIMER_WIDTH });
+  doc.moveDown(0.3);
+  doc.font('SourceHanSans').fontSize(7.5);
+  DISCLAIMER_PARAGRAPHS.forEach(p => {
+    doc.text(p, DISCLAIMER_LEFT, doc.y, { width: DISCLAIMER_WIDTH, lineGap: 4 });
+    doc.moveDown(0.3);
+  });
+}
+
 function addFooters(doc, disclaimer) {
   const range = doc.bufferedPageRange();
   const dateText = new Date().toLocaleString('zh-CN', { hour12: false });
@@ -1009,9 +1039,11 @@ async function buildPDF(sections, outputPath, opts) {
       if (sections.attachments && sections.attachments.photos && sections.attachments.photos.length > 0) {
         renderAttachments(doc, sections.attachments);
       }
-      
+
+      drawDisclaimerSection(doc);
+
       addFooters(doc, sections.cover.disclaimer);
-      
+
       doc.end();
       
       stream.on('finish', () => resolve());
