@@ -51,13 +51,20 @@ Page({
         // 推导 riskReason（从 conflict_notes）
         const riskReason = (computed.conflict_notes || []).join(' / ') || '无风险';
 
+        // 根据 payload 中的实际供暖类型动态生成 heating action
+        const heatingType = payload.heatingType || payload.heating_type || '';
+        const heatingAction = heatingType === 'central' ? '集中供暖区域，K值需满足当地节能标准'
+          : heatingType === 'self' ? '自采暖房型，选择K值≥2.0，避免冬季结露'
+          : '无供暖区域，重点关注隔热性能';
+
         // factor → action 映射表
         const factor_to_action = {
-          'heating': '自采暖房型，选择K值≥2.0，避免冬季结露',
+          'heating': heatingAction,
           'high_floor': '高楼层风压加严，气密性和隔音需提升',
           'typhoon': '台风区域，玻璃等级需加强',
           'coastal': '沿海盐雾环境，选用抗腐蚀材料',
-          'shading': '夏季西晒无遮阳，SHGC需下调'
+          'shading': '夏季西晒无遮阳，SHGC需下调',
+          'bigWindow': '落地窗/大面积玻璃，需符合安全玻璃强制要求'
         };
 
         // 构建 sections[]（从 corrections）
