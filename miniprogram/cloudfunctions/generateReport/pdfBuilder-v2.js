@@ -659,14 +659,16 @@ function renderChapter3(doc, c3) {
   doc.y += 72;
 
   if (c3.upgradeOptions && c3.upgradeOptions.l2_entry && c3.upgradeOptions.l2_entry.action) {
-    const bg = COLORS.bg_card;
-    const fg = COLORS.brand_blue;
-    const bY = doc.y;
-    doc.rect(55, bY, 485, 42).fill(bg);
-    doc.fillColor(fg).fontSize(10).text(c3.upgradeOptions.l2_entry.text || "", 67, bY + 10, { width: 360 });
-    doc.roundedRect(442, bY + 9, 86, 24, 4).stroke(fg);
-    doc.fillColor(fg).fontSize(10).text(c3.upgradeOptions.l2_entry.action, 460, bY + 15);
-    doc.y = bY + 52;
+    const ctaY = doc.y;
+    doc.rect(55, ctaY, 485, 60)
+       .strokeColor('#1B3F72')
+       .lineWidth(0.8)
+       .stroke();
+    doc.fontSize(10).fillColor('#1B3F72')
+       .text(c3.upgradeOptions.l2_entry.text || '如需评估哪项升级性价比最高，可咨询李Sir', 65, ctaY + 14, { width: 465 });
+    doc.fontSize(10).fillColor('#4A7FBF')
+       .text(c3.upgradeOptions.l2_entry.action, 65, ctaY + 36, { width: 465 });
+    doc.y = ctaY + 70;
   }
 }
 
