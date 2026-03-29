@@ -53,8 +53,11 @@ Page({
 
         // 根据 payload 中的实际供暖类型动态生成 heating action
         const heatingType = payload.heatingType || payload.heating_type || '';
-        const heatingAction = heatingType === 'central' ? '集中供暖区域，K值需满足当地节能标准'
-          : heatingType === 'self' ? '自采暖房型，选择K值≥2.0，避免冬季结露'
+        const heatingAction =
+          (heatingType === 'central' || heatingType === '集中供暖')
+            ? '集中供暖区域，K值需满足当地节能标准'
+          : (heatingType === 'self' || heatingType === '自采暖' || heatingType === '空调取暖')
+            ? '自采暖房型，选择K值≥2.0，避免冬季结露'
           : '无供暖区域，重点关注隔热性能';
 
         // factor → action 映射表
