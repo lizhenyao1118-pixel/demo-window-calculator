@@ -208,9 +208,15 @@ exports.main = async (event, context) => {
     let qrCodeBuffer = null;
     try {
       const tenderSections = {
-        parameterTable: sections && sections.chapter1 ? sections.chapter1.needsTable : null,
+        parameterTable: {
+          K_target: computed.K_target,
+          Rw_required: computed.Rw_required,
+          SHGC_target: computed.SHGC_target,
+          P3_required: computed.P3_required,
+          safety_items: computed.safety_items
+        },
         budgetTier: sections && sections.chapter3 && sections.chapter3.budgetComparison ? sections.chapter3.budgetComparison.currentTier : null,
-        climateZone: computed && (computed.climateZone || computed.climate_zone || computed.climateZoneCN) ? (computed.climateZone || computed.climate_zone || computed.climateZoneCN) : null
+        climateZone: computed.climateZone || computed.climate_zone || computed.climateZoneCN || null
       };
 
       const tenderAnswers = {
