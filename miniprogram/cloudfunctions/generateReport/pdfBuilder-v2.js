@@ -970,6 +970,8 @@ function renderAttachments(doc, attachments) {
 }
 
 function drawDisclaimerSection(doc) {
+  const _t1 = Date.now();
+  console.log('[disclaimer] start y:', doc.y, 'page:', doc.bufferedPageRange().count);
   // 检查剩余空间，如不足则添加新页面
   if (842 - doc.y < 200) {
     doc.addPage();
@@ -987,13 +989,18 @@ function drawDisclaimerSection(doc) {
      .text('【免责声明】', DISCLAIMER_LEFT, doc.y, { width: DISCLAIMER_WIDTH });
   doc.moveDown(0.3);
   doc.font('SourceHanSans').fontSize(7.5);
-  DISCLAIMER_PARAGRAPHS.forEach(p => {
+  DISCLAIMER_PARAGRAPHS.forEach((p, i) => {
+    const yBefore = doc.y;
     doc.text(p, DISCLAIMER_LEFT, doc.y, { width: DISCLAIMER_WIDTH, lineGap: 4 });
+    console.log('[disclaimer] para', i, 'y:', yBefore, '->', doc.y, 'pages:', doc.bufferedPageRange().count);
     doc.moveDown(0.3);
   });
+  console.log('[disclaimer] end y:', doc.y, '耗时:', Date.now() - _t1, 'ms');
 }
 
 function addFooters(doc, disclaimer) {
+  const _t2 = Date.now();
+  console.log('[addFooters] start pages:', doc.bufferedPageRange().count);
   const range = doc.bufferedPageRange();
   const dateText = new Date().toLocaleString('zh-CN', { hour12: false });
   const footerText = {
@@ -1021,6 +1028,7 @@ function addFooters(doc, disclaimer) {
 
     doc.fillColor(COLORS.text_secondary).fontSize(8).text(`${i + 1} / ${range.count}`, 502, 804);
   }
+  console.log('[addFooters] end 耗时:', Date.now() - _t2, 'ms');
 }
 
 async function buildPDF(sections, outputPath, opts) {
