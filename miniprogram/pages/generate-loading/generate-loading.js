@@ -99,9 +99,9 @@ Page({
         // 存储 fileID（原有逻辑）
         wx.setStorageSync('last_pdf_fileid', res.result.fileID);
 
-        // 导航到结果摘要页
+        // 导航到结果页
         wx.redirectTo({
-          url: '/pages/result-summary/result-summary?fileID=' + res.result.fileID
+          url: '/pages/result/result?fileID=' + res.result.fileID
         });
       },
 

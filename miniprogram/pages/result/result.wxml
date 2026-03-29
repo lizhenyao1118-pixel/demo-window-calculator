@@ -6,6 +6,14 @@
 
   <view class="exp-banner" wx:if="{{expPosition === 'top'}}">{{expTitle}}</view>
 
+  <!-- 顶部风险条 -->
+  <view class="risk-bar risk-bar--{{riskClass}}" wx:if="{{riskLevel}}">
+    <view class="risk-bar__inner">
+      <view class="risk-badge risk-badge--{{riskClass}}">{{riskLevel}}风险</view>
+      <text class="risk-reason">{{riskReason}}</text>
+    </view>
+  </view>
+
   <!-- 头部状态 -->
   <view class="header {{isDisclaimer ? 'risk-header' : 'normal-header'}}">
     <view class="status-icon">{{isDisclaimer ? '⚠️' : '✅'}}</view>
@@ -17,6 +25,30 @@
     </view>
     <view class="status-subtitle" wx:if="{{isDisclaimer}}">
       检测到预算与楼层配置冲突，建议仅用于咨询
+    </view>
+  </view>
+
+  <!-- 参数卡片区 -->
+  <view class="section" wx:if="{{paramCards.length}}">
+    <text class="section-title">关键参数指标</text>
+    <view class="param-grid">
+      <view wx:for="{{paramCards}}" wx:key="label" class="param-card {{item.colorClass}}">
+        <text class="param-prefix">{{item.prefix}}</text>
+        <text class="param-value">{{item.value}}</text>
+        <text class="param-unit">{{item.unit}}</text>
+        <text class="param-label">{{item.label}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 反向映射区 -->
+  <view class="section" wx:if="{{reverseMappings.length}}">
+    <text class="section-title">这些标准是怎么来的</text>
+    <view class="mapping-list">
+      <view wx:for="{{reverseMappings}}" wx:key="index" class="mapping-item mapping-item--{{item.mappingType}}">
+        <text class="mapping-title">{{item.title}}</text>
+        <text class="mapping-desc">{{item.description}}</text>
+      </view>
     </view>
   </view>
 

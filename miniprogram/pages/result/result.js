@@ -3,7 +3,7 @@ Page({
     isDisclaimer: false,
     formData: {},
     timestamp: '',
-    fileID: '', 
+    fileID: '',
     qrImageUrl: '', // 空字符串，等待转换
     // 原始File ID保留用于调试
     qrFileID: 'cloud://cloud1-7grn8mcy176fcc2b.636c-cloud1-7grn8mcy176fcc2b-1407149429/qr-code/lisir-wechat.jpg',
@@ -13,6 +13,12 @@ Page({
     expTitle: '标准标题',
     expPosition: 'top',
     expVariant: 'A',
+    arbitrator: null,
+    paramCards: [],
+    reverseMappings: [],
+    riskLevel: '',
+    riskReason: '',
+    riskClass: '',
     experimentConfig: [
       { variant: 'A', title: '标准标题', position: 'top' },
       { variant: 'B', title: '强调标题', position: 'top' },
@@ -39,6 +45,22 @@ Page({
     }
     // 关键：转换File ID为临时HTTPS链接
     this.getQRCodeUrl();
+
+    // 从本地存储读取 arbitrator 数据并构建参数卡片
+    const arbitrator = wx.getStorageSync('arbitrator');
+    if (arbitrator) {
+      const paramCards = this._buildParamCards(arbitrator.params || {});
+      const reverseMappings = this._buildReverseMappings(arbitrator);
+      const riskClassMap = { '高': 'high', '中': 'medium', '低': 'low' };
+      this.setData({
+        arbitrator,
+        paramCards,
+        reverseMappings,
+        riskLevel: arbitrator.riskLevel || '',
+        riskReason: arbitrator.riskReason || '',
+        riskClass: riskClassMap[arbitrator.riskLevel] || 'low',
+      });
+    }
 
     try {
       const app = getApp();
@@ -226,5 +248,28 @@ Page({
     const hour = date.getHours().toString().padStart(2, '0');
     const minute = date.getMinutes().toString().padStart(2, '0');
     return `${year}-${month}-${day} ${hour}:${minute}`;
+  },
+
+  _buildParamCards(params) {
+    return [
+      { label: 'K值', value: params.K != null ? params.K : '—', unit: 'W/(m²·K)', prefix: '≤', colorClass: 'c-blue' },
+      { label: 'Rw值', value: params.Rw != null ? params.Rw : '—', unit: 'dB', prefix: '≥', colorClass: 'c-green' },
+      { label: 'SHGC', value: params.SHGC != null ? params.SHGC : '—', unit: '', prefix: '≤', colorClass: 'c-amber' },
+      { label: '气密', value: params.airtight != null ? params.airtight : '—', unit: '级', prefix: '', colorClass: 'c-purple' },
+      { label: '安全', value: params.safety != null ? params.safety : '常规', unit: '', prefix: '', colorClass: 'c-pink' },
+    ];
+  },
+
+  _buildReverseMappings(arbitrator) {
+    if (!arbitrator || !Array.isArray(arbitrator.sections)) return [];
+    const severityOrder = { error: 0, warning: 1, info: 2 };
+    const sorted = [...arbitrator.sections]
+      .sort((a, b) => (severityOrder[a.severity] ?? 3) - (severityOrder[b.severity] ?? 3));
+    return sorted.slice(0, 3).map((item, index) => ({
+      ...item,
+      title: item.reason,
+      description: item.action,
+      mappingType: index < 2 ? 'data' : 'action',
+    }));
   }
 });
