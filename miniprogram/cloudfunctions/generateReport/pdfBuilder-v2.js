@@ -970,6 +970,7 @@ function renderAttachments(doc, attachments) {
 }
 
 function drawDisclaimerSection(doc) {
+  console.log('[PDF] drawDisclaimerSection start - y:', doc.y, 'pageRange:', doc.bufferedPageRange());
   doc.moveDown(1.5);
   const y = doc.y;
   doc.moveTo(DISCLAIMER_LEFT, y)
@@ -986,6 +987,7 @@ function drawDisclaimerSection(doc) {
     doc.text(p, DISCLAIMER_LEFT, doc.y, { width: DISCLAIMER_WIDTH, lineGap: 4 });
     doc.moveDown(0.3);
   });
+  console.log('[PDF] drawDisclaimerSection end - y:', doc.y);
 }
 
 function addFooters(doc, disclaimer) {
@@ -1040,7 +1042,9 @@ async function buildPDF(sections, outputPath, opts) {
         renderAttachments(doc, sections.attachments);
       }
 
+      console.log('[PDF] About to call drawDisclaimerSection');
       drawDisclaimerSection(doc);
+      console.log('[PDF] drawDisclaimerSection completed');
 
       addFooters(doc, sections.cover.disclaimer);
 
