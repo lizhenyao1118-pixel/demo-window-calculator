@@ -4,11 +4,11 @@ cloud.init({ env: 'cloud1-7grn8mcy176fcc2b' });
 
 const db = cloud.database();
 
-const { createTender } = require('../generateReport/shared/createTenderService');
-const { buildRedlineRegistry } = require('../generateReport/shared/redlineSpec');
-const { buildAcceptanceItems } = require('../generateReport/shared/acceptanceSpec');
-const { TERM, getTierLabel } = require('../generateReport/documentMapper');
-const { getClimateZone } = require('../generateReport/shared/climateSpec');
+const { createTender } = require('./shared/createTenderService');
+const { buildRedlineRegistry } = require('./shared/redlineSpec');
+const { buildAcceptanceItems } = require('./shared/acceptanceSpec');
+const { TERM, getTierLabel } = require('./documentMapper');
+const { getClimateZone } = require('./shared/climateSpec');
 
 exports.main = async (event, context) => {
   const { reportId, answers, sections, ownerOpenId } = event || {};
