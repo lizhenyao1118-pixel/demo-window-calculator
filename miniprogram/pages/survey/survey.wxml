@@ -406,7 +406,7 @@
         <text class="confirm-label">窗型</text>
         <text class="confirm-value">{{confirmWindowTypeLabel}}</text>
       </view>
-      <view class="confirm-item">
+      <view class="confirm-item confirm-item-full">
         <text class="confirm-label">安全风险</text>
         <text class="confirm-value">{{confirmFamilyRiskLabels}}</text>
       </view>
