@@ -970,6 +970,11 @@ function renderAttachments(doc, attachments) {
 }
 
 function drawDisclaimerSection(doc) {
+  // 检查剩余空间，如不足则添加新页面
+  if (842 - doc.y < 200) {
+    doc.addPage();
+  }
+
   doc.moveDown(1.5);
   const y = doc.y;
   doc.moveTo(DISCLAIMER_LEFT, y)
