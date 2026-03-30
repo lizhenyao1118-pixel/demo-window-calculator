@@ -63,6 +63,34 @@
 
 ---
 
+## 2026-03-30 · [v3.9.2-patch] · Sprint 8A 收尾
+
+**完成：**
+- feat: PDF免责声明插入 pdfBuilder-v2.js (SPEC-PDF-DISCLAIMER-v1.0) · 58c8939
+- fix: 免责声明迁移至正确文件 pdfBuilder-v2.js，对齐v2布局参数 · 58c8939
+- feat: 前端视觉优化封面+问卷页 (SPEC-UI-SURVEY-v1.0) · 04b1643
+- fix(pdf): P-01 封面重复品牌描述删除 · 6ca23a8
+- fix(pdf): P-06 尾页页脚删除重复免责内容 · 0364559
+- fix(pdf): P-02 预算提示不再独占新页（二次修复）· 6fa3ec3
+- fix(pdf): P-03 升级项强制新页避免跨页（二次修复）· a113878
+- fix(pdf): P-04 CTA改为描边卡片 · 3197c67
+- fix(pdf): P-05 安全专项符号统一为⚠ · 29fd616
+- fix(pdf): P-07 水密性双行显示 · 02017ad
+- docs: 新建CLAUDE.md同步v3.9.2状态 · 8986af6
+- 云函数超时调整为20秒（微信云开发控制台）
+
+**待验收：**
+- P-02/P-03 修复已提交，待重新部署 generateReport 后视觉验收
+
+**经验教训：**
+- pdfBuilder.js 与 pdfBuilder-v2.js 并存，index.js 只引用 v2，改错文件浪费一轮排查
+- PDF生成耗时随参数复杂度变化，超时阈值需留足余量（建议≥20秒）
+- Claude Code 工作目录必须 cd 到项目根目录再执行，否则文档写到错误路径
+
+**测试：** 125/125 全绿
+
+---
+
 ## 2026-03 早期 · v3.5.0-v3.8.x · Sprint 8A + PDF审计
 
 **改动：**
