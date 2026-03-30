@@ -398,6 +398,13 @@ function renderChapter1(doc, c1) {
 
     if (c1.needsAnalysis.budgetFitnessNote && c1.needsAnalysis.budgetFitnessNote.type === 'budget_fitness_warning') {
       const note = c1.needsAnalysis.budgetFitnessNote;
+
+      // P-02 fix: 确保标题+内容整块不被分页截断
+      const estimatedBlockHeight = 100; // 标题+内容段落合计高度
+      if (doc.y + estimatedBlockHeight > doc.page.height - doc.page.margins.bottom) {
+        doc.addPage();
+      }
+
       const titleText = '预算适配性提示';
       const bodyText = String(note.text || '');
       const boxX = 55;
