@@ -552,8 +552,8 @@ function buildParameterNote({ windPressure, soundInsulation, thermal, shgc, safe
   const noiseText = inputs.noiseType === 'main_road'
     ? `主干道 ${distLabel}`
     : inputs.noiseType === 'rail'
-      ? '轨道近距'
-      : (inputs.noiseType === 'elevated' ? '高架近距' : '噪声源已评估');
+      ? `轨道 ${distLabel}`
+      : (inputs.noiseType === 'elevated' ? `高架 ${distLabel}` : '噪声源已评估');
   const distAdjText = `${soundInsulation.distAdj > 0 ? '+' : ''}${soundInsulation.distAdj}`;
   const usageAdjText = `${soundInsulation.usageAdj > 0 ? '+' : ''}${soundInsulation.usageAdj}`;
   const usageExplain = (inputs.noiseType === 'rail')

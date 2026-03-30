@@ -648,7 +648,7 @@ function renderChapter3(doc, c3) {
   }
 
   // 可选升级项 — 分页保护：三项卡片必须在同一页
-  const upgradeBlockHeight = 320;
+  const upgradeBlockHeight = 200;
   if (doc.y + upgradeBlockHeight > doc.page.height - doc.page.margins.bottom) {
     doc.addPage();
   }
