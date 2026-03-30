@@ -412,6 +412,7 @@ function build1_2(answers, resolved) {
       floor: answers.floor,
       heightRatio: (Number(answers.floor) / Number(answers.total_floors || 1)).toFixed(2),
       noiseType: answers.noise_type,
+      noiseDist: answers.noise_dist,
       roomType: Array.isArray(answers.room_type) ? answers.room_type : [],
       facing: answers.orientation,
       painPoint: answers.pain_point,
@@ -539,8 +540,17 @@ function buildParameterNote({ windPressure, soundInsulation, thermal, shgc, safe
 
   lines.push(`① **抗风压**：${inputs.city}属 ${windPressure.windZone} 风区，第 ${inputs.floor} 层高度比 ${Math.round(Number(inputs.heightRatio) * 100)}%，按 GB/T 7106 推荐等级取 ≥${windPressure.value} kPa。`);
 
+  // 动态生成距离标签
+  const distanceLabels = {
+    lt20: '<20m',
+    '20to50': '20~50m',
+    gt50: '>50m',
+    gt50_shielded: '>50m（有遮挡）'
+  };
+  const distLabel = distanceLabels[inputs.noiseDist] || inputs.noiseDist;
+
   const noiseText = inputs.noiseType === 'main_road'
-    ? '主干道 <20m'
+    ? `主干道 ${distLabel}`
     : inputs.noiseType === 'rail'
       ? '轨道近距'
       : (inputs.noiseType === 'elevated' ? '高架近距' : '噪声源已评估');
