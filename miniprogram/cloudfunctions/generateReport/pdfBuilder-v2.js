@@ -96,14 +96,42 @@ function renderRedLines(doc, redLines) {
   const conflictNotes = Array.isArray(rl.conflictNotes) ? rl.conflictNotes : [];
 
   const boxY = doc.y;
-  const linesCount = forbidden.length + safetyItems.length + conflictNotes.length;
-  const boxH = 18 + linesCount * 17 + (safetyItems.length > 0 ? 20 : 0) + (conflictNotes.length > 0 ? 16 : 0) + 10;
+  const X = 69;
+  const contentWidth = 458;
+
+  // 计算实际所需高度（考虑文本换行）
+  let contentHeight = 10 + 18; // top padding + title
+  forbidden.forEach((item) => {
+    const h = doc.heightOfString(String(item || ""), { width: contentWidth, lineGap: 4 });
+    contentHeight += Math.max(h, 16) + 4; // min 16pt per item + 4pt gap
+  });
+
+  if (safetyItems.length > 0) {
+    contentHeight += 6 + 16;
+    safetyItems.forEach((item) => {
+      const h = doc.heightOfString(String(item || ""), { width: contentWidth, lineGap: 4 });
+      contentHeight += Math.max(h, 16) + 4;
+    });
+  }
+
+  if (rl.safetyBudgetWarning) {
+    const h = doc.heightOfString(String(rl.safetyBudgetWarning), { width: contentWidth });
+    contentHeight += h + 4;
+  }
+
+  if (conflictNotes.length > 0) {
+    conflictNotes.forEach((note) => {
+      const h = doc.heightOfString(`! ${String(note || "")}`, { width: contentWidth });
+      contentHeight += h + 4;
+    });
+  }
+
+  const boxH = contentHeight + 10; // bottom padding
 
   doc.rect(55, boxY, 5, boxH).fill(COLORS.risk_red);
   doc.rect(60, boxY, 480, boxH).fill(COLORS.risk_red_bg);
 
   let y = boxY + 10;
-  const X = 69;
 
   doc.fillColor(COLORS.risk_red).fontSize(14)
     .text("明确禁止项（违反即视为方案不合格）", X, y);
@@ -113,8 +141,9 @@ function renderRedLines(doc, redLines) {
     doc.fillColor(COLORS.risk_red).fontSize(11)
       .text("✗ ", X, y, { continued: true });
     doc.fillColor(COLORS.text_body).fontSize(11)
-      .text(String(item || ""), { width: 458 });
-    y += 16;
+      .text(String(item || ""), { width: contentWidth, lineGap: 4 });
+    const h = doc.heightOfString(String(item || ""), { width: contentWidth, lineGap: 4 });
+    y += Math.max(h, 16) + 4;
   });
 
   if (safetyItems.length > 0) {
@@ -127,22 +156,25 @@ function renderRedLines(doc, redLines) {
       doc.fillColor('#E6A817').fontSize(11)
         .text("⚠ ", X, y, { continued: true });
       doc.fillColor(COLORS.text_body).fontSize(11)
-        .text(String(item || ""), { width: 458 });
-      y += 16;
+        .text(String(item || ""), { width: contentWidth, lineGap: 4 });
+      const h = doc.heightOfString(String(item || ""), { width: contentWidth, lineGap: 4 });
+      y += Math.max(h, 16) + 4;
     });
   }
 
   if (rl.safetyBudgetWarning) {
     doc.fillColor(COLORS.warn_orange).fontSize(10)
-      .text(String(rl.safetyBudgetWarning), X, y, { width: 458 });
-    y += 14;
+      .text(String(rl.safetyBudgetWarning), X, y, { width: contentWidth });
+    const h = doc.heightOfString(String(rl.safetyBudgetWarning), { width: contentWidth });
+    y += h + 4;
   }
 
   if (conflictNotes.length > 0) {
     conflictNotes.forEach((note) => {
       doc.fillColor(COLORS.warn_orange).fontSize(10)
-        .text(`! ${String(note || "")}`, X, y, { width: 458 });
-      y += 14;
+        .text(`! ${String(note || "")}`, X, y, { width: contentWidth });
+      const h = doc.heightOfString(`! ${String(note || "")}`, { width: contentWidth });
+      y += h + 4;
     });
   }
 
@@ -157,48 +189,48 @@ function renderCover(doc, cover) {
   const floorDesc = cover.floorDesc || '楼层信息待填';
   const pdfNo = cover.pdfNo || 'LSA-00000000-0000';
   const issueDate = cover.issueDate || new Date().toISOString().slice(0,10).replace(/-/g,'/');
-  
+
   // 深蓝背景
   doc.rect(0, 0, 595, 290).fill(COLORS.brand_navy);
-  
+
   // 降级警告（如果有）
   if (cover.degradedMsg) {
     doc.rect(0, 0, 595, 28).fill(COLORS.risk_red);
     doc.fillColor("#FFFFFF").fontSize(9)
       .text(cover.degradedMsg, 55, 8, { width: 485, align: "center" });
   }
-  
+
   // 主标题
   doc.fillColor("#FFFFFF").fontSize(24)
     .text("门 窗 技 术 招 标 文 件", 55, 96, { width: 485, align: "center" });
-  
+
   // 文件编号
   doc.fontSize(12)
     .text(`文件编号：${pdfNo}　　签发日期：${issueDate}`, 55, 134, { width: 485, align: "center" });
-  
+
   // 项目信息卡
   doc.roundedRect(55, 156, 485, 98, 6).fill("#FFFFFF");
   doc.fillColor(COLORS.brand_navy).fontSize(10.5)
     .text(`${city}${cover.district ? " " + cover.district : ""} · ${climate}`, 69, 170)
     .text(floorDesc, 69, 188);
-  
+
   // 痛点徽章（计算宽度避免溢出）
   const painTag = cover.painTag || '综合需求';
   const badgeW = painTag.length * 10 + 20;
   doc.roundedRect(69, 208, Math.min(badgeW, 100), 20, 3).fill(COLORS.warn_orange);
   doc.fillColor("#FFFFFF").fontSize(9)
     .text(painTag, 73, 214);
-  
+
   // 安全标记
   if (cover.hasSafety) {
     doc.roundedRect(69 + Math.min(badgeW, 100) + 8, 208, 96, 20, 3).fill(COLORS.risk_red);
     doc.fillColor("#FFFFFF").fontSize(9)
       .text("含安全专项条款", 73 + Math.min(badgeW, 100) + 8, 214);
   }
-  
+
   // 白色内容区
   doc.rect(0, 290, 595, 552).fill("#FFFFFF");
-  
+
   // 签发人
   doc.fillColor("#FFFFFF").fontSize(10.5)
     .text("李Sir · 独立门窗技术顾问（不销售、不代理）", 55, 278, { width: 485, align: "right" });
@@ -206,7 +238,7 @@ function renderCover(doc, cover) {
   doc.fillColor(COLORS.text_body).fontSize(10)
     .text("本文件基于您的实际需求，将生活诉求转化为可量化的技术采购标准——帮您用数据选窗，不凭感觉、不靠话术。", 55, 304, { width: 485, align: "left", lineGap: 4 });
 
-  const guideY = 330;
+  const guideY = 318;
   const guideText = "📋 业主：第一章了解需求转化逻辑；第三章确认预算；第四章直接发给商家。\n🏭 商家：请重点阅读第二章技术指标，并完整填写第四章答题表后回传业主。";
   doc.roundedRect(55, guideY, 485, 54, 6).fill("#F0F7FF").stroke(COLORS.border);
   doc.fillColor(COLORS.text_body).fontSize(10)
@@ -273,7 +305,7 @@ function renderChapter1(doc, c1) {
   if (c1.needsAnalysis && c1.needsAnalysis.needsTable) {
     const rows = Array.isArray(c1.needsAnalysis.needsTable) ? c1.needsAnalysis.needsTable : [];
     const tableTop = doc.y;
-    const colWidths = [90, 110, 285];
+    const colWidths = [90, 155, 240];
     const rowHeight = 28;
     const tableWidth = 485;
     const startX = 55;
@@ -430,7 +462,7 @@ function renderChapter1(doc, c1) {
       doc.fillColor(COLORS.text_body).fontSize(titleSize).text(titleText, boxX + padding.left, y + padding.top, { width: titleW });
       doc.fillColor(COLORS.text_body).fontSize(bodySize).text(bodyText, boxX + padding.left, y + padding.top + titleH + 4, { width: bodyW, align: 'left', lineGap: 2 });
       doc.fillColor(COLORS.text_body);
-      doc.y = y + boxH + 18;
+      doc.y = y + boxH + 8;
     }
   } else {
     doc.fillColor(COLORS.text_body).fontSize(10.5)
@@ -669,11 +701,11 @@ function renderChapter3(doc, c3) {
     doc.fillColor(COLORS.brand_navy).fontSize(12).text(u.name, x + 8, doc.y + 8);
     doc.fillColor(COLORS.text_body).fontSize(9).text(u.desc, x + 8, doc.y + 24, { width: cardW - 16 });
     doc.fillColor(COLORS.warn_orange).fontSize(9.5).text(u.costHint, x + 8, doc.y + 48);
-    
+
     const stars = "★".repeat(u.stars || 3) + "☆".repeat(5 - (u.stars || 3));
     doc.fillColor(COLORS.warn_orange).fontSize(9).text(stars, x + cardW - 50, doc.y + 50);
   });
-  doc.y += 72;
+  doc.y += 80;
 
   if (c3.upgradeOptions && c3.upgradeOptions.l2_entry && c3.upgradeOptions.l2_entry.action) {
     const ctaY = doc.y;
@@ -954,7 +986,7 @@ function renderChapter4(doc, c4, opts) {
       doc.fillColor(COLORS.text_body).fontSize(10).text(risk.desc, 70, doc.y + 26, { width: 460 });
       const suggestLine = `→ ${risk.suggest}` + (risk.question ? `\n→ 要问商家的问题：${risk.question}` : "");
       doc.fillColor(COLORS.brand_mid).fontSize(10).text(suggestLine, 70, doc.y + 44, { width: 460 });
-      doc.y += boxH + 10;
+      doc.y += boxH + 8;
     });
   }
   
@@ -1062,7 +1094,9 @@ async function buildPDF(sections, outputPath, opts) {
       
       renderCover(doc, sections.cover);
       doc.addPage(); renderChapter1(doc, sections.chapter1);
-      doc.addPage(); renderChapter2(doc, sections.chapter2);
+      // V-03: 第二章不强制新页，而是检查剩余空间，若足够则继续同页
+      if (842 - doc.y < 120) doc.addPage();
+      renderChapter2(doc, sections.chapter2);
       doc.addPage(); renderChapter3(doc, sections.chapter3);
       doc.addPage(); renderChapter4(doc, sections.chapter4, opts || {});
       
