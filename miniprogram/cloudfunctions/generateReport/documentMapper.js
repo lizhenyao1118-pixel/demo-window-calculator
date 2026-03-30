@@ -250,7 +250,7 @@ function getRwRequired(noiseType, noiseDist, painPoint, floor) {
 
   if (noiseDist === 'lt20') rw += 3;
 
-  if (painPoint === 'sound') rw += 3;
+  if (painPoint === 'sound' && noiseType !== 'rail') rw += 3;
 
   return Math.min(rw, 45);
 }

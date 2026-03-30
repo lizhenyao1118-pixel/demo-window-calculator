@@ -241,8 +241,8 @@ function getRwRequired(noiseType, noiseDist, painPoint, floor) {
   const BASE = {
     quiet: 25,
     main_road: 35,
-    elevated: 35,
-    rail: 35
+    elevated: 38,
+    rail: 40
   };
 
   let rw = Number(BASE[noiseType]);
@@ -250,9 +250,7 @@ function getRwRequired(noiseType, noiseDist, painPoint, floor) {
 
   if (noiseDist === 'lt20') rw += 3;
 
-  if (painPoint === 'sound') rw += 3;
-
-  if (Number(floor) > 20) rw += 2;
+  if (painPoint === 'sound' && noiseType !== 'rail') rw += 3;
 
   return Math.min(rw, 45);
 }
