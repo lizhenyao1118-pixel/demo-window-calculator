@@ -73,7 +73,7 @@ const COLORS = {
 
 // 辅助函数
 function drawChapterHeader(doc, num, title, color) {
-  if (842 - doc.y < 140) doc.addPage();
+  if (doc.y > 100 && 842 - doc.y < 140) doc.addPage();
   const y = doc.y;
   const chapterLabel = (typeof num === 'string' && num.startsWith('第') && !num.includes('章')) ? `${num}章` : num;
   const badgeText = typeof chapterLabel === 'string' ? chapterLabel.replace('第', '').replace('章', '').slice(0, 1) : String(chapterLabel);
@@ -85,6 +85,7 @@ function drawChapterHeader(doc, num, title, color) {
 }
 
 function drawSectionTitle(doc, title) {
+  if (842 - doc.y < 160) doc.addPage();
   doc.fillColor(COLORS.brand_mid).fontSize(14).text(title, 55, doc.y);
   doc.y += 20;
 }
@@ -460,7 +461,7 @@ function renderChapter1(doc, c1) {
       const boxH = padding.top + titleH + 4 + doc.heightOfString(bodyText, { width: bodyW, lineGap: 2 }) + padding.bottom;
 
       const _totalBfnH = boxH + 20;
-      if (doc.y + _totalBfnH + 140 > doc.page.height - 60) doc.addPage();
+      if (doc.y + _totalBfnH > doc.page.height - 60) doc.addPage();
       const y = doc.y + 6;
       doc.rect(boxX, y, boxW, boxH).fill('#FFF8E1');
       doc.rect(boxX, y, boxW, boxH).lineWidth(1).strokeColor('#E0C36A').stroke();
@@ -556,7 +557,9 @@ function renderChapter2(doc, c2) {
   doc.y += 16;
   doc.y = renderMetricBlock(mThermal, doc.y);
 
-  // 产品红线
+  // 产品红线 — 标题+box联合分页判断，避免标题孤儿
+  const _rlH = measureRedLinesHeight(doc, c2.redLines);
+  if (842 - doc.y < _rlH + 60) doc.addPage();
   drawSectionTitle(doc, "2.4 产品红线（违反以下强制项视为方案不合格）");
   renderRedLines(doc, c2.redLines);
   doc.y += 18;
@@ -1127,9 +1130,9 @@ async function buildPDF(sections, outputPath, opts) {
       
       renderCover(doc, sections.cover);
       doc.addPage(); renderChapter1(doc, sections.chapter1);
-      doc.addPage(); renderChapter2(doc, sections.chapter2);
-      doc.addPage(); renderChapter3(doc, sections.chapter3);
-      doc.addPage(); renderChapter4(doc, sections.chapter4, opts || {});
+      renderChapter2(doc, sections.chapter2);
+      renderChapter3(doc, sections.chapter3);
+      renderChapter4(doc, sections.chapter4, opts || {});
       
       if (sections.attachments && sections.attachments.photos && sections.attachments.photos.length > 0) {
         renderAttachments(doc, sections.attachments);
