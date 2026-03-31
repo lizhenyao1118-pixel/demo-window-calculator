@@ -89,16 +89,46 @@ function drawSectionTitle(doc, title) {
   doc.y += 20;
 }
 
+function measureRedLinesHeight(doc, redLines) {
+  const rl = redLines || {};
+  const forbidden = Array.isArray(rl.forbidden) ? rl.forbidden : [];
+  const safetyItems = Array.isArray(rl.safetyItems) ? rl.safetyItems : [];
+  const conflictNotes = Array.isArray(rl.conflictNotes) ? rl.conflictNotes : [];
+
+  let h = 14;
+  doc.fontSize(14);
+  h += doc.heightOfString("明确禁止项（违反即视为方案不合格）", { width: 458 }) + 8;
+  doc.fontSize(11);
+  forbidden.forEach(item => {
+    h += doc.heightOfString(`✗  ${String(item || '')}`, { width: 448, lineGap: 2 }) + 6;
+  });
+  if (safetyItems.length > 0) {
+    h += 12;
+    h += doc.heightOfString("⚠ 安全专项条款", { width: 458 }) + 8;
+    safetyItems.forEach(item => {
+      h += doc.heightOfString(`⚠  ${String(item || '')}`, { width: 448, lineGap: 2 }) + 6;
+    });
+  }
+  doc.fontSize(10);
+  if (rl.safetyBudgetWarning) {
+    h += doc.heightOfString(String(rl.safetyBudgetWarning), { width: 458, lineGap: 2 }) + 6;
+  }
+  conflictNotes.forEach(n => {
+    h += doc.heightOfString(`! ${String(n || '')}`, { width: 458, lineGap: 2 }) + 6;
+  });
+  h += 20;
+  return h;
+}
+
 function renderRedLines(doc, redLines) {
   const rl = redLines || {};
   const forbidden = Array.isArray(rl.forbidden) ? rl.forbidden : [];
   const safetyItems = Array.isArray(rl.safetyItems) ? rl.safetyItems : [];
   const conflictNotes = Array.isArray(rl.conflictNotes) ? rl.conflictNotes : [];
 
+  const boxH = measureRedLinesHeight(doc, redLines);
+  if (doc.y + boxH > doc.page.height - 60) doc.addPage();
   const boxY = doc.y;
-  const linesCount = forbidden.length + safetyItems.length + conflictNotes.length;
-  const boxH = 18 + linesCount * 17 + (safetyItems.length > 0 ? 20 : 0) + (conflictNotes.length > 0 ? 16 : 0) + 10;
-
   doc.rect(55, boxY, 5, boxH).fill(COLORS.risk_red);
   doc.rect(60, boxY, 480, boxH).fill(COLORS.risk_red_bg);
 
@@ -114,35 +144,35 @@ function renderRedLines(doc, redLines) {
       .text("✗ ", X, y, { continued: true });
     doc.fillColor(COLORS.text_body).fontSize(11)
       .text(String(item || ""), { width: 458 });
-    y += 16;
+    y = doc.y + 4;
   });
 
   if (safetyItems.length > 0) {
     y += 6;
     doc.fillColor('#E6A817').fontSize(11)
       .text("⚠ 安全专项条款", X, y);
-    y += 16;
+    y = doc.y + 4;
 
     safetyItems.forEach((item) => {
       doc.fillColor('#E6A817').fontSize(11)
         .text("⚠ ", X, y, { continued: true });
       doc.fillColor(COLORS.text_body).fontSize(11)
         .text(String(item || ""), { width: 458 });
-      y += 16;
+      y = doc.y + 4;
     });
   }
 
   if (rl.safetyBudgetWarning) {
     doc.fillColor(COLORS.warn_orange).fontSize(10)
       .text(String(rl.safetyBudgetWarning), X, y, { width: 458 });
-    y += 14;
+    y = doc.y + 4;
   }
 
   if (conflictNotes.length > 0) {
     conflictNotes.forEach((note) => {
       doc.fillColor(COLORS.warn_orange).fontSize(10)
         .text(`! ${String(note || "")}`, X, y, { width: 458 });
-      y += 14;
+      y = doc.y + 4;
     });
   }
 
@@ -273,7 +303,7 @@ function renderChapter1(doc, c1) {
   if (c1.needsAnalysis && c1.needsAnalysis.needsTable) {
     const rows = Array.isArray(c1.needsAnalysis.needsTable) ? c1.needsAnalysis.needsTable : [];
     const tableTop = doc.y;
-    const colWidths = [90, 110, 285];
+    const colWidths = [90, 130, 265];
     const rowHeight = 28;
     const tableWidth = 485;
     const startX = 55;
@@ -399,12 +429,6 @@ function renderChapter1(doc, c1) {
     if (c1.needsAnalysis.budgetFitnessNote && c1.needsAnalysis.budgetFitnessNote.type === 'budget_fitness_warning') {
       const note = c1.needsAnalysis.budgetFitnessNote;
 
-      // P-02 fix: 确保标题+内容整块不被分页截断
-      const estimatedBlockHeight = 100; // 标题+内容段落合计高度
-      if (doc.y + estimatedBlockHeight > doc.page.height - doc.page.margins.bottom) {
-        doc.addPage();
-      }
-
       const titleText = '预算适配性提示';
       const bodyText = String(note.text || '');
       const boxX = 55;
@@ -414,15 +438,14 @@ function renderChapter1(doc, c1) {
       const bodySize = 10;
       const titleW = boxW - padding.left - padding.right;
       const bodyW = boxW - padding.left - padding.right;
-      const y0 = doc.y + 6;
 
       doc.fontSize(titleSize);
       const titleH = doc.heightOfString(titleText, { width: titleW });
       doc.fontSize(bodySize);
-      const bodyH = doc.heightOfString(bodyText, { width: bodyW, lineGap: 2 });
-      const boxH = padding.top + titleH + 4 + bodyH + padding.bottom;
+      const boxH = padding.top + titleH + 4 + doc.heightOfString(bodyText, { width: bodyW, lineGap: 2 }) + padding.bottom;
 
-      doc.moveDown(1);
+      const _totalBfnH = boxH + 20;
+      if (doc.y + _totalBfnH > doc.page.height - 60) doc.addPage();
       const y = doc.y + 6;
       doc.rect(boxX, y, boxW, boxH).fill('#FFF8E1');
       doc.rect(boxX, y, boxW, boxH).lineWidth(1).strokeColor('#E0C36A').stroke();
@@ -647,33 +670,45 @@ function renderChapter3(doc, c3) {
     }
   }
 
-  // 可选升级项 — 分页保护：三项卡片必须在同一页
-  const upgradeBlockHeight = 350;
-  console.log('[P-03] doc.y=', doc.y, 'pageHeight=', doc.page.height, 'margins=', doc.page.margins.bottom);
-  if (doc.y + upgradeBlockHeight > doc.page.height - doc.page.margins.bottom) {
-    doc.addPage();
-  }
-  drawSectionTitle(doc, "3.4 可选升级项");
-  doc.y += 6;
-  
+  // 可选升级项 — 分页保护：计算实际块高度
   const upgrades = (c3.upgradeOptions && c3.upgradeOptions.items) || [
     { name: "隔音升级+", desc: "Rw基础上+5dB，需三玻两腔", costHint: "+约180元/㎡", stars: 4 },
     { name: "热工升级+", desc: "K值降0.3，需注胶式断桥", costHint: "+约120元/㎡", stars: 3 },
     { name: "安全升级+", desc: "夹胶玻璃+儿童限位器", costHint: "+约80元/㎡", stars: 5 }
   ];
-  
+
   const cardW = (485 - 16) / 3;
+  // 先算出所有卡片中最高的 desc 高度，统一卡片高度
+  const cardPadding = { top: 8, nameH: 20, gap: 4, bottom: 24 };
+  let maxDescH = 0;
+  upgrades.forEach((u) => {
+    doc.fontSize(9);
+    const h = doc.heightOfString(u.desc || '', { width: cardW - 16 });
+    if (h > maxDescH) maxDescH = h;
+  });
+  const cardH = cardPadding.top + cardPadding.nameH + cardPadding.gap + maxDescH + cardPadding.bottom + 16;
+
+  // V-03 fix: 动态计算升级块高度
+  const _hasCtaBlock = !!(c3.upgradeOptions && c3.upgradeOptions.l2_entry && c3.upgradeOptions.l2_entry.action);
+  const _upgradeBlockH = 30 + 12 + cardH + 12 + (_hasCtaBlock ? 70 : 0);
+  if (doc.y + _upgradeBlockH > doc.page.height - 60) {
+    doc.addPage();
+  }
+
+  drawSectionTitle(doc, "3.4 可选升级项");
+  doc.y += 12;
+
+  const cardY = doc.y;
   upgrades.forEach((u, i) => {
     const x = 55 + i * (cardW + 8);
-    doc.roundedRect(x, doc.y, cardW, 68, 4).stroke(COLORS.brand_blue);
-    doc.fillColor(COLORS.brand_navy).fontSize(12).text(u.name, x + 8, doc.y + 8);
-    doc.fillColor(COLORS.text_body).fontSize(9).text(u.desc, x + 8, doc.y + 24, { width: cardW - 16 });
-    doc.fillColor(COLORS.warn_orange).fontSize(9.5).text(u.costHint, x + 8, doc.y + 48);
-    
+    doc.roundedRect(x, cardY, cardW, cardH, 4).stroke(COLORS.brand_blue);
+    doc.fillColor(COLORS.brand_navy).fontSize(12).text(u.name, x + 8, cardY + cardPadding.top);
+    doc.fillColor(COLORS.text_body).fontSize(9).text(u.desc, x + 8, cardY + cardPadding.top + cardPadding.nameH + cardPadding.gap, { width: cardW - 16 });
+    doc.fillColor(COLORS.warn_orange).fontSize(9.5).text(u.costHint, x + 8, cardY + cardH - 20);
     const stars = "★".repeat(u.stars || 3) + "☆".repeat(5 - (u.stars || 3));
-    doc.fillColor(COLORS.warn_orange).fontSize(9).text(stars, x + cardW - 50, doc.y + 50);
+    doc.fillColor(COLORS.warn_orange).fontSize(9).text(stars, x + cardW - 50, cardY + cardH - 18);
   });
-  doc.y += 72;
+  doc.y = cardY + cardH + 12;
 
   if (c3.upgradeOptions && c3.upgradeOptions.l2_entry && c3.upgradeOptions.l2_entry.action) {
     const ctaY = doc.y;
@@ -700,9 +735,11 @@ function renderPerformanceChecks(doc, checks) {
     const num = item.num ? String(item.num) : "";
     const text = item.text ? String(item.text) : "";
     const line = ` · ${num} ${text}`.trimEnd();
+    doc.fontSize(10);
     const h = doc.heightOfString(line, { width: 485, lineGap: 2 });
-    doc.fillColor(COLORS.text_body).fontSize(10).text(line, 55, doc.y, { width: 485, align: 'left', lineGap: 2 });
-    doc.y += h + 6;
+    const _pY = doc.y;
+    doc.fillColor(COLORS.text_body).fontSize(10).text(line, 55, _pY, { width: 485, align: 'left', lineGap: 2 });
+    doc.y = _pY + h + 6;
   });
   doc.y += 6;
 }
@@ -727,14 +764,11 @@ function renderRedlineChecklist(doc, checklist) {
       const line1 = `□ ${id} ${text}`.trimEnd();
       const confirmLine = "    商家确认：□ 满足  □ 不满足（请说明原因：__________）";
 
-      const h1 = doc.heightOfString(line1, { width: 485, lineGap: 2 });
-      const h2 = doc.heightOfString(confirmLine, { width: 485, lineGap: 2 });
-      const barH = Math.max(12, Math.min(h1, 40));
-      doc.rect(51, doc.y + 1, 3, barH + 2).fill(COLORS.risk_red);
-      doc.fillColor(COLORS.text_body).fontSize(10).text(line1, 55, doc.y, { width: 485, lineGap: 2 });
-      doc.y += h1 + 2;
+      const startY = doc.y;
+      doc.rect(51, startY + 1, 3, 30).fill(COLORS.risk_red);
+      doc.fillColor(COLORS.text_body).fontSize(10).text(line1, 55, startY, { width: 485, lineGap: 2 });
       doc.fillColor(COLORS.text_secondary).fontSize(9).text(confirmLine, 55, doc.y, { width: 485, lineGap: 2 });
-      doc.y += h2 + 10;
+      doc.y += 10;
 
       if (842 - doc.y < 80) doc.addPage();
     });
@@ -751,12 +785,9 @@ function renderRedlineChecklist(doc, checklist) {
       const line1 = `□ ${id} ${text}`.trimEnd();
       const confirmLine = "    商家确认：□ 知悉并同意  □ 不适用";
 
-      const h1 = doc.heightOfString(line1, { width: 485, lineGap: 2 });
-      const h2 = doc.heightOfString(confirmLine, { width: 485, lineGap: 2 });
       doc.fillColor(COLORS.text_body).fontSize(10).text(line1, 55, doc.y, { width: 485, lineGap: 2 });
-      doc.y += h1 + 2;
       doc.fillColor(COLORS.text_secondary).fontSize(9).text(confirmLine, 55, doc.y, { width: 485, lineGap: 2 });
-      doc.y += h2 + 8;
+      doc.y += 8;
 
       if (842 - doc.y < 60) doc.addPage();
     });
@@ -947,14 +978,33 @@ function renderChapter4(doc, c4, opts) {
   if (c4.risks && c4.risks.items && c4.risks.items.length > 0) {
     drawSectionTitle(doc, c4.risks.title || "4.3 风险提示");
     c4.risks.items.forEach((risk) => {
-      const boxH = risk.question ? 86 : 65;
-      doc.rect(55, doc.y, 5, boxH).fill(COLORS.risk_red);
-      doc.rect(60, doc.y, 480, boxH).fill(COLORS.risk_red_bg);
-      doc.fillColor(COLORS.risk_red).fontSize(12).text(`⚠️ ${risk.title}`, 70, doc.y + 8);
-      doc.fillColor(COLORS.text_body).fontSize(10).text(risk.desc, 70, doc.y + 26, { width: 460 });
+      // 1. 先用固定 fontSize 测量各段高度
+      doc.fontSize(12);
+      const titleH = doc.heightOfString(`⚠️ ${risk.title || ''}`, { width: 460 });
+      doc.fontSize(10);
+      const descH = doc.heightOfString(String(risk.desc || ''), { width: 460 });
       const suggestLine = `→ ${risk.suggest}` + (risk.question ? `\n→ 要问商家的问题：${risk.question}` : "");
-      doc.fillColor(COLORS.brand_mid).fontSize(10).text(suggestLine, 70, doc.y + 44, { width: 460 });
-      doc.y += boxH + 10;
+      const suggestH = doc.heightOfString(suggestLine, { width: 460 });
+
+      const PT = 10, PG = 8, PB = 14; // padding top / gap / bottom
+      const boxH = PT + titleH + PG + descH + PG + suggestH + PB;
+
+      // 2. 分页保护：整框不拆页
+      if (doc.y + boxH > doc.page.height - 60) doc.addPage();
+
+      // 3. 锁定 boxY，全部用绝对坐标渲染
+      const boxY = doc.y;
+      doc.rect(55, boxY, 5, boxH).fill(COLORS.risk_red);
+      doc.rect(60, boxY, 480, boxH).fill(COLORS.risk_red_bg);
+
+      let tY = boxY + PT;
+      doc.fillColor(COLORS.risk_red).fontSize(12).text(`⚠️ ${risk.title}`, 70, tY, { width: 460 });
+      tY += titleH + PG;
+      doc.fillColor(COLORS.text_body).fontSize(10).text(String(risk.desc || ''), 70, tY, { width: 460 });
+      tY += descH + PG;
+      doc.fillColor(COLORS.brand_mid).fontSize(10).text(suggestLine, 70, tY, { width: 460 });
+
+      doc.y = boxY + boxH + 16;
     });
   }
   
