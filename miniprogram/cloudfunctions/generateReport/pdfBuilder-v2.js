@@ -95,28 +95,43 @@ function measureRedLinesHeight(doc, redLines) {
   const safetyItems = Array.isArray(rl.safetyItems) ? rl.safetyItems : [];
   const conflictNotes = Array.isArray(rl.conflictNotes) ? rl.conflictNotes : [];
 
-  let h = 14;
+  let h = 10;  // 顶部间距（对应renderRedLines的 boxY + 10）
+
+  // 标题：明确禁止项
   doc.fontSize(14);
-  h += doc.heightOfString("明确禁止项（违反即视为方案不合格）", { width: 458 }) + 8;
+  h += doc.heightOfString("明确禁止项（违反即视为方案不合格）", { width: 458 }) + 18;  // 18对应y += 18
+
+  // 禁止项列表
   doc.fontSize(11);
   forbidden.forEach(item => {
-    h += doc.heightOfString(`✗  ${String(item || '')}`, { width: 448, lineGap: 2 }) + 6;
+    h += doc.heightOfString(`✗  ${String(item || '')}`, { width: 448, lineGap: 2 }) + 4;  // 4对应y = doc.y + 4
   });
+
+  // 安全项（如果有）
   if (safetyItems.length > 0) {
-    h += 12;
-    h += doc.heightOfString("⚠ 安全专项条款", { width: 458 }) + 8;
+    h += 6;  // 对应renderRedLines的 y += 6（与禁止项分离）
+
+    // 安全专项条款标题
+    doc.fontSize(11);
+    h += doc.heightOfString("⚠ 安全专项条款", { width: 458 }) + 4;  // 4对应y = doc.y + 4
+
+    // 安全项列表
     safetyItems.forEach(item => {
-      h += doc.heightOfString(`⚠  ${String(item || '')}`, { width: 448, lineGap: 2 }) + 6;
+      h += doc.heightOfString(`⚠  ${String(item || '')}`, { width: 448, lineGap: 2 }) + 4;  // 4对应y = doc.y + 4
     });
   }
+
+  // 预算警告
   doc.fontSize(10);
   if (rl.safetyBudgetWarning) {
-    h += doc.heightOfString(String(rl.safetyBudgetWarning), { width: 458, lineGap: 2 }) + 6;
+    h += doc.heightOfString(String(rl.safetyBudgetWarning), { width: 458, lineGap: 2 }) + 4;  // 4对应y = doc.y + 4
   }
+
+  // 冲突说明
   conflictNotes.forEach(n => {
-    h += doc.heightOfString(`! ${String(n || '')}`, { width: 458, lineGap: 2 }) + 6;
+    h += doc.heightOfString(`! ${String(n || '')}`, { width: 458, lineGap: 2 }) + 4;  // 4对应y = doc.y + 4
   });
-  h += 20;
+
   return h;
 }
 
