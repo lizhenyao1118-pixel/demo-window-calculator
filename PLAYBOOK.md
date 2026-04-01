@@ -331,3 +331,23 @@ factor_to_action 映射表放前端而非云函数：
 - 配置需要飞书企业自建应用 + App_ID + App_Secret
 - Claude Code MCP配置必须用 --scope=user
 - 现阶段不接入，避免配置成本干扰内容节奏
+
+---
+
+## 混合执行模型·模型切换操作 [2026-04-01]
+
+工具：ccm（claude-code-switch）
+
+**切换命令：**
+- 低风险任务（日常代码/格式修改）：`ccm glm china` → 使用GLM-4.7
+- 高风险任务（架构/PDF/核心逻辑）：`ccm claude` → 使用Claude Pro
+- 查看当前模型：`ccm status`
+- 更新模型映射：`ccm update-config`
+
+**配置文件：** `~/.ccm_config`  
+**GLM节点：** 国内用 china，海外用 global
+
+**登录问题应急处理：**
+1. 先查 status.claude.com 确认是否服务端故障
+2. 终端执行：`claude auth logout` → `claude auth login`
+3. 浏览器未自动打开时按 c 复制OAuth URL手动粘贴
