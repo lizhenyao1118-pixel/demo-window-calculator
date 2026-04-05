@@ -1060,11 +1060,11 @@ function drawDisclaimerSection(doc) {
   const _t1 = Date.now();
   console.log('[disclaimer] start y:', doc.y, 'page:', doc.bufferedPageRange().count);
   // 检查剩余空间，如不足则添加新页面
-  if (842 - doc.y < 200) {
+  if (842 - doc.y < 110) {
     doc.addPage();
   }
 
-  doc.moveDown(1.5);
+  doc.moveDown(0.8);
   const y = doc.y;
   doc.moveTo(DISCLAIMER_LEFT, y)
      .lineTo(DISCLAIMER_RIGHT, y)

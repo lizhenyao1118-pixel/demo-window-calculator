@@ -21,7 +21,8 @@ const {
   getShgcNote,
   getThermalModifier,
   getField,
-  assertResolved
+  assertResolved,
+  getUpgrades
 } = dm;
 
 describe('build1_1', () => {
@@ -233,6 +234,30 @@ describe('helpers', () => {
     const r = build1_2(a, resolved);
     expect(String(((r.parameterNote || {}).block2 || ''))).toContain('③ **传热系数**：');
     expect(String(((r.parameterNote || {}).block2 || ''))).not.toContain('unknown');
+  });
+
+  test('DM-40: 交通噪声Rw>38 - 隔音升级描述不含三玻两腔', () => {
+    const a = fixtures.createPure(fixtures.guangzhouFull, { noise_type: 'rail', pain_point: 'sound', noise_dist: 'lt20' });
+    const assessment = {
+      city: a.city,
+      floor: a.floor,
+      total_floors: a.total_floors,
+      noise_type: a.noise_type,
+      noise_dist: a.noise_dist,
+      orientation: a.orientation,
+      west_shading: a.west_shading,
+      pain_point: a.pain_point,
+      heating_type: a.heating_type,
+      family_risk: a.family_risk,
+      budget_tier: a.budget_tier
+    };
+    const resolved = calculateAll(assessment);
+    // 直接调用 getUpgrades 验证文案
+    const upgrades = dm.getUpgrades(a, resolved);
+    const acousticDesc = upgrades.find(u => u.name.includes('隔音'));
+    expect(acousticDesc).toBeDefined();
+    expect(acousticDesc.desc).not.toMatch(/需三玻两腔/);
+    expect(acousticDesc.desc).toMatch(/夹胶中空升规格/);
   });
 });
 

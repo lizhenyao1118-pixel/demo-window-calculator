@@ -1126,8 +1126,14 @@ function getStars(count) {
 }
 
 function getUpgrades(answers, resolved) {
+  const TRAFFIC_NOISE_TYPES = ['main_road', 'elevated', 'rail', 'traffic_road', 'traffic_rail', 'traffic_highway'];
+  const isTrafficNoise = TRAFFIC_NOISE_TYPES.includes(answers.noise_type);
+  const acousticUpgradeDesc = isTrafficNoise
+    ? 'Rw基础上+3~5dB，需夹胶中空升规格（厚PVB或增腔宽）；交通噪声场景不建议三玻两腔，Ctr表现不稳定'
+    : 'Rw基础上+5dB，可选三玻两腔（非交通噪声场景）';
+
   return [
-    { name: '隔音升级+', desc: 'Rw基础上+5dB，需三玻两腔', costHint: '+约180元/㎡', stars: calcUpgradeRating('sound', answers, resolved) },
+    { name: '隔音升级+', desc: acousticUpgradeDesc, costHint: '+约180元/㎡', stars: calcUpgradeRating('sound', answers, resolved) },
     { name: '热工升级+', desc: 'K值降0.3，需注胶式断桥', costHint: '+约120元/㎡', stars: calcUpgradeRating('thermal', answers, resolved) },
     { name: '安全升级+', desc: buildSafetyUpgradeDesc(answers.family_risk), costHint: '+约80元/㎡', stars: calcUpgradeRating('safety', answers, resolved) }
   ];
@@ -1270,7 +1276,15 @@ function mapToSections(resolved, answers, pdfNo) {
           const Rw_required = Number(getField(resolved, 'Rw'));
           const costLevel = Rw_required <= 33 ? '轻' : Rw_required <= 38 ? '中' : '重';
           const targetDesc = normalizedAnswers.pain_point === 'heat' ? '隔热舒适' : normalizedAnswers.pain_point === 'wind' ? '抗风防水' : '隔声目标';
-          const glassDirection = Rw_required <= 33 ? '可在档内用常规中空配置实现' : Rw_required <= 38 ? '需要夹胶/更高隔声玻璃构造' : '往往需要三玻两腔等高阶隔声构造';
+          const TRAFFIC_NOISE_TYPES = ['main_road', 'elevated', 'rail', 'traffic_road', 'traffic_rail', 'traffic_highway'];
+          const isTrafficNoise = TRAFFIC_NOISE_TYPES.includes(normalizedAnswers.noise_type);
+          const glassDirection = Rw_required <= 33
+            ? '可在档内用常规中空配置实现'
+            : Rw_required <= 38
+              ? '需要夹胶/更高隔声玻璃构造'
+              : isTrafficNoise
+                ? '需夹胶中空升规格配置（厚PVB层+宽腔），交通噪声场景Ctr要求优先于三玻两腔'
+                : '往往需要三玻两腔或夹胶中空升规格等高阶隔声构造';
 
           return [
             { type: 'climate_note', text: `${normalizedAnswers.city}属于${climateLabel}，${westShavingNote}` },
@@ -1377,5 +1391,6 @@ module.exports = {
   getBudgetSpec,
   getHeatingAdjText,
   getShgcNote,
-  getThermalModifier
+  getThermalModifier,
+  getUpgrades
 };
