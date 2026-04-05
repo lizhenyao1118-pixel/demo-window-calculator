@@ -6,7 +6,7 @@ const GLASS_LEVELS = {
   basic_hollow: { level: 1, rw_max: 33, k_max: 2.8, base_cost: 150, name: '普通中空玻璃（5+9A+5）' },
   low_e_hollow: { level: 2, rw_max: 33, k_max: 2.4, base_cost: 180, name: 'Low-E中空玻璃（5Low-E+12A+5）' },
   low_e_argon: { level: 3, rw_max: 34, k_max: 2.0, base_cost: 220, name: 'Low-E充氩中空（5Low-E+12Ar+5）' },
-  laminated_hollow: { level: 4, rw_max: 42, k_max: 2.0, base_cost: 320, name: '夹胶中空玻璃（6+0.76PVB+6+12Ar+5）' },
+  laminated_hollow: { level: 4, rw_max: 42, k_max: 2.0, base_cost: 320, name: '夹胶中空玻璃（6+0.76PVB+6+12Ar+5）（Rw≥40dB经济起点配置，工程余量有限，建议要求商家提供第三方Rw检测报告）' },
   triple_pane: { level: 5, rw_max: 45, k_max: 1.4, base_cost: 500, name: '三玻两腔（5+9A+5+9A+5Low-E）' }
 };
 

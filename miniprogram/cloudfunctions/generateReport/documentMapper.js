@@ -536,7 +536,7 @@ function buildParameterNote({ windPressure, soundInsulation, thermal, shgc, safe
   const block1 = '本表各项参数综合三类信息确定：① 国家/行业标准的基准值；② 您填写的项目信息（城市、楼层、窗型、噪声环境等）；③ 李Sir 基于工程案例的专业修正。';
   const lines = [];
 
-  lines.push(`① **抗风压**：${inputs.city}属 ${windPressure.windZone} 风区，第 ${inputs.floor} 层高度比 ${Math.round(Number(inputs.heightRatio) * 100)}%，按 GB/T 7106 推荐等级取 ≥${windPressure.value} kPa。`);
+  lines.push(`① **抗风压**：${inputs.city}属 ${windPressure.windZone} 风区，第 ${inputs.floor} 层高度比 ${Math.round(Number(inputs.heightRatio) * 100)}%，按 GB/T 7106 推荐等级取 ≥${windPressure.value} kPa。对应GB/T 7106抗风压等级P4及以上。`);
 
   // 动态生成距离标签
   const distanceLabels = {
@@ -557,7 +557,7 @@ function buildParameterNote({ windPressure, soundInsulation, thermal, shgc, safe
   const usageExplain = (inputs.noiseType === 'rail')
     ? '隔声降噪诉求加严 0（轨道噪声已按最严基准计）'
     : `隔声降噪诉求加严 ${usageAdjText}`;
-  lines.push(`② **隔声**：${noiseText}，基础 Rw≥${soundInsulation.baseRw} dB，距离修正 ${distAdjText}，${usageExplain}，最终 ≥${soundInsulation.value} dB。`);
+  lines.push(`② **隔声**：${noiseText}，基础 Rw≥${soundInsulation.baseRw} dB，距离修正 ${distAdjText}，${usageExplain}，最终 ≥${soundInsulation.value} dB。依据：GB 50118 + HJ 2055 · 轨道交通中距离声学计算推导值。`);
 
   const factorMap = {
     heating: '自采暖保温修正 -0.2',
@@ -1140,7 +1140,7 @@ function getUpgrades(answers, resolved) {
   const TRAFFIC_NOISE_TYPES = ['main_road', 'elevated', 'rail', 'traffic_road', 'traffic_rail', 'traffic_highway'];
   const isTrafficNoise = TRAFFIC_NOISE_TYPES.includes(answers.noise_type);
   const acousticUpgradeDesc = isTrafficNoise
-    ? 'Rw基础上+3~5dB，需夹胶中空升规格（厚PVB或增腔宽）；交通噪声场景不建议三玻两腔，Ctr表现不稳定'
+    ? 'Rw基础上+3~5dB，需夹胶中空升规格（6+1.52PVB+6+12–16Ar+6）（稳定保障Rw≥40dB的推荐下限）；交通噪声场景不建议三玻两腔，Ctr表现不稳定'
     : 'Rw基础上+5dB，可选三玻两腔（非交通噪声场景）';
 
   return [
