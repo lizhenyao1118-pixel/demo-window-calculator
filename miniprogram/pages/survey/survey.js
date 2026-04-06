@@ -574,6 +574,22 @@ Page({
   },
 
   onNoiseDistChange(e) {
+    // v3.9.8 · 安静环境距离字段联动
+    // 安静环境下，距离字段不应参与传参
+    const isQuietEnvironment = this.data.formData.noise_type === 'quiet'
+      || this.data.formData.noise_type === 'silent'
+      || this.data.formData.noise_type === 'none';
+
+    if (isQuietEnvironment) {
+      // 安静环境：距离字段设为 null，不显示选择
+      this.setData({
+        'formData.noise_dist': null,
+        'formData.noise_dist_label': '安静环境无需选择距离范围'
+      });
+      this.saveDraft();
+      return; // 不继续处理
+    }
+
     const opt = this.data.noiseDistOptions[e.detail.value];
     const noiseDist = opt ? opt.value : 'gt50';
     const noiseLabel = opt ? opt.label : '50米以上（隔一条街）';

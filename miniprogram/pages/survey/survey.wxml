@@ -176,13 +176,14 @@
         </view>
       </picker>
 
-      <view class="field-label mt24">与噪声源距离 <text class="req">*</text></view>
-      <picker mode="selector" range="{{noiseDistOptions}}" range-key="label" bindchange="onNoiseDistChange">
+      <view class="field-label mt24" wx:if="{{formData.noise_type !== 'quiet' && formData.noise_type !== 'silent' && formData.noise_type !== 'none'}}">与噪声源距离 <text class="req">*</text></view>
+      <picker wx:if="{{formData.noise_type !== 'quiet' && formData.noise_type !== 'silent' && formData.noise_type !== 'none'}}" mode="selector" range="{{noiseDistOptions}}" range-key="label" bindchange="onNoiseDistChange">
         <view class="picker {{formData.noise_dist ? 'picker-filled' : ''}}">
           <text>{{formData.noise_dist_label || '请选择距离范围'}}</text>
           <text class="picker-arrow">›</text>
         </view>
       </picker>
+      <view wx:else class="field-note">安静环境无需选择距离范围</view>
 
       <view class="inline-tip warn-tip" wx:if="{{formData.noise_type === 'main_road' && formData.noise_dist === 'lt20'}}">
         主干道近距离噪声强，建议隔声量 Rw ≥ 41 dB
