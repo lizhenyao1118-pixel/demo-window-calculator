@@ -569,26 +569,77 @@ function renderChapter3(doc, c3) {
   drawChapterHeader(doc, "第三", "产品配置与预算方案", COLORS.brand_navy);
   
   const spec = (c3.recommendedConfig && c3.recommendedConfig.spec) || { label: "舒适型 B档" };
-  drawSectionTitle(doc, `3.1 推荐配置方案（${spec.label}）`);
-  
-  // 配置表（复用第二章数据）
-  const glassValue = (spec.glass || "5Low-E+12Ar+5") + (spec.glass_reason ? `\n（来源：${spec.glass_reason}）` : "");
-  const rows = [
-    { label: "型材", value: spec.profile || "断桥铝，壁厚≥1.6mm", h: 22 },
-    { label: "玻璃", value: glassValue, h: spec.glass_reason ? 44 : 22 },
-    { label: "五金", value: spec.hardware || "多点锁传动", h: 22 },
-    { label: "密封", value: spec.seal || "EPDM胶条，2道密封", h: 22 }
-  ];
+  const isDualTier = spec.is_dual_tier === true;
 
-  let yRow = doc.y;
-  rows.forEach((row, i) => {
-    doc.rect(55, yRow, 68, row.h).fill(COLORS.brand_navy);
-    doc.rect(123, yRow, 417, row.h).fill(i % 2 === 0 ? COLORS.bg_card : "#FFFFFF");
-    doc.fillColor("#FFFFFF").fontSize(9.5).text(row.label, 63, yRow + 7);
-    doc.fillColor(COLORS.text_body).fontSize(10.5).text(row.value, 133, yRow + 6, { width: 400 });
-    yRow += row.h;
-  });
-  doc.y = yRow + 25;
+  // B档双档并列显示
+  if (isDualTier && spec.base_config && spec.enhanced_config) {
+    drawSectionTitle(doc, `3.1 推荐配置方案（${spec.label} 双档可选）`);
+
+    // 基础配置 B档
+    doc.fillColor(COLORS.brand_navy).fontSize(11).text("基础配置 B档（900–1400 元/㎡）", 55, doc.y + 5);
+    doc.y += 25;
+
+    const baseGlassValue = (spec.base_config.glass || "5Low-E+12Ar+5") + (spec.base_config.glass_reason ? `\n（来源：${spec.base_config.glass_reason}）` : "");
+    const baseRows = [
+      { label: "型材", value: spec.base_config.profile || "断桥铝，壁厚≥1.6mm", h: 22 },
+      { label: "玻璃", value: baseGlassValue, h: spec.base_config.glass_reason ? 44 : 22 },
+      { label: "五金", value: spec.base_config.hardware || "多点锁传动", h: 22 },
+      { label: "密封", value: spec.base_config.seal || "EPDM胶条，3道密封", h: 22 }
+    ];
+
+    let yRow = doc.y;
+    baseRows.forEach((row, i) => {
+      doc.rect(55, yRow, 68, row.h).fill(COLORS.brand_navy);
+      doc.rect(123, yRow, 417, row.h).fill(i % 2 === 0 ? COLORS.bg_card : "#FFFFFF");
+      doc.fillColor("#FFFFFF").fontSize(9.5).text(row.label, 63, yRow + 7);
+      doc.fillColor(COLORS.text_body).fontSize(10.5).text(row.value, 133, yRow + 6, { width: 400 });
+      yRow += row.h;
+    });
+    doc.y = yRow + 10;
+
+    // 增强配置 C档
+    doc.fillColor(COLORS.brand_navy).fontSize(11).text("增强配置 C档（1400–2000 元/㎡）", 55, doc.y + 5);
+    doc.y += 25;
+
+    const enhancedRows = [
+      { label: "型材", value: spec.enhanced_config.profile || "断桥铝，壁厚≥1.8mm", h: 22 },
+      { label: "玻璃", value: spec.enhanced_config.glass || "夹胶中空玻璃（6+0.76PVB+6+12Ar+5）", h: 22 },
+      { label: "五金", value: spec.enhanced_config.hardware || "进口品牌五金，铰链负载≥100kg", h: 22 },
+      { label: "密封", value: spec.enhanced_config.seal || "EPDM胶条，3道密封", h: 22 }
+    ];
+
+    yRow = doc.y;
+    enhancedRows.forEach((row, i) => {
+      doc.rect(55, yRow, 68, row.h).fill(COLORS.brand_navy);
+      doc.rect(123, yRow, 417, row.h).fill(i % 2 === 0 ? COLORS.bg_card : "#FFFFFF");
+      doc.fillColor("#FFFFFF").fontSize(9.5).text(row.label, 63, yRow + 7);
+      doc.fillColor(COLORS.text_body).fontSize(10.5).text(row.value, 133, yRow + 6, { width: 400 });
+      yRow += row.h;
+    });
+    doc.y = yRow + 20;
+  } else {
+    // 单档显示（原有逻辑）
+    drawSectionTitle(doc, `3.1 推荐配置方案（${spec.label}）`);
+
+    // 配置表（复用第二章数据）
+    const glassValue = (spec.glass || "5Low-E+12Ar+5") + (spec.glass_reason ? `\n（来源：${spec.glass_reason}）` : "");
+    const rows = [
+      { label: "型材", value: spec.profile || "断桥铝，壁厚≥1.6mm", h: 22 },
+      { label: "玻璃", value: glassValue, h: spec.glass_reason ? 44 : 22 },
+      { label: "五金", value: spec.hardware || "多点锁传动", h: 22 },
+      { label: "密封", value: spec.seal || "EPDM胶条，2道密封", h: 22 }
+    ];
+
+    let yRow = doc.y;
+    rows.forEach((row, i) => {
+      doc.rect(55, yRow, 68, row.h).fill(COLORS.brand_navy);
+      doc.rect(123, yRow, 417, row.h).fill(i % 2 === 0 ? COLORS.bg_card : "#FFFFFF");
+      doc.fillColor("#FFFFFF").fontSize(9.5).text(row.label, 63, yRow + 7);
+      doc.fillColor(COLORS.text_body).fontSize(10.5).text(row.value, 133, yRow + 6, { width: 400 });
+      yRow += row.h;
+    });
+    doc.y = yRow + 25;
+  }
 
   // 价格横条图
   drawSectionTitle(doc, "3.2 预算档位对比");

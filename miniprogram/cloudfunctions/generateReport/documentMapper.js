@@ -899,7 +899,7 @@ function buildBudgetSpecView(resolved, answers) {
 
   resolved.conflict_notes = conflict_notes;
 
-  return {
+  const baseConfig = {
     label: spec.label,
     price_range: spec.price_range,
     price_hint: spec.price_hint,
@@ -914,6 +914,44 @@ function buildBudgetSpecView(resolved, answers) {
     conflict: glass_result.conflict,
     cost_delta: estimateCostDelta(glass_result.glass_key, tier),
     is_compensated: glass_result.is_compensated
+  };
+
+  // B档双档并列：基础配置 + 增强配置
+  if (tier === 'B') {
+    const enhanced_tier = 'C';
+    const enhanced_spec = BUDGET_SPEC[enhanced_tier];
+    const enhanced_bar = getInsulationBarRequirement(Number(getField(resolved, 'K')));
+
+    const enhanced_glass_result = resolveGlassConfig(
+      Number(getField(resolved, 'Rw')),
+      Number(getField(resolved, 'K')),
+      Number(getField(resolved, 'SHGC')),
+      window_features,
+      enhanced_tier,
+      answers.pain_point,
+      answers.noise_type
+    );
+
+    const enhancedConfig = {
+      label: enhanced_spec.label,
+      price_range: enhanced_spec.price_range,
+      profile: `壁厚≥${enhanced_spec.profile.min_wall_thickness}mm；隔热条≥${enhanced_bar.min_mm}mm（${enhanced_bar.process}）`,
+      glass: enhanced_glass_result.glass_name + (enhanced_glass_result.thermal_overlay ? ` + ${enhanced_glass_result.thermal_overlay}` : ''),
+      hardware: `铰链负载≥${enhanced_spec.hardware.min_load_kg}kg`,
+      seal: `${enhanced_spec.seal.layers}道密封（${enhanced_spec.seal.material}）`
+    };
+
+    return {
+      ...baseConfig,
+      is_dual_tier: true,
+      base_config: baseConfig,
+      enhanced_config: enhancedConfig
+    };
+  }
+
+  return {
+    ...baseConfig,
+    is_dual_tier: false
   };
 }
 
