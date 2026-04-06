@@ -14,6 +14,7 @@
 **修改文件**：
 - `createTender/documentMapper.js`：收窄 shouldShowDualTier() 触发条件
 - `generateReport/documentMapper.js`：重写双档逻辑，统一为 A 档触发
+- `pdfBuilder-v2.js`：修复渲染层与数据结构不匹配问题（P0）
 
 **核心变更**：
 - 触发条件：仅 A 档 + (楼层>16 OR 高度比>0.6 OR 交通噪声) 时触发双档
@@ -25,6 +26,18 @@
 - `shouldShowDualTier()`：两份文件完全一致
 - `buildUpgradeReasons()`：生成升级原因文案（无建议/应当等指令型语言）
 - `calcCostDelta()`：计算档位间差价（基于中位值）
+- PDF渲染：读取 c3.recommendedConfig 数组，current/recommended 双档堆叠布局
+
+**数据结构**：
+```javascript
+{
+  is_dual_tier: true,
+  recommendedConfig: [
+    { displayRole: 'current', tier: 'A', spec: {...} },
+    { displayRole: 'recommended', tier: 'B', spec: {...}, upgradeReasons: [...], costDelta: {...} }
+  ]
+}
+```
 
 **测试覆盖**：139/139 passing（原有 134 + 新增 DM-42~46）
 
