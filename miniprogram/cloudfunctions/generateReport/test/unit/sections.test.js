@@ -110,13 +110,4 @@ describe('mapToSections', () => {
     const item13 = items.find(x => typeof x === 'string' && x.startsWith('⑬')) || '';
     expect(item13).toContain('适老配件');
   });
-
-  test('SEC08: mapToSections 可纠正 Rw_required', () => {
-    const fx = fixtures.createPure(fixtures.guangzhouFull, { noise_type: 'rail', noise_dist: 'lt20', pain_point: 'sound', pain_points: ['sound'] });
-    const assessment = buildAssessment(fx);
-    const resolved = calculateAll(assessment);
-    resolved.Rw_required = 30;
-    mapToSections(resolved, buildAnswers(fx), 'UNIT-SEC08');
-    expect(resolved.Rw_required).toBeGreaterThan(30);
-  });
 });

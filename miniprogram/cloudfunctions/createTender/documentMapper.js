@@ -255,24 +255,6 @@ function getNoiseLabel(noiseType, noiseDist) {
   };
 }
 
-function getRwRequired(noiseType, noiseDist, painPoint, floor) {
-  const BASE = {
-    quiet: 25,
-    main_road: 35,
-    elevated: 38,
-    rail: 40
-  };
-
-  let rw = Number(BASE[noiseType]);
-  if (!Number.isFinite(rw)) rw = 30;
-
-  if (noiseDist === 'lt20') rw += 3;
-
-  if (painPoint === 'sound' && noiseType !== 'rail') rw += 3;
-
-  return Math.min(rw, 45);
-}
-
 function getNoiseSceneDesc(noiseType, noiseDist) {
   if (noiseType === 'quiet') return NOISE_SCENE.quiet;
   const byType = NOISE_SCENE[noiseType];
@@ -1244,16 +1226,6 @@ function buildAnalysisParagraph(answers, resolved) {
 function mapToSections(resolved, answers, pdfNo) {
   assertResolved(resolved);
 
-  try {
-    const painPoint = answers.pain_point;
-    const currentRw = Number(getField(resolved, 'Rw'));
-    const rw = getRwRequired(answers.noise_type, answers.noise_dist, painPoint, answers.floor);
-    if (Number.isFinite(rw) && (!Number.isFinite(currentRw) || rw > currentRw)) {
-      resolved.Rw_required = rw;
-    }
-  } catch (e) {
-  }
-  
   const now = new Date();
   const issueDate = `${now.getFullYear()}年${String(now.getMonth() + 1).padStart(2, '0')}月${String(now.getDate()).padStart(2, '0')}日`;
   

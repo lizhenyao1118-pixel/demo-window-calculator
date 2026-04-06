@@ -289,24 +289,6 @@ function getNoiseLabel(noiseType, noiseDist) {
   };
 }
 
-function getRwRequired(noiseType, noiseDist, painPoint, floor) {
-  const BASE = {
-    quiet: 25,
-    main_road: 35,
-    elevated: 38,
-    rail: 40
-  };
-
-  let rw = Number(BASE[noiseType]);
-  if (!Number.isFinite(rw)) rw = 30;
-
-  if (noiseDist === 'lt20') rw += 3;
-
-  if (painPoint === 'sound' && noiseType !== 'rail') rw += 3;
-
-  return Math.min(rw, 45);
-}
-
 function getNoiseSceneDesc(noiseType, noiseDist) {
   if (noiseType === 'quiet') return NOISE_SCENE.quiet;
   const byType = NOISE_SCENE[noiseType];
@@ -609,7 +591,14 @@ function buildParameterNote({ windPressure, soundInsulation, thermal, shgc, safe
   const usageExplain = (inputs.noiseType === 'rail')
     ? '隔声降噪诉求加严 0（轨道噪声已按最严基准计）'
     : `隔声降噪诉求加严 ${usageAdjText}`;
+  if (inputs.noise_type === 'quiet') {
+  const quietUsageNote = soundInsulation.usageAdj > 0
+    ? `；因您将隔声降噪列为核心诉求，加严修正+${soundInsulation.usageAdj}`
+    : '';
+  lines.push(`② **隔声**：噪声环境评估为安静（夜间本底噪声约35–40dB），隔声基准取${soundInsulation.baseRw} dB，无距离修正${quietUsageNote}，最终 ≥${soundInsulation.value} dB。依据：GB 50118 · 安静环境基础隔声标准。`);
+} else {
   lines.push(`② **隔声**：${noiseText}，基础 Rw≥${soundInsulation.baseRw} dB，距离修正 ${distAdjText}，${usageExplain}，最终 ≥${soundInsulation.value} dB。依据：GB 50118 + HJ 2055 · 轨道交通中距离声学计算推导值。`);
+}
 
   const factorMap = {
     heating: '自采暖保温修正 -0.2',
@@ -1287,15 +1276,6 @@ function buildAnalysisParagraph(answers, resolved) {
 function mapToSections(resolved, answers, pdfNo) {
   assertResolved(resolved);
 
-  try {
-    const painPoint = answers.pain_point;
-    const currentRw = Number(getField(resolved, 'Rw'));
-    const rw = getRwRequired(answers.noise_type, answers.noise_dist, painPoint, answers.floor);
-    if (Number.isFinite(rw) && (!Number.isFinite(currentRw) || rw > currentRw)) {
-      resolved.Rw_required = rw;
-    }
-  } catch (e) {
-  }
   
   const now = new Date();
   const issueDate = `${now.getFullYear()}年${String(now.getMonth() + 1).padStart(2, '0')}月${String(now.getDate()).padStart(2, '0')}日`;
