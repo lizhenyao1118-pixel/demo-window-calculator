@@ -577,11 +577,31 @@ function renderChapter3(doc, c3) {
     drawSectionTitle(doc, `3.1 推荐配置方案（您的选择 · ${currentConfig.label}）`);
 
     const currentSpec = currentConfig.spec || {};
+
+    // 格式化函数：将spec对象转换为可读字符串
+    function formatSpecField(field, defaultValue) {
+      if (typeof field === 'string') {
+        return field;
+      }
+      if (field && typeof field === 'object') {
+        if (field.min_wall_thickness) {
+          return `壁厚≥${field.min_wall_thickness}mm`;
+        }
+        if (field.min_load_kg) {
+          return `铰链负载≥${field.min_load_kg}kg`;
+        }
+        if (field.layers) {
+          return `${field.layers}道密封（${field.material}）`;
+        }
+      }
+      return defaultValue;
+    }
+
     const currentRows = [
-      { label: "型材", value: currentSpec.profile || "断桥铝，壁厚≥1.5mm", h: 22 },
-      { label: "玻璃", value: currentSpec.glass || "双白玻中空（5+12A+5）", h: 22 },
-      { label: "五金", value: currentSpec.hardware || "多点锁传动", h: 22 },
-      { label: "密封", value: currentSpec.seal || "EPDM胶条，2道密封", h: 22 }
+      { label: "型材", value: formatSpecField(currentSpec.profile, "断桥铝，壁厚≥1.5mm"), h: 22 },
+      { label: "玻璃", value: currentSpec.glass || "夹胶中空玻璃", h: 22 },
+      { label: "五金", value: formatSpecField(currentSpec.hardware, "多点锁传动"), h: 22 },
+      { label: "密封", value: formatSpecField(currentSpec.seal, "EPDM胶条，2道密封"), h: 22 }
     ];
 
     let yRow = doc.y;
@@ -598,11 +618,12 @@ function renderChapter3(doc, c3) {
     drawSectionTitle(doc, `推荐升级方案 · ${recommendedConfig.label}`);
 
     const recommendedSpec = recommendedConfig.spec || {};
+
     const recommendedRows = [
-      { label: "型材", value: recommendedSpec.profile || "断桥铝，壁厚≥1.6mm", h: 22 },
+      { label: "型材", value: formatSpecField(recommendedSpec.profile, "断桥铝，壁厚≥1.6mm"), h: 22 },
       { label: "玻璃", value: recommendedSpec.glass || "夹胶中空玻璃（6+0.76PVB+6+12Ar+5）", h: 22 },
-      { label: "五金", value: recommendedSpec.hardware || "多点锁传动", h: 22 },
-      { label: "密封", value: recommendedSpec.seal || "EPDM胶条，3道密封", h: 22 }
+      { label: "五金", value: formatSpecField(recommendedSpec.hardware, "多点锁传动"), h: 22 },
+      { label: "密封", value: formatSpecField(recommendedSpec.seal, "EPDM胶条，3道密封"), h: 22 }
     ];
 
     yRow = doc.y;
