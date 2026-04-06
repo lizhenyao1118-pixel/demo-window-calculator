@@ -15,6 +15,7 @@
 - `createTender/documentMapper.js`：收窄 shouldShowDualTier() 触发条件
 - `generateReport/documentMapper.js`：重写双档逻辑，统一为 A 档触发
 - `pdfBuilder-v2.js`：修复渲染层与数据结构不匹配问题（P0）
+- `budgetSpec.js`（两份同步）：修正差价基准描述（P1-A）
 
 **核心变更**：
 - 触发条件：仅 A 档 + (楼层>16 OR 高度比>0.6 OR 交通噪声) 时触发双档
@@ -27,6 +28,7 @@
 - `buildUpgradeReasons()`：生成升级原因文案（无建议/应当等指令型语言）
 - `calcCostDelta()`：计算档位间差价（基于中位值）
 - PDF渲染：读取 c3.recommendedConfig 数组，current/recommended 双档堆叠布局
+- mapToSections()：修复数据传递，保留 is_dual_tier 和 recommendedConfig 数组结构
 
 **数据结构**：
 ```javascript
@@ -38,6 +40,10 @@
   ]
 }
 ```
+
+**文案修正**：
+- `BUDGET_TIER_GLASS_BASE.A.config`：从"双白玻中空（5+12A+5）"修正为"夹胶中空"
+- `calcCostDelta.note`：从"相对于 A 档标准配置：双白玻中空..."修正为"相对于本案A档实际配置（夹胶中空）"
 
 **测试覆盖**：139/139 passing（原有 134 + 新增 DM-42~46）
 

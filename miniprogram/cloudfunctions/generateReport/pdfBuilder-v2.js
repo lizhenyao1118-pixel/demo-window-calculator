@@ -645,7 +645,7 @@ function renderChapter3(doc, c3) {
       }
 
       if (costDelta.disclaimer) {
-        doc.fillColor(COLORS.text_subtle).fontSize(8).italic();
+        doc.fillColor(COLORS.text_subtle).fontSize(8);
         doc.text(costDelta.disclaimer, 63, doc.y);
         doc.y += 18;
       }
