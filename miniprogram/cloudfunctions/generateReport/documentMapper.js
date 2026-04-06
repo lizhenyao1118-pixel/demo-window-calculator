@@ -1431,10 +1431,20 @@ function mapToSections(resolved, answers, pdfNo) {
     },
     
     chapter3: {
-      ...budgetSpec,
+      is_dual_tier: budgetSpec.is_dual_tier,
       recommendedConfig: budgetSpec.is_dual_tier
         ? budgetSpec.recommendedConfig
-        : { title: '3.1 推荐配置方案', spec: { ...budgetSpec, label: getTierLabel(String(answers.budget_tier || 'B').toUpperCase()) } },
+        : {
+            title: '3.1 推荐配置方案',
+            spec: {
+              label: budgetSpec.label || getTierLabel(String(answers.budget_tier || 'B').toUpperCase()),
+              profile: budgetSpec.profile,
+              glass: budgetSpec.glass,
+              glass_reason: budgetSpec.glass_reason,
+              hardware: budgetSpec.hardware,
+              seal: budgetSpec.seal
+            }
+          },
       budgetComparison: {
         title: '3.2 预算档位对比',
         currentTier: answers.budget_tier,
