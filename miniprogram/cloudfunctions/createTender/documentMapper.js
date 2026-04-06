@@ -122,15 +122,18 @@ const NOISE_TYPE_MAP = {
   quiet: '安静环境'
 };
 
-const TRAFFIC_NOISE_TYPES = ['main_road', 'elevated', 'rail', 'traffic_road', 'traffic_rail', 'traffic_highway'];
+// v3.9.7 · A档升级触发判断（原始规格）
+// 触发条件：用户选A档 + (floor>16 OR heightRatio>0.6 OR noise_type在交通噪声列表)
+// 不触发：B/C/D档；含儿童/老人（由现有文字提醒单独处理）
+const TRAFFIC_NOISE_TYPES = ['rail', 'highway', 'metro', 'airport'];
 
 function shouldShowDualTier(answers) {
   const budgetTier = String(answers.budget_tier || 'B').toUpperCase();
-  if (budgetTier !== 'A') return true;
+  if (budgetTier !== 'A') return false;
 
-  const floor = answers.floor || 0;
-  const totalFloors = answers.total_floors || 1;
-  const heightRatio = floor / totalFloors;
+  const floor = Number(answers.floor || 0);
+  const totalFloors = Number(answers.total_floors || 1);
+  const heightRatio = totalFloors > 0 ? floor / totalFloors : 0;
   const isHighFloor = floor > 16 || heightRatio > 0.6;
   const isTrafficNoise = TRAFFIC_NOISE_TYPES.includes(answers.noise_type);
 
@@ -1323,7 +1326,6 @@ function mapToSections(resolved, answers, pdfNo) {
           const Rw_required = Number(getField(resolved, 'Rw'));
           const costLevel = Rw_required <= 33 ? '轻' : Rw_required <= 38 ? '中' : '重';
           const targetDesc = normalizedAnswers.pain_point === 'heat' ? '隔热舒适' : normalizedAnswers.pain_point === 'wind' ? '抗风防水' : '隔声目标';
-          const TRAFFIC_NOISE_TYPES = ['main_road', 'elevated', 'rail', 'traffic_road', 'traffic_rail', 'traffic_highway'];
           const isTrafficNoise = TRAFFIC_NOISE_TYPES.includes(normalizedAnswers.noise_type);
           const glassDirection = Rw_required <= 33
             ? '可在档内用常规中空配置实现'

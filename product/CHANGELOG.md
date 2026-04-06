@@ -5,7 +5,32 @@
 
 ---
 
-## [v3.9.8] · 2026-04-05 · 当前版本
+## [v3.9.7] · 2026-04-06 · 当前版本
+
+### 决策事件：双档并列逻辑修复为原始规格（P0）
+
+**触发**：createTender 和 generateReport 双档逻辑不一致，B档触发条件错误。
+
+**修改文件**：
+- `createTender/documentMapper.js`：收窄 shouldShowDualTier() 触发条件
+- `generateReport/documentMapper.js`：重写双档逻辑，统一为 A 档触发
+
+**核心变更**：
+- 触发条件：仅 A 档 + (楼层>16 OR 高度比>0.6 OR 交通噪声) 时触发双档
+- 显示内容：A档（current）+ B档（recommended）双档并列
+- B/C/D 档不触发双档显示
+
+**技术实现**：
+- `TRAFFIC_NOISE_TYPES`：统一为 ['rail', 'highway', 'metro', 'airport']
+- `shouldShowDualTier()`：两份文件完全一致
+- `buildUpgradeReasons()`：生成升级原因文案（无建议/应当等指令型语言）
+- `calcCostDelta()`：计算档位间差价（基于中位值）
+
+**测试覆盖**：139/139 passing（原有 134 + 新增 DM-42~46）
+
+---
+
+## [v3.9.8] · 2026-04-05
 
 ### 决策事件：B档双档并列显示（P1）
 

@@ -22,7 +22,8 @@ const {
   getThermalModifier,
   getField,
   assertResolved,
-  getUpgrades
+  getUpgrades,
+  buildBudgetSpecView
 } = dm;
 
 describe('build1_1', () => {
@@ -565,5 +566,124 @@ describe('Sprint 7 热修复 v3.4.1', () => {
   test('DM-39: 封面新增签发人信任锚文本行', async () => {
     const pdfContent = await buildPdfTextForAnswers(fixtures.guangzhouFull, 'S7-HF-DM39');
     expect(pdfContent).toContain('李Sir · 独立门窗技术顾问（不销售、不代理）');
+  });
+});
+
+describe('v3.9.7 双档并列逻辑验证', () => {
+  test('DM-42: 触发场景 · 高层A档', () => {
+    const answers = {
+      budget_tier: 'A',
+      floor: 20,
+      total_floors: 30,
+      noise_type: 'traffic',
+      city: 'guangzhou',
+      window_type: 'casement',
+      orientation: 'west',
+      west_shading: false,
+      pain_point: 'sound',
+      heating_type: 'none',
+      family_risk: [],
+      noise_dist: '20to50'
+    };
+    const resolved = calculateAll(answers);
+    const spec = buildBudgetSpecView(resolved, answers);
+
+    expect(spec.is_dual_tier).toBe(true);
+    expect(Array.isArray(spec.recommendedConfig)).toBe(true);
+    expect(spec.recommendedConfig.length).toBe(2);
+    expect(spec.recommendedConfig[0].displayRole).toBe('current');
+    expect(spec.recommendedConfig[0].tier).toBe('A');
+    expect(spec.recommendedConfig[1].displayRole).toBe('recommended');
+    expect(spec.recommendedConfig[1].tier).toBe('B');
+    expect(spec.recommendedConfig[1].upgradeReasons.length).toBeGreaterThanOrEqual(1);
+    expect(spec.recommendedConfig[1].costDelta.delta).toBe(400);
+  });
+
+  test('DM-43: 触发场景 · 轨道交通噪声A档', () => {
+    const answers = {
+      budget_tier: 'A',
+      floor: 8,
+      total_floors: 18,
+      noise_type: 'rail',
+      city: 'guangzhou',
+      window_type: 'casement',
+      orientation: 'south',
+      west_shading: false,
+      pain_point: 'sound',
+      heating_type: 'none',
+      family_risk: [],
+      noise_dist: 'lt20'
+    };
+    const resolved = calculateAll(answers);
+    const spec = buildBudgetSpecView(resolved, answers);
+
+    expect(spec.is_dual_tier).toBe(true);
+    expect(Array.isArray(spec.recommendedConfig)).toBe(true);
+    expect(spec.recommendedConfig[1].upgradeReasons.length).toBeGreaterThan(0);
+    expect(spec.recommendedConfig[1].upgradeReasons.some(reason => reason.includes('轨道交通'))).toBe(true);
+  });
+
+  test('DM-44: 非触发场景 · B档用户', () => {
+    const answers = {
+      budget_tier: 'B',
+      floor: 20,
+      noise_type: 'rail',
+      city: 'guangzhou',
+      window_type: 'casement',
+      orientation: 'south',
+      west_shading: false,
+      pain_point: 'sound',
+      heating_type: 'none',
+      family_risk: [],
+      noise_dist: 'lt20',
+      total_floors: 30
+    };
+    const resolved = calculateAll(answers);
+    const spec = buildBudgetSpecView(resolved, answers);
+
+    expect(spec.is_dual_tier).toBe(false);
+    expect(typeof spec.recommendedConfig).toBe('undefined');
+  });
+
+  test('DM-45: 非触发场景 · A档低层无交通噪声', () => {
+    const answers = {
+      budget_tier: 'A',
+      floor: 6,
+      total_floors: 18,
+      noise_type: 'street',
+      city: 'guangzhou',
+      window_type: 'casement',
+      orientation: 'south',
+      west_shading: false,
+      pain_point: 'sound',
+      heating_type: 'none',
+      family_risk: [],
+      noise_dist: '20to50'
+    };
+    const resolved = calculateAll(answers);
+    const spec = buildBudgetSpecView(resolved, answers);
+
+    expect(spec.is_dual_tier).toBe(false);
+  });
+
+  test('DM-46: 非触发场景 · A档含儿童（不触发双档）', () => {
+    const answers = {
+      budget_tier: 'A',
+      floor: 6,
+      total_floors: 18,
+      noise_type: 'street',
+      city: 'guangzhou',
+      window_type: 'casement',
+      orientation: 'south',
+      west_shading: false,
+      pain_point: 'sound',
+      heating_type: 'none',
+      family_risk: ['child'],
+      noise_dist: '20to50'
+    };
+    const resolved = calculateAll(answers);
+    const spec = buildBudgetSpecView(resolved, answers);
+
+    expect(spec.is_dual_tier).toBe(false);
   });
 });

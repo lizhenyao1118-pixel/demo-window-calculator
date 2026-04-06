@@ -122,6 +122,58 @@ const NOISE_TYPE_MAP = {
   quiet: '安静环境'
 };
 
+// v3.9.7 · A档升级触发判断（原始规格）
+const TRAFFIC_NOISE_TYPES = ['rail', 'highway', 'metro', 'airport'];
+
+function shouldShowDualTier(answers) {
+  const budgetTier = String(answers.budget_tier || 'B').toUpperCase();
+  if (budgetTier !== 'A') return false;
+
+  const floor = Number(answers.floor || 0);
+  const totalFloors = Number(answers.total_floors || 1);
+  const heightRatio = totalFloors > 0 ? floor / totalFloors : 0;
+  const isHighFloor = floor > 16 || heightRatio > 0.6;
+  const isTrafficNoise = TRAFFIC_NOISE_TYPES.includes(answers.noise_type);
+
+  return isHighFloor || isTrafficNoise;
+}
+
+function buildUpgradeReasons(answers) {
+  const reasons = [];
+  const floor = Number(answers.floor || 0);
+  const totalFloors = Number(answers.total_floors || 1);
+  const heightRatio = totalFloors > 0 ? floor / totalFloors : 0;
+  const isTrafficNoise = TRAFFIC_NOISE_TYPES.includes(answers.noise_type);
+
+  if (floor > 16 || heightRatio > 0.6) {
+    reasons.push(
+      `本案楼层（${floor}F/${totalFloors}F）处于高风压区，` +
+      'B档夹胶玻璃可提供更稳定的抗风压裕量'
+    );
+  }
+  if (isTrafficNoise) {
+    const noiseLabel = answers.noise_type === 'rail' ? '轨道交通' : '交通干道';
+    reasons.push(
+      `本案临近${noiseLabel}，` +
+      'B档夹胶中空在中低频段（125–500Hz）隔声表现优于A档非对称中空'
+    );
+  }
+  return reasons;
+}
+
+function calcCostDelta(answers, fromTier, toTier) {
+  const TIER_MIDPOINT = { A: 750, B: 1150, C: 1700, D: 2500 };
+  const delta = (TIER_MIDPOINT[toTier] || 1150) - (TIER_MIDPOINT[fromTier] || 750);
+  return {
+    delta,
+    fromTier,
+    toTier,
+    label: `约+${delta}元/㎡`,
+    note: '相对于本案A档实际配置（夹胶中空）',
+    disclaimer: '差价为参考区间中位值，实际报价以商家为准',
+  };
+}
+
 const NOISE_DIST_MAP = {
   lt20: '近距离（<20m）',
   '20_50': '中距离（20~50m）',
@@ -916,36 +968,28 @@ function buildBudgetSpecView(resolved, answers) {
     is_compensated: glass_result.is_compensated
   };
 
-  // B档双档并列：基础配置 + 增强配置
-  if (tier === 'B') {
-    const enhanced_tier = 'C';
-    const enhanced_spec = BUDGET_SPEC[enhanced_tier];
-    const enhanced_bar = getInsulationBarRequirement(Number(getField(resolved, 'K')));
-
-    const enhanced_glass_result = resolveGlassConfig(
-      Number(getField(resolved, 'Rw')),
-      Number(getField(resolved, 'K')),
-      Number(getField(resolved, 'SHGC')),
-      window_features,
-      enhanced_tier,
-      answers.pain_point,
-      answers.noise_type
-    );
-
-    const enhancedConfig = {
-      label: enhanced_spec.label,
-      price_range: enhanced_spec.price_range,
-      profile: `壁厚≥${enhanced_spec.profile.min_wall_thickness}mm；隔热条≥${enhanced_bar.min_mm}mm（${enhanced_bar.process}）`,
-      glass: enhanced_glass_result.glass_name + (enhanced_glass_result.thermal_overlay ? ` + ${enhanced_glass_result.thermal_overlay}` : ''),
-      hardware: `铰链负载≥${enhanced_spec.hardware.min_load_kg}kg`,
-      seal: `${enhanced_spec.seal.layers}道密封（${enhanced_spec.seal.material}）`
-    };
-
+  // v3.9.7 · A档升级触发判断（原始规格）
+  const dual = shouldShowDualTier(answers);
+  if (dual) {
     return {
       ...baseConfig,
       is_dual_tier: true,
-      base_config: baseConfig,
-      enhanced_config: enhancedConfig
+      recommendedConfig: [
+        {
+          spec: BUDGET_SPEC['A'],
+          label: getTierLabel('A'),
+          displayRole: 'current',
+          tier: 'A',
+        },
+        {
+          spec: BUDGET_SPEC['B'],
+          label: getTierLabel('B'),
+          displayRole: 'recommended',
+          tier: 'B',
+          upgradeReasons: buildUpgradeReasons(answers),
+          costDelta: calcCostDelta(answers, 'A', 'B'),
+        }
+      ]
     };
   }
 
@@ -1175,7 +1219,6 @@ function getStars(count) {
 }
 
 function getUpgrades(answers, resolved) {
-  const TRAFFIC_NOISE_TYPES = ['main_road', 'elevated', 'rail', 'traffic_road', 'traffic_rail', 'traffic_highway'];
   const isTrafficNoise = TRAFFIC_NOISE_TYPES.includes(answers.noise_type);
   const acousticUpgradeDesc = isTrafficNoise
     ? 'Rw基础上+3~5dB，需夹胶中空升规格（6+1.52PVB+6+12–16Ar+6）（稳定保障Rw≥40dB的推荐下限）；交通噪声场景不建议三玻两腔，Ctr表现不稳定'
@@ -1326,7 +1369,6 @@ function mapToSections(resolved, answers, pdfNo) {
           const Rw_required = Number(getField(resolved, 'Rw'));
           const costLevel = Rw_required <= 33 ? '轻' : Rw_required <= 38 ? '中' : '重';
           const targetDesc = normalizedAnswers.pain_point === 'heat' ? '隔热舒适' : normalizedAnswers.pain_point === 'wind' ? '抗风防水' : '隔声目标';
-          const TRAFFIC_NOISE_TYPES = ['main_road', 'elevated', 'rail', 'traffic_road', 'traffic_rail', 'traffic_highway'];
           const isTrafficNoise = TRAFFIC_NOISE_TYPES.includes(normalizedAnswers.noise_type);
           const glassDirection = Rw_required <= 33
             ? '可在档内用常规中空配置实现'
@@ -1442,5 +1484,6 @@ module.exports = {
   getHeatingAdjText,
   getShgcNote,
   getThermalModifier,
-  getUpgrades
+  getUpgrades,
+  buildBudgetSpecView
 };
