@@ -31,7 +31,17 @@ function calcRw({ noise_type, noise_dist, pain_point }) {
   const BASE = { main_road: 35, elevated: 38, rail: 40, quiet: 30 };
   const DIST = { lt20: 3, "20to50": 0, gt50: -3, gt50_shielded: -3 };
 
-  let rw = (BASE[noise_type] || 30) + (DIST[noise_dist] || 0);
+  // v3.9.8 · 安静环境距离修正归零
+  const isQuietEnvironment = noise_type === 'quiet'
+    || noise_type === 'silent'
+    || noise_type === 'none';
+
+  let rw = (BASE[noise_type] || 30);
+
+  // 安静环境时，距离修正归零；非安静环境应用距离修正
+  if (!isQuietEnvironment) {
+    rw += DIST[noise_dist] || 0;
+  }
 
   const noise_usage = pain_point === 'sound' ? 'sleep' : 'general';
   const USAGE_ADJ = { sleep: 3, office: 2, living: 1, general: 0 };
