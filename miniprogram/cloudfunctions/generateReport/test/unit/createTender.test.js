@@ -2,7 +2,7 @@ const { createTender } = require('../../shared/createTenderService');
 const { buildRedlineRegistry } = require('../../shared/redlineSpec');
 const { buildAcceptanceItems } = require('../../shared/acceptanceSpec');
 const { getClimateZone } = require('../../shared/climateSpec');
-const { TERM, getTierLabel } = require('../../documentMapper');
+const { TERM, getTierLabel, getField } = require('../../documentMapper');
 
 describe('createTender', () => {
   test('CTD-01: tenderId 格式正确且可重试避免冲突', async () => {
@@ -30,7 +30,7 @@ describe('createTender', () => {
           return seen.length === 1 ? 1 : 0;
         },
         insertTender: async (data) => inserted.push(data),
-        buildRedlines: () => buildRedlineRegistry({ TERM, getTierLabel }),
+        buildRedlines: () => buildRedlineRegistry({ TERM, getTierLabel, getField }),
         buildAcceptanceItems: (windowType) => buildAcceptanceItems(windowType),
         getClimateZone: (city) => getClimateZone(city)
       }
@@ -59,7 +59,7 @@ describe('createTender', () => {
       deps: {
         countByTenderId: async () => 0,
         insertTender: async (data) => inserted.push(data),
-        buildRedlines: () => buildRedlineRegistry({ TERM, getTierLabel }),
+        buildRedlines: () => buildRedlineRegistry({ TERM, getTierLabel, getField }),
         buildAcceptanceItems: (windowType) => buildAcceptanceItems(windowType),
         getClimateZone: (city) => getClimateZone(city)
       }
@@ -78,7 +78,8 @@ describe('createTender', () => {
 
     const r01 = reportSnapshot.redlines.find(r => r.displayId === 'R01');
     const r02 = reportSnapshot.redlines.find(r => r.displayId === 'R02');
-    expect(r01.softened).toBe(true);
+    // SPEC-05后所有红线均为强制（softened=false）
+    expect(r01.softened).toBe(false);
     expect(r02.softened).toBe(false);
 
     const a12 = reportSnapshot.acceptanceItems.find(i => i.id === '12');

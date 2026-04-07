@@ -5,7 +5,7 @@ const { getVendorResponsesService } = require('../../shared/tenderOwnerService')
 const { buildRedlineRegistry } = require('../../shared/redlineSpec');
 const { buildAcceptanceItems } = require('../../shared/acceptanceSpec');
 const { getClimateZone } = require('../../shared/climateSpec');
-const { TERM, getTierLabel } = require('../../documentMapper');
+const { TERM, getTierLabel, getField } = require('../../documentMapper');
 
 function makeDb() {
   return {
@@ -34,7 +34,7 @@ describe('Sprint 8A 集成场景（服务层模拟）', () => {
       deps: {
         countByTenderId: async (id) => db.tenders.some(t => t.tenderId === id) ? 1 : 0,
         insertTender: async (data) => db.tenders.push(data),
-        buildRedlines: () => buildRedlineRegistry({ TERM, getTierLabel }),
+        buildRedlines: () => buildRedlineRegistry({ TERM, getTierLabel, getField }),
         buildAcceptanceItems: (windowType) => buildAcceptanceItems(windowType),
         getClimateZone: (city) => getClimateZone(city)
       },
@@ -105,7 +105,7 @@ describe('Sprint 8A 集成场景（服务层模拟）', () => {
       deps: {
         countByTenderId: async (id) => 0,
         insertTender: async (data) => db.tenders.push(data),
-        buildRedlines: () => buildRedlineRegistry({ TERM, getTierLabel }),
+        buildRedlines: () => buildRedlineRegistry({ TERM, getTierLabel, getField }),
         buildAcceptanceItems: (windowType) => buildAcceptanceItems(windowType),
         getClimateZone: (city) => getClimateZone(city)
       }
@@ -129,7 +129,7 @@ describe('Sprint 8A 集成场景（服务层模拟）', () => {
     })).rejects.toThrow('REDLINE_VIOLATION:R02');
   });
 
-  test('E2E-03: 可软化红线+有理由（R01）', async () => {
+  test('E2E-03: 强制红线违反应拦截（R01）', async () => {
     const db = makeDb();
     const owner = 'O'; const vendor = 'V';
     const answers = { Q1: '广州', Q3: 8, Q7: 'sliding' };
@@ -139,7 +139,7 @@ describe('Sprint 8A 集成场景（服务层模拟）', () => {
       deps: {
         countByTenderId: async () => 0,
         insertTender: async (data) => db.tenders.push(data),
-        buildRedlines: () => buildRedlineRegistry({ TERM, getTierLabel }),
+        buildRedlines: () => buildRedlineRegistry({ TERM, getTierLabel, getField }),
         buildAcceptanceItems: (windowType) => buildAcceptanceItems(windowType),
         getClimateZone: (city) => getClimateZone(city)
       }
@@ -149,23 +149,22 @@ describe('Sprint 8A 集成场景（服务层模拟）', () => {
       deps: { findTenderById: async (id) => findTender(db, id), findExistingDraft: async () => null }
     });
     const rs = v.reportSnapshot.redlines;
+    // SPEC-05后所有红线均为强制，违反应抛出异常
     const list = rs.map(r => ({ displayId: r.displayId, type: 'redline', checkValue: r.displayId === 'R01' ? false : true, note: r.displayId === 'R01' ? '业主预算不足' : '' }));
-    const res = await submitVendorResponseService({
+    await expect(submitVendorResponseService({
       tenderId, vendorInfo: {}, answers: list, openid: vendor,
       deps: {
         findTenderByTenderId: async (id) => findTender(db, id),
         countSubmittedByVendor: async () => 0,
         findDraftByVendor: async () => null,
         updateResponseById: async () => {},
-        addResponse: async (data) => { db.responses.push({ _id: 'RID', ...data }); return 'RID'; },
+        addResponse: async () => {},
         incTenderVendorCount: async () => {}
       }
-    });
-    expect(res.success).toBe(true);
-    expect(res.redlineHits).toEqual(['R01']);
+    })).rejects.toThrow('REDLINE_VIOLATION:R01');
   });
 
-  test('E2E-04: 可软化红线+无理由（R04）', async () => {
+  test('E2E-04: 强制红线违反应拦截（R04）', async () => {
     const db = makeDb();
     const owner = 'O'; const vendor = 'V';
     const answers = { Q1: '广州', Q3: 8, Q7: 'sliding' };
@@ -175,7 +174,7 @@ describe('Sprint 8A 集成场景（服务层模拟）', () => {
       deps: {
         countByTenderId: async () => 0,
         insertTender: async (data) => db.tenders.push(data),
-        buildRedlines: () => buildRedlineRegistry({ TERM, getTierLabel }),
+        buildRedlines: () => buildRedlineRegistry({ TERM, getTierLabel, getField }),
         buildAcceptanceItems: (windowType) => buildAcceptanceItems(windowType),
         getClimateZone: (city) => getClimateZone(city)
       }
@@ -185,6 +184,7 @@ describe('Sprint 8A 集成场景（服务层模拟）', () => {
       deps: { findTenderById: async (id) => findTender(db, id), findExistingDraft: async () => null }
     });
     const rs = v.reportSnapshot.redlines;
+    // SPEC-05后所有红线均为强制，违反应抛出 REDLINE_VIOLATION
     const list = rs.map(r => ({ displayId: r.displayId, type: 'redline', checkValue: r.displayId === 'R04' ? false : true, note: '' }));
     await expect(submitVendorResponseService({
       tenderId, vendorInfo: {}, answers: list, openid: vendor,
@@ -196,7 +196,7 @@ describe('Sprint 8A 集成场景（服务层模拟）', () => {
         addResponse: async () => {},
         incTenderVendorCount: async () => {}
       }
-    })).rejects.toThrow('REASON_REQUIRED:R04');
+    })).rejects.toThrow('REDLINE_VIOLATION:R04');
   });
 
   test('E2E-05: 草稿恢复', async () => {
@@ -209,7 +209,7 @@ describe('Sprint 8A 集成场景（服务层模拟）', () => {
       deps: {
         countByTenderId: async () => 0,
         insertTender: async (data) => db.tenders.push(data),
-        buildRedlines: () => buildRedlineRegistry({ TERM, getTierLabel }),
+        buildRedlines: () => buildRedlineRegistry({ TERM, getTierLabel, getField }),
         buildAcceptanceItems: (windowType) => buildAcceptanceItems(windowType),
         getClimateZone: (city) => getClimateZone(city)
       }
@@ -248,7 +248,7 @@ describe('Sprint 8A 集成场景（服务层模拟）', () => {
       deps: {
         countByTenderId: async () => 0,
         insertTender: async (data) => db.tenders.push({ ...data, status: 'closed' }),
-        buildRedlines: () => buildRedlineRegistry({ TERM, getTierLabel }),
+        buildRedlines: () => buildRedlineRegistry({ TERM, getTierLabel, getField }),
         buildAcceptanceItems: (windowType) => buildAcceptanceItems(windowType),
         getClimateZone: (city) => getClimateZone(city)
       }
@@ -270,7 +270,7 @@ describe('Sprint 8A 集成场景（服务层模拟）', () => {
       deps: {
         countByTenderId: async () => 0,
         insertTender: async (data) => db.tenders.push(data),
-        buildRedlines: () => buildRedlineRegistry({ TERM, getTierLabel }),
+        buildRedlines: () => buildRedlineRegistry({ TERM, getTierLabel, getField }),
         buildAcceptanceItems: (windowType) => buildAcceptanceItems(windowType),
         getClimateZone: (city) => getClimateZone(city)
       }
@@ -299,7 +299,7 @@ describe('Sprint 8A 集成场景（服务层模拟）', () => {
       deps: {
         countByTenderId: async () => 0,
         insertTender: async (data) => db.tenders.push(data),
-        buildRedlines: () => buildRedlineRegistry({ TERM, getTierLabel }),
+        buildRedlines: () => buildRedlineRegistry({ TERM, getTierLabel, getField }),
         buildAcceptanceItems: (windowType) => buildAcceptanceItems(windowType),
         getClimateZone: (city) => getClimateZone(city)
       }

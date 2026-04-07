@@ -1,4 +1,5 @@
 const { resolveGlassConfig } = require('../../arbitrator');
+const { GLASS_LEVELS } = require('../../shared/budgetSpec');
 
 describe('resolveGlassConfig', () => {
   test('AR01: 低需求 - 无冲突', () => {
@@ -106,6 +107,58 @@ describe('resolveGlassConfig', () => {
     } else {
       expect(r.is_risk).toBe(false);
     }
+  });
+
+  // SPEC-06: perf_glass_key 测试
+  test('T-01: perf_glass_key 与 glass_key 在有预算冲突时不相同', () => {
+    // 场景：高 Rw 要求触发性能需求超出预算档位
+    // A档预算上限为 laminated_hollow (level 4)，但高 Rw 可能需要 triple_pane (level 5)
+    const r = resolveGlassConfig(
+      44, // 高隔声需求
+      1.4, // 低 K 需求（热工要求高）
+      0.30,
+      { has_large_fixed: false },
+      'A', // 低预算档位
+      'sound'
+    );
+
+    // 存在预算冲突
+    expect(r.conflict).not.toBeNull();
+    expect(r.conflict.type).toBe('glass_upgrade');
+
+    // perf_glass_key 和 glass_key 应该不同
+    expect(r.perf_glass_key).toBeTruthy();
+    expect(r.glass_key).toBeTruthy();
+    expect(r.perf_glass_key).not.toBe(r.glass_key);
+
+    // glass_key 受预算上限截断
+    const glassLevel = GLASS_LEVELS[r.glass_key]?.level || 0;
+    const perfLevel = GLASS_LEVELS[r.perf_glass_key]?.level || 0;
+    expect(glassLevel).toBeLessThan(perfLevel);
+
+    // perf_glass_key 为性能要求对应的更高档位
+    expect(perfLevel).toBeGreaterThan(glassLevel);
+  });
+
+  test('T-02: perf_glass_key 与 glass_key 在无预算冲突时相同', () => {
+    // 场景：性能要求在预算档位范围内
+    // D档预算充足，可以容纳任何性能要求
+    const r = resolveGlassConfig(
+      35, // 中等隔声需求
+      2.0,
+      0.35,
+      { has_large_fixed: false },
+      'D', // 高预算档位
+      'sound'
+    );
+
+    // 无预算冲突
+    expect(r.conflict).toBeNull();
+
+    // perf_glass_key 和 glass_key 应该相同
+    expect(r.perf_glass_key).toBeTruthy();
+    expect(r.glass_key).toBeTruthy();
+    expect(r.perf_glass_key).toBe(r.glass_key);
   });
 });
 

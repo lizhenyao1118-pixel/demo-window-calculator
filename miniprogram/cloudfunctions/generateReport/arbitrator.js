@@ -43,19 +43,25 @@ function resolveGlassConfig(Rw_req, K_req, SHGC_req, window_features, budget_tie
     budget_max_level = Math.max(budget_max_level, GLASS_LEVELS.laminated_hollow.level);
   }
 
-  let final_level = Math.min(perf_level, maxAvailableLevel);
+  // 预计算 eligibleKeys 供后续使用
+  const eligibleKeys = new Set(eligibleLevels.map(x => x.key));
+
+  // 性能要求驱动的玻璃 key（预算截断前，但受限于可用级别）
+  const perf_level_capped = Math.min(perf_level, maxAvailableLevel);
+  const perf_glass_key = Object.keys(GLASS_LEVELS).find(k => GLASS_LEVELS[k].level === perf_level_capped && eligibleKeys.has(k)) || 'basic_hollow';
+
+  let final_level = Math.min(perf_level, maxAvailableLevel, budget_max_level);
   let conflict = null;
 
-  if (final_level > budget_max_level) {
+  if (perf_level_capped > budget_max_level) {
     const next_tier = getNextTier(budget_tier);
     conflict = {
       type: 'glass_upgrade',
       severity: pain_point === 'sound' ? 'error' : 'warning',
-      message: `${budget_spec.label}内最高可实现 Rw≤${budget_spec.glass_rw_max}dB，您的环境需要更高配置。${next_tier ? `建议升级至${BUDGET_SPEC[next_tier].label}。` : ''}`
+      message: `${budget_spec.label}内最高可实现 Rw≤${budget_spec.glass_rw_max}dB，您的环境需要更高配置。${next_tier ? `满足本案性能要求的最低配置为${BUDGET_SPEC[next_tier].label}。` : ''}`
     };
   }
 
-  const eligibleKeys = new Set(eligibleLevels.map(x => x.key));
   const glass_key = Object.keys(GLASS_LEVELS).find(k => GLASS_LEVELS[k].level === final_level && eligibleKeys.has(k));
   const glass_config = glass_key ? GLASS_LEVELS[glass_key] : GLASS_LEVELS.basic_hollow;
 
@@ -68,16 +74,17 @@ function resolveGlassConfig(Rw_req, K_req, SHGC_req, window_features, budget_tie
   const isAsymmetricIGU = glass_key === 'basic_hollow' || glass_key === 'low_e_hollow' || glass_key === 'low_e_argon';
   const is_risk = isAsymmetricIGU && Rw_req >= 35;
   const risk_notes = is_risk
-    ? ['非对称中空配置Rw实测上限约34dB，当前需求≥35dB，建议升级至夹胶中空']
+    ? ['非对称中空配置Rw实测上限约34dB，当前需求≥35dB，满足本案性能要求的最低配置为夹胶中空']
     : undefined;
 
   // SPEC-02: 交通噪声场景备选排除三玻两腔时附加注记
   const triple_pane_excluded_note = isTrafficNoise
-    ? '三玻两腔适用于非交通噪声环境，临街/交通场景建议选用夹胶中空'
+    ? '三玻两腔适用于非交通噪声环境，临街/交通场景满足本案性能要求的最低配置为夹胶中空'
     : undefined;
 
   return {
     glass_key,
+    perf_glass_key,
     glass_name: glass_config.name,
     reason: `基于Rw≥${Rw_req}dB隔声目标${window_features && window_features.has_large_fixed ? '，且存在落地窗（安全强制要求夹胶构造）' : ''}`,
     rw_effective: Math.min(Rw_req, glass_config.rw_max),

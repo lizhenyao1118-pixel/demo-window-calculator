@@ -67,7 +67,7 @@ function getTierLabel(tier) {
   return map[tier] || tier;
 }
 
-const { GLASS_LEVELS, BUDGET_SPEC, getNextTier, BUDGET_TIER_GLASS_BASE } = require('./shared/budgetSpec.js');
+const { GLASS_LEVELS, BUDGET_SPEC, getNextTier } = require('./shared/budgetSpec.js');
 const { getInsulationBarRequirement } = require('./shared/thermalSpec.js');
 const { resolveGlassConfig } = require('./arbitrator.js');
 const { getClimateZone, CLIMATE_SPEC } = require('./shared/climateSpec.js');
@@ -213,7 +213,7 @@ const ACCEPTANCE_NODES = {
   }
 };
 
-const REDLINE_REGISTRY = buildRedlineRegistry({ TERM, getTierLabel });
+const REDLINE_REGISTRY = buildRedlineRegistry({ TERM, getTierLabel, getField });
 
 // ═══════════════════════════════════════════════════════════════
 // 工具函数
@@ -736,7 +736,12 @@ function buildChapter3ConflictAlert(budgetSpec, resolved) {
   const label = String(budgetSpec.label || '');
   const tierMatch = label.match(/[ABCD]/);
   const tier = tierMatch ? tierMatch[0] : 'B';
-  const base = BUDGET_TIER_GLASS_BASE[tier] || BUDGET_TIER_GLASS_BASE.B;
+  // TODO SPEC-03: needs GLASS_LEVELS mapping for tier standard glass config
+  const baseConfigMap = {
+    A: GLASS_LEVELS.laminated_hollow,
+    B: GLASS_LEVELS.basic_hollow
+  };
+  const base = baseConfigMap[tier] || baseConfigMap.B;
 
   return {
     title: hasConflicts ? '配置升级提醒' : '配置兼容性检查',
@@ -745,8 +750,8 @@ function buildChapter3ConflictAlert(budgetSpec, resolved) {
     severity: (conflictMeta && conflictMeta.severity) ? conflictMeta.severity : 'warning',
     cost_estimate: hasConflicts
       ? (Number(budgetSpec.cost_delta) === 0
-        ? `预计玻璃成本增加：视实际玻璃配置而定（请商家在报价中单独列出玻璃部分的加价幅度）；相对于 ${tier} 档标准配置（${base.config}）`
-        : `预计玻璃成本增加：${budgetSpec.cost_delta}元/㎡（相对于 ${tier} 档标准配置：${base.config}）`)
+        ? `预计玻璃成本增加：视实际玻璃配置而定（请商家在报价中单独列出玻璃部分的加价幅度）；相对于 ${tier} 档标准配置（${base.name}）`
+        : `预计玻璃成本增加：${budgetSpec.cost_delta}元/㎡（相对于 ${tier} 档标准配置：${base.name}）`)
       : null
   };
 }
@@ -755,14 +760,37 @@ function buildRedlineChecklist(answers, resolved) {
   const mandatory = [];
   const recommended = [];
 
+  // 计算水密气密等级
+  const sealGrades = calcSealGrades({ city: answers.city, floor: answers.floor, windowType: answers.window_type });
+
+  // 计算抗风压等级（根据 P3 值映射）
+  const p3 = Number(getField(resolved, 'P3')) || 0;
+  let windPressureLevel = '待定';
+  if (p3 >= 7.0) windPressureLevel = '9';
+  else if (p3 >= 6.0) windPressureLevel = '8';
+  else if (p3 >= 5.0) windPressureLevel = '7';
+  else if (p3 >= 4.0) windPressureLevel = '6';
+  else if (p3 >= 3.0) windPressureLevel = '5';
+  else if (p3 >= 2.0) windPressureLevel = '4';
+  else if (p3 >= 1.5) windPressureLevel = '3';
+  else if (p3 >= 1.0) windPressureLevel = '2';
+  else if (p3 > 0) windPressureLevel = '1';
+
+  // 扩展 resolved 对象，包含计算出的等级
+  const resolvedWithLevels = {
+    ...resolved,
+    sealGrades,
+    wind_pressure_level: windPressureLevel
+  };
+
   REDLINE_REGISTRY.forEach((r) => {
-    if (!r.trigger(answers, resolved)) return;
-    const item = { ...r, text: (typeof r.text === 'function' ? r.text(answers, resolved) : r.text) };
-    if (r.id === 'R06') {
-      const sealGrades = calcSealGrades({ city: answers.city, floor: answers.floor, windowType: answers.window_type });
-      const desc = `提供整窗淋水及气密性测试报告（推荐：气密≥${sealGrades.airRec}级、水密≥${sealGrades.waterRec}级，GB/T 7106）。若方案仅能达到水密 5 级或气密 4~5 级，应说明具体构造、排水与密封加强措施，并由业主确认是否接受；该类方案不建议作为首选。`;
+    if (!r.trigger(answers, resolvedWithLevels)) return;
+    const item = { ...r, text: (typeof r.text === 'function' ? r.text(answers, resolvedWithLevels) : r.text) };
+    // R12: 水密气密性能（原 R06）
+    if (r.id === 'R12') {
+      const desc = `水密气密性能：水密≥${sealGrades.waterRec}级，气密≥${sealGrades.airRec}级（GB/T 7106）。安装节点须按设计图纸施工，打胶须全程留影像记录`;
       item.text = desc;
-      item._sealGrades = { airMin: sealGrades.airMin, airRec: sealGrades.airRec, waterMin: sealGrades.waterMin, waterRec: sealGrades.waterRec };
+      item._sealGrades = sealGrades;
     }
     if (r.level === 'mandatory') mandatory.push(item);
     else recommended.push(item);
@@ -898,17 +926,21 @@ function getBudgetSpec(tier) {
   return BUDGET_SPEC[tier] || BUDGET_SPEC.B;
 }
 
-function estimateCostDelta(glassKey, tier) {
-  const base = BUDGET_TIER_GLASS_BASE[tier] || BUDGET_TIER_GLASS_BASE.B;
-  const baseCost = base.pricePerSqm || 0;
-  const targetCost = (GLASS_LEVELS[glassKey] && GLASS_LEVELS[glassKey].base_cost) ? GLASS_LEVELS[glassKey].base_cost : 0;
+function estimateCostDelta(glassKey, baseGlassKey) {
+  const baseCost = GLASS_LEVELS[baseGlassKey] ? GLASS_LEVELS[baseGlassKey].base_cost : 0;
+  const targetCost = GLASS_LEVELS[glassKey] ? GLASS_LEVELS[glassKey].base_cost : 0;
   return Math.max(0, Math.round(targetCost - baseCost));
 }
 
 function buildBudgetSpecView(resolved, answers) {
   const tier = answers.budget_tier || 'B';
   const spec = BUDGET_SPEC[tier] || BUDGET_SPEC.B;
-  const tierStandardGlass = BUDGET_TIER_GLASS_BASE[tier] || BUDGET_TIER_GLASS_BASE.B;
+  // TODO SPEC-03: needs GLASS_LEVELS mapping for tier standard glass config
+  const tierStandardGlassMap = {
+    A: GLASS_LEVELS.laminated_hollow,
+    B: GLASS_LEVELS.basic_hollow
+  };
+  const tierStandardGlass = tierStandardGlassMap[tier] || tierStandardGlassMap.B;
   const bar = getInsulationBarRequirement(Number(getField(resolved, 'K')));
 
   const familyRisk = Array.isArray(answers.family_risk) ? answers.family_risk : [];
@@ -953,7 +985,10 @@ function buildBudgetSpecView(resolved, answers) {
     seal: `${spec.seal.layers}道密封（${spec.seal.material}）`,
     glass_key: glass_result.glass_key,
     conflict: glass_result.conflict,
-    cost_delta: estimateCostDelta(glass_result.glass_key, tier),
+    cost_delta: estimateCostDelta(
+      glass_result.perf_glass_key,
+      glass_result.glass_key
+    ),
     is_compensated: glass_result.is_compensated
   };
 
@@ -989,19 +1024,20 @@ function buildBudgetSpecView(resolved, answers) {
 }
 
 function getForbiddenItems(budget_tier, K_target, window_features, Rw_required) {
+  // 与红线主表保持一致，使用强制性表述
   const base = [
-    '建议优先采用原生铝型材，并提供相应材质证明；如采用其他材质，应说明理由并提供检测依据。',
-    '禁止单玻或无Low-E膜的普通中空玻璃',
-    '禁止以普通密封胶代替结构胶（须使用中性硅酮结构胶）',
-    '断桥铝隔热条宽度建议不低于本项目所需的热工要求（如常规穿条式≥28mm），不建议使用明显低于要求的仿断桥产品。'
+    '型材系统：须采用原生铝型材，并提供材质检验证明',
+    '型材系统：主受力壁厚≥1.5mm，须提供截面检测报告',
+    '型材系统：禁止非配套隔热条拼装，不接受与型材品牌不一致的隔热条',
+    '热工性能：禁止单玻或无Low-E膜的普通中空玻璃',
+    '密封结构：禁止普通密封胶代替结构胶（须采用中性硅酮结构胶）'
   ];
 
   if (window_features && window_features.needs_whole_window_test) {
-    base.push(`【强制】推拉窗/门联窗需提供整窗性能测试报告（${STANDARDS_MAP.wind_pressure.short} 抗风压 + GB/T 7107 气密·水密）`);
+    base.push(`抗风性能：推拉窗/门联窗须提供整窗性能测试报告（${STANDARDS_MAP.wind_pressure.short} 抗风压 + GB/T 7106 气密·水密）`);
   }
 
-  const wall = '型材主受力壁厚建议不低于 1.5mm，并提供截面检测报告；如提议采用更薄型材，应说明承载与风压校核依据。';
-  return [...base, wall];
+  return base;
 }
 
 function getSafetyItems(familyRisk, budgetTier) {
