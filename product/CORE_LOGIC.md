@@ -2,7 +2,7 @@
 # CORE_LOGIC.md
 > 本文件是系统核心逻辑的唯一权威来源。
 > 所有迭代决策必须对照此文件，发现冲突时以此文件为准。
-> 建立时间：2026-04-07 | 代码基线：v3.9.8（138/138，commit 915db5b）
+> 建立时间：2026-04-07 | 代码基线：v3.9.9（145/145，commit f1026da）
 
 ---
 
@@ -120,10 +120,11 @@
 
 | 废弃项 | 原因 | 替代方案 |
 |--------|------|---------|
-| BUDGET_TIER_GLASS_BASE | 档位倒置，数据错乱 | GLASS_LEVELS级差驱动差价计算 |
+| BUDGET_TIER_GLASS_BASE | 档位倒置，数据错乱 | GLASS_LEVELS 级差驱动（SPEC-02） |
 | getRwRequired() fallback | 死代码（已删除，commit 915db5b）| calculator-v2.js为唯一Rw数据源 |
 | 档位模板式红线生成 | 导致条款错配 | 性能层动态生成 |
-| 冲突提示指令型语言 | 违反原则5 | 改为事实陈述 |
+| 冲突提示指令型语言 | 违反原则5 | 已改为信息呈现型陈述（SPEC-01） |
+| estimateCostDelta(glassKey, tier) | tier 参数语义错误 | 改为 (perf_glass_key, glass_key)（SPEC-03/04） |
 
 ---
 
@@ -140,16 +141,13 @@
 
 ## 八、待执行迭代项
 
-### v3.9.9
-
-| SPEC | 内容 | 依赖 |
-|------|------|------|
-| SPEC-01 | 冲突提示语言修正 | 无 |
-| SPEC-02 | 废弃BUDGET_TIER_GLASS_BASE | 无 |
-| SPEC-03 | shouldShowThermalUpgrade() | SPEC-02 |
-| SPEC-04 | buildThermalUpgradeOutput() | SPEC-03 |
-| SPEC-05 | 红线清单补全 | SPEC-03/04 |
-| SPEC-06 | 测试补全（目标138→143） | SPEC-01~05 |
+### v3.9.9 ✅ 已完成（145/145，commit f1026da）
+- SPEC-01 冲突提示语言修正
+- SPEC-02 废弃 BUDGET_TIER_GLASS_BASE
+- SPEC-03 差价计算基准修正
+- SPEC-04 perf_glass_key 新增
+- SPEC-05 红线清单五条主线补全
+- SPEC-06 测试补全（138→145）
 
 ---
 
