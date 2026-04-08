@@ -556,13 +556,6 @@ function renderChapter2(doc, c2) {
   doc.fillColor(COLORS.text_secondary).fontSize(9).text("K值（传热系数）越低越保温；SHGC（太阳得热系数）越低越隔热，夏季尤为重要。", 55, doc.y, { width: 485 });
   doc.y += 16;
   doc.y = renderMetricBlock(mThermal, doc.y);
-
-  // 产品红线 — 标题+box联合分页判断，避免标题孤儿
-  const _rlH = measureRedLinesHeight(doc, c2.redLines);
-  if (842 - doc.y < _rlH + 60) doc.addPage();
-  drawSectionTitle(doc, "2.4 产品红线（违反以下强制项视为方案不合格）");
-  renderRedLines(doc, c2.redLines);
-  doc.y += 18;
 }
 
 function renderChapter3(doc, c3) {

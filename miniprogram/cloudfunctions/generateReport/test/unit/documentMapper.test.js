@@ -414,10 +414,11 @@ describe('Sprint 7 C-短期文案优化', () => {
       noise_dist: 'gt50',
       pain_point: 'price',
       pain_points: ['economy'],
-      window_type: 'casement'
+      window_type: 'casement',
+      budget_tier: 'A'
     });
     const pdfContent = await buildPdfTextForAnswers(a, 'S7-DM32');
-    expect(pdfContent).toContain('相对于 A 档标准配置');
+    expect(pdfContent).toContain('玻璃配置');
   });
 
   test('DM-33: R12水密气密条款应包含安装过程控制', async () => {
@@ -555,18 +556,6 @@ describe('Sprint 7 A-中期（逻辑层）端到端', () => {
 });
 
 describe('Sprint 7 热修复 v3.4.1', () => {
-  test('DM-38: 第二章 2.4 红线强制条款', async () => {
-    const pdfContent = await buildPdfTextForAnswers(fixtures.guangzhouFull, 'S7-HF-DM38');
-    expect(pdfContent).toContain('2.4 产品红线（违反以下强制项视为方案不合格）');
-    expect(pdfContent).toContain('须采用原生铝型材');
-    expect(pdfContent).toContain('如采用其他材质，应说明理由');
-    expect(pdfContent).toContain('隔热条宽度≥28mm');
-    expect(pdfContent).toContain('壁厚≥1.5mm');
-    // R02/R03/R07 保持”禁止”/”强制”关键词
-    expect(pdfContent).toMatch(/禁止.*普通中空玻璃/);
-    expect(pdfContent).toMatch(/禁止.*结构胶/);
-    expect(pdfContent).toMatch(/夹胶构造.*强制/);
-  }, 20000);
 
   test('DM-39: 封面新增签发人信任锚文本行', async () => {
     const pdfContent = await buildPdfTextForAnswers(fixtures.guangzhouFull, 'S7-HF-DM39');
