@@ -44,7 +44,7 @@ describe('mapToSections', () => {
     const assessment = buildAssessment(fixtures.guangzhouFull);
     const resolved = calculateAll(assessment);
     const sections = mapToSections(resolved, buildAnswers(fixtures.guangzhouFull), 'UNIT-SEC01');
-    const items = (((sections.chapter3 || {}).upgradeOptions || {}).items) || [];
+    const items = (((sections.chapter4 || {}).configSummary || {}).upgradeOptions || []);
     const sound = items.find(x => String(x.name || '').includes('隔音')) || {};
     const thermal = items.find(x => String(x.name || '').includes('热工')) || {};
     const safety = items.find(x => String(x.name || '').includes('安全')) || {};
@@ -66,7 +66,7 @@ describe('mapToSections', () => {
     const assessment = buildAssessment(fixtures.chengduMinimal);
     const resolved = calculateAll(assessment);
     const sections = mapToSections(resolved, buildAnswers(fixtures.chengduMinimal), 'UNIT-SEC03');
-    const label = String((((sections.chapter3 || {}).recommendedConfig || {}).spec || {}).label || '');
+    const label = String((((sections.chapter4 || {}).configSummary || {}).spec || {}).label || '');
     expect(label).toContain('A档');
     expect(label).toContain('经济实用');
   });

@@ -801,18 +801,10 @@ function buildPerformanceChecks(answers) {
   return checks;
 }
 
-function buildChapter4Data(answers, budgetSpec, resolved, riskTrigger, isRisk) {
+function buildChapter4Data(answers, budgetSpec, resolved, riskTrigger, isRisk, sharedRedlineChecklist) {
   const deadline = '请于14个工作日内';
   const family_risk = Array.isArray(answers.family_risk) ? answers.family_risk : [];
-  const safetyForced = ['sliding', 'door_window'].includes(answers.window_type) ||
-    family_risk.includes('child') ||
-    family_risk.includes('elder') ||
-    family_risk.includes('elderly') ||
-    family_risk.includes('large_fixed') ||
-    family_risk.includes('floor_window') ||
-    !!resolved.hasSafetyClause;
   const performanceChecks = buildPerformanceChecks(answers);
-  const redlineChecklist = buildRedlineChecklist(answers, { ...resolved, safetyForced });
 
   return {
     title: '下一步怎么用：问商家什么 & 怎么验收',
@@ -826,7 +818,7 @@ function buildChapter4Data(answers, budgetSpec, resolved, riskTrigger, isRisk) {
       ]
     },
     merchantNotice: {
-      title: '4.1 给商家的说明',
+      content: '本文件第一章为需求诊断，第二章为本案采购技术底线，第三章为采购红线清单。请贵司按照第二章和第三章逐项回应，并在下表中如实填写方案，便于业主横向对比。',
       content: '本文件前两章为本次采购的技术标准，第三章为预算参考档位。请贵司按照第二章的技术指标和第三章的配置基准，在下表中如实填写贵司方案，便于业主横向对比。',
       deadline: `${deadline}将填写完整的表格拍照回传至业主`
     },
@@ -870,7 +862,7 @@ function buildChapter4Data(answers, budgetSpec, resolved, riskTrigger, isRisk) {
     },
     risks: { title: '4.3 风险提示', items: isRisk ? getRiskWarnings(answers, resolved, riskTrigger) : [] },
     acceptance: { title: '4.4 验收节点', nodes: buildAcceptanceNodes(family_risk, answers.window_type) },
-    performanceChecks,
+    redlineChecklist: sharedRedlineChecklist
     redlineChecklist
   };
 }
@@ -1291,6 +1283,14 @@ function mapToSections(resolved, answers, pdfNo) {
     highRatio: isHighRatio,
     budgetConflict: answers.budget_tier === 'A' && (isHighFloor || isHighRatio)
   };
+  const safetyForced = ['sliding', 'door_window'].includes(normalizedAnswers.window_type) ||
+    familyRisk.includes('child') ||
+    familyRisk.includes('elder') ||
+    familyRisk.includes('elderly') ||
+    familyRisk.includes('large_fixed') ||
+    familyRisk.includes('floor_window') ||
+    !!resolved.hasSafetyClause;
+  const sharedRedlineChecklist = buildRedlineChecklist(normalizedAnswers, { ...resolved, safetyForced });
 
   return {
     cover: {
@@ -1358,10 +1358,11 @@ function mapToSections(resolved, answers, pdfNo) {
     },
     
     chapter2: {
+      positionStatement: '以下参数来自第一章的诊断结果，是本案的采购技术底线。商家方案须逐项回应，不达标项须书面说明。',
       metrics: [
         {
           name: '抗风压性能',
-          value: `≥ ${getField(resolved, 'P3')}`, // 修复：使用 getField
+          value: ` ${getField(resolved, 'P3')}`,
           unit: 'kPa',
           std: STANDARDS_MAP.wind_pressure.code,
           level: (getField(resolved, 'P3') >= 3.0 ? '高等级' : '标准等级'),
@@ -1370,7 +1371,7 @@ function mapToSections(resolved, answers, pdfNo) {
         },
         {
           name: '计权隔声量',
-          value: `≥ ${getField(resolved, 'Rw')}`, // 修复：使用 getField
+          value: ` ${getField(resolved, 'Rw')}`,
           unit: 'dB',
           std: STANDARDS_MAP.sound_insulation.code,
           level: (getField(resolved, 'Rw') >= 35 ? '高隔声' : '标准隔声'),
@@ -1379,48 +1380,33 @@ function mapToSections(resolved, answers, pdfNo) {
         },
         {
           name: '热工性能',
-          value: `K≤${getField(resolved, 'K')} W/(m²·K)\nSHGC≤${getField(resolved, 'SHGC')}`,
+          value: `K${getField(resolved, 'K')} W/(m²K)\nSHGC${getField(resolved, 'SHGC')}`,
           unit: '',
           std: STANDARDS_MAP.thermal.code,
           level: getClimateLabel(climateZone),
           note: `${getClimateName(climateZone)}区 ${getThermalModifier(normalizedAnswers)}`,
           isCore: painTag.coreMetric === 'SHGC'
         }
-      ],
-      budgetSpec: budgetSpec,
-      redLines: {
-        forbidden: getForbiddenItems(normalizedAnswers.budget_tier, getField(resolved, 'K'), window_features, getField(resolved, 'Rw')),
-        safetyItems: safety.items,
-        safetyBudgetWarning: safety.budgetWarning
-      }
+      ]
     },
     
     chapter3: {
-      recommendedConfig: { title: '3.1 推荐配置方案', spec: { ...budgetSpec, label: getTierLabel(String(answers.budget_tier || 'B').toUpperCase()) } },
-      budgetComparison: {
-        title: '3.2 预算档位对比',
-        currentTier: answers.budget_tier,
-        tiers: [
-          { key: 'A', label: getTierLabel('A'), priceRange: BUDGET_SPEC.A.price_range, barRatio: BUDGET_SPEC.A.bar_ratio },
-          { key: 'B', label: getTierLabel('B'), priceRange: BUDGET_SPEC.B.price_range, barRatio: BUDGET_SPEC.B.bar_ratio },
-          { key: 'C', label: getTierLabel('C'), priceRange: BUDGET_SPEC.C.price_range, barRatio: BUDGET_SPEC.C.bar_ratio },
-          { key: 'D', label: getTierLabel('D'), priceRange: BUDGET_SPEC.D.price_range, barRatio: BUDGET_SPEC.D.bar_ratio }
-        ]
-      },
-      conflictAlert: buildChapter3ConflictAlert(budgetSpec, resolved),
-      upgradeOptions: {
-        title: '3.4 可选升级项',
-        items: getUpgrades(normalizedAnswers, resolved),
-        l2_entry: {
-          text: '以下升级项未包含在当前标准中。如需评估哪项性价比最高、或商家能否在报价中实现，可咨询李Sir',
-          action: '预约咨询 →',
-          variant: 'outlined'
-        }
-      }
+      title: '本案采购红线清单',
+      sourceNote: '以下红线由第一章性能诊断结果动态生成，每条对应一项可量化指标。低于任一项即视为方案不合格。',
+      redlineChecklist: sharedRedlineChecklist,
+      forbidden: getForbiddenItems(normalizedAnswers.budget_tier, getField(resolved, 'K'), window_features, getField(resolved, 'Rw')),
+      safetyItems: safety.items,
+      safetyBudgetWarning: safety.budgetWarning,
+      conflictAlert: buildChapter3ConflictAlert(budgetSpec, resolved)
     },
     
     chapter4: {
-      ...buildChapter4Data(answers, budgetSpec, resolved, riskTrigger, isRisk),
+      configSummary: {
+        spec: { ...budgetSpec, label: getTierLabel(String(answers.budget_tier || 'B').toUpperCase()) },
+        conflictAlert: buildChapter3ConflictAlert(budgetSpec, resolved),
+        upgradeOptions: getUpgrades(normalizedAnswers, resolved)
+      },
+      ...buildChapter4Data(answers, budgetSpec, resolved, riskTrigger, isRisk, sharedRedlineChecklist),
       isRisk: isRisk,
       riskTrigger: riskTrigger
     },
