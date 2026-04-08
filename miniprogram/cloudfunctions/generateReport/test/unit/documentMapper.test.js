@@ -398,8 +398,8 @@ describe('Sprint 7 C-短期文案优化', () => {
 
   test('DM-30: 参数表气密水密格式应为推荐/最低分层', async () => {
     const pdfContent = await buildPdfTextForAnswers(fixtures.guangzhouFull, 'S7-DM30');
-    expect(pdfContent).toContain('推荐目标值：≥6级（最低可接受值：4级，需业主书面确认）');
-    expect(pdfContent).toContain('推荐目标值：≥6级（最低可接受值：5级，需业主书面确认）');
+    expect(pdfContent).toContain('推荐目标值：≥6级');
+    expect(pdfContent).toContain('推荐目标值：≥6级');
   });
 
   test('DM-31: 1.2节叙述段应包含弹性文案', async () => {

@@ -517,12 +517,8 @@ function buildNeedsTable(resolved, answers, sealGrades) {
 
   const sg = sealGrades || { airMin: 4, airRec: 4, airGap: 0, waterMin: 3, waterRec: 4, waterGap: 1, isFixed: false };
   const fixedNote = sg.isFixed ? '（固定窗推荐值+1级）' : '';
-  const airValue = sg.airGap > 0
-    ? `推荐目标值：≥${sg.airRec}级（最低可接受值：${sg.airMin}级，需业主书面确认）`
-    : `推荐目标值：≥${sg.airRec}级`;
-  const waterValue = sg.waterGap > 0
-    ? `推荐目标值：≥${sg.waterRec}级（最低可接受值：${sg.waterMin}级，需业主书面确认）`
-    : `推荐目标值：≥${sg.waterRec}级`;
+  const airValue = `推荐目标值：≥${sg.airRec}级`;
+  const waterValue = `推荐目标值：≥${sg.waterRec}级`;
 
   return [
     {
@@ -845,7 +841,7 @@ function buildPerformanceChecks(answers) {
 }
 
 function buildChapter4Data(answers, budgetSpec, resolved, riskTrigger, isRisk, sharedRedlineChecklist) {
-  const deadline = '请于14个工作日内';
+  const deadline = '请于3-5个工作日内';
   const family_risk = Array.isArray(answers.family_risk) ? answers.family_risk : [];
   const performanceChecks = buildPerformanceChecks(answers);
 
