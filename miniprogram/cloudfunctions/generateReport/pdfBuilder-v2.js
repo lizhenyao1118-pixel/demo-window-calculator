@@ -566,286 +566,58 @@ function renderChapter2(doc, c2) {
 }
 
 function renderChapter3(doc, c3) {
-  drawChapterHeader(doc, "第三", "产品配置与预算方案", COLORS.brand_navy);
+  drawChapterHeader(doc, "第三", "本案采购红线清单", COLORS.brand_navy);
 
-  const isDualTier = c3.is_dual_tier === true && Array.isArray(c3.recommendedConfig);
-
-  if (isDualTier) {
-    const [currentConfig, recommendedConfig] = c3.recommendedConfig;
-
-    // 渲染 currentConfig 区块（A档，「您的选择」）
-    drawSectionTitle(doc, `3.1 推荐配置方案（您的选择 · ${currentConfig.label}）`);
-
-    const currentSpec = currentConfig.spec || {};
-
-    // 格式化函数：将spec对象转换为可读字符串
-    function formatSpecField(field, defaultValue) {
-      if (typeof field === 'string') {
-        return field;
-      }
-      if (field && typeof field === 'object') {
-        if (field.min_wall_thickness) {
-          return `壁厚≥${field.min_wall_thickness}mm`;
-        }
-        if (field.min_load_kg) {
-          return `铰链负载≥${field.min_load_kg}kg`;
-        }
-        if (field.layers) {
-          return `${field.layers}道密封（${field.material}）`;
-        }
-      }
-      return defaultValue;
-    }
-
-    const currentRows = [
-      { label: "型材", value: formatSpecField(currentSpec.profile, "断桥铝，壁厚≥1.5mm"), h: 22 },
-      { label: "玻璃", value: currentSpec.glass || "夹胶中空玻璃", h: 22 },
-      { label: "五金", value: formatSpecField(currentSpec.hardware, "多点锁传动"), h: 22 },
-      { label: "密封", value: formatSpecField(currentSpec.seal, "EPDM胶条，2道密封"), h: 22 }
-    ];
-
-    let yRow = doc.y;
-    currentRows.forEach((row, i) => {
-      doc.rect(55, yRow, 68, row.h).fill(COLORS.brand_navy);
-      doc.rect(123, yRow, 417, row.h).fill(i % 2 === 0 ? COLORS.bg_card : "#FFFFFF");
-      doc.fillColor("#FFFFFF").fontSize(9.5).text(row.label, 63, yRow + 7);
-      doc.fillColor(COLORS.text_body).fontSize(10.5).text(row.value, 133, yRow + 6, { width: 400 });
-      yRow += row.h;
-    });
-    doc.y = yRow + 15;
-
-    // 渲染 recommendedConfig 区块（B档，「推荐升级方案」）
-    drawSectionTitle(doc, `推荐升级方案 · ${recommendedConfig.label}`);
-
-    const recommendedSpec = recommendedConfig.spec || {};
-
-    const recommendedRows = [
-      { label: "型材", value: formatSpecField(recommendedSpec.profile, "断桥铝，壁厚≥1.6mm"), h: 22 },
-      { label: "玻璃", value: recommendedSpec.glass || "夹胶中空玻璃（6+0.76PVB+6+12Ar+5）", h: 22 },
-      { label: "五金", value: formatSpecField(recommendedSpec.hardware, "多点锁传动"), h: 22 },
-      { label: "密封", value: formatSpecField(recommendedSpec.seal, "EPDM胶条，3道密封"), h: 22 }
-    ];
-
-    yRow = doc.y;
-    recommendedRows.forEach((row, i) => {
-      doc.rect(55, yRow, 68, row.h).fill(COLORS.brand_navy);
-      doc.rect(123, yRow, 417, row.h).fill(i % 2 === 0 ? COLORS.bg_card : "#FFFFFF");
-      doc.fillColor("#FFFFFF").fontSize(9.5).text(row.label, 63, yRow + 7);
-      doc.fillColor(COLORS.text_body).fontSize(10.5).text(row.value, 133, yRow + 6, { width: 400 });
-      yRow += row.h;
-    });
-    doc.y = yRow + 15;
-
-    // 升级原因
-    if (Array.isArray(recommendedConfig.upgradeReasons) && recommendedConfig.upgradeReasons.length > 0) {
-      doc.fillColor(COLORS.brand_navy).fontSize(11).text("升级优势说明", 55, doc.y + 5);
-      doc.y += 20;
-
-      recommendedConfig.upgradeReasons.forEach((reason, i) => {
-        doc.fillColor(COLORS.text_body).fontSize(10);
-        doc.text(`• ${reason}`, 63, doc.y, { width: 477 });
-        doc.y += 18;
-      });
-      doc.y += 10;
-    }
-
-    // 差价说明
-    if (recommendedConfig.costDelta) {
-      const costDelta = recommendedConfig.costDelta;
-      doc.fillColor(COLORS.brand_navy).fontSize(11).text("成本影响", 55, doc.y + 5);
-      doc.y += 20;
-
-      doc.fillColor(COLORS.text_body).fontSize(10);
-      doc.text(`预计成本增加：${costDelta.label || '待定'}`, 63, doc.y);
-      doc.y += 18;
-
-      if (costDelta.note) {
-        doc.fillColor(COLORS.text_subtle).fontSize(9);
-        doc.text(costDelta.note, 63, doc.y);
-        doc.y += 15;
-      }
-
-      if (costDelta.disclaimer) {
-        doc.fillColor(COLORS.text_subtle).fontSize(8);
-        doc.text(costDelta.disclaimer, 63, doc.y);
-        doc.y += 18;
-      }
-    }
-    doc.y = yRow + 10;
-  } else {
-    // 单档显示（原有逻辑）
-    const spec = (c3.recommendedConfig && c3.recommendedConfig.spec) || { label: "舒适型 B档" };
-    drawSectionTitle(doc, `3.1 推荐配置方案（${spec.label}）`);
-
-    // 配置表（复用第二章数据）
-    const glassValue = (spec.glass || "5Low-E+12Ar+5") + (spec.glass_reason ? `\n（来源：${spec.glass_reason}）` : "");
-    const rows = [
-      { label: "型材", value: spec.profile || "断桥铝，壁厚≥1.6mm", h: 22 },
-      { label: "玻璃", value: glassValue, h: spec.glass_reason ? 44 : 22 },
-      { label: "五金", value: spec.hardware || "多点锁传动", h: 22 },
-      { label: "密封", value: spec.seal || "EPDM胶条，2道密封", h: 22 }
-    ];
-
-    let yRow = doc.y;
-    rows.forEach((row, i) => {
-      doc.rect(55, yRow, 68, row.h).fill(COLORS.brand_navy);
-      doc.rect(123, yRow, 417, row.h).fill(i % 2 === 0 ? COLORS.bg_card : "#FFFFFF");
-      doc.fillColor("#FFFFFF").fontSize(9.5).text(row.label, 63, yRow + 7);
-      doc.fillColor(COLORS.text_body).fontSize(10.5).text(row.value, 133, yRow + 6, { width: 400 });
-      yRow += row.h;
-    });
-    doc.y = yRow + 25;
+  // 渲染说明文字
+  if (c3.sourceNote) {
+    doc.fillColor(COLORS.text_subtle).fontSize(9)
+      .text(c3.sourceNote, 55, doc.y + 5, { width: 485 });
+    doc.y += 25;
   }
 
-  // 价格横条图
-  drawSectionTitle(doc, "3.2 预算档位对比");
-  const tiers = (c3.budgetComparison && c3.budgetComparison.tiers) || [
-    { key: "A", label: "经济实用 A档", priceRange: "600-800元/㎡", barRatio: 0.35 },
-    { key: "B", label: "舒适均衡 B档", priceRange: "800-1200元/㎡", barRatio: 0.55 },
-    { key: "C", label: "品质进阶 C档", priceRange: "1200-1800元/㎡", barRatio: 0.75 },
-    { key: "D", label: "定制高端 D档", priceRange: "1800+元/㎡", barRatio: 1.0 }
-  ];
-  const currentTier = (c3.budgetComparison && c3.budgetComparison.currentTier) || "B";
-  
-  const barMaxW = 280;
-  let y = doc.y;
+  // A节：禁止项
+  const forbidden = c3.forbidden || [];
+  if (forbidden.length > 0) {
+    drawSectionTitle(doc, "3.1 禁止项（方案必须全部满足）");
 
-  const tierDesc = {
-    A: '基本满足常规隔声；热工中等',
-    B: '较好满足主干道隔声；Low-E 热工',
-    C: '舒适满足高架/轨道隔声；系统窗热工',
-    D: '从容满足各类指标；被动式水准'
-  };
-  
-  tiers.forEach(tier => {
-    const isCur = tier.key === currentTier;
-    const barW = Math.round(barMaxW * (tier.barRatio || 0.5));
-    
-    // 标签
-    doc.fillColor(isCur ? COLORS.brand_blue : COLORS.text_secondary).fontSize(10)
-      .text(tier.label, 55, y + 4);
-    
-    // 灰色底座
-    doc.rect(135, y, barMaxW, 16).fill("#EEEEEE");
-    
-    // 档位条
-    const fillColor = isCur ? COLORS.brand_blue : (COLORS[`tier_${tier.key}`] || COLORS.tier_inactive);
-    doc.rect(135, y, barW, 16).fill(fillColor, isCur ? 1.0 : 0.6);
-    
-    if (isCur) {
-      doc.rect(135, y, barW, 16).stroke(COLORS.brand_navy);
-      doc.fillColor("#FFFFFF").fontSize(9).text("▶ 当前选择", 141, y + 4);
-    }
-    
-    // 价格
-    doc.fillColor(isCur ? COLORS.brand_navy : COLORS.text_secondary).fontSize(9)
-      .text(tier.priceRange, 425, y + 4);
-    if (tierDesc[tier.key]) {
-      doc.fillColor(COLORS.text_light).fontSize(8).text(tierDesc[tier.key], 425, y + 16, { width: 120 });
-    }
-    
-    y += 32;
-  });
-  
-  doc.fillColor(COLORS.text_light).fontSize(9)
-    .text("* 价格为市场参考值（元/㎡），差异>30%时谨慎选择最低价", 55, y + 5);
-  doc.y = y + 25;
+    forbidden.forEach((item, i) => {
+      const text = typeof item === 'string' ? item : String(item);
+      const rowH = 26;
+      const bgColor = i % 2 === 0 ? COLORS.bg_card : "#FFFFFF";
 
-  if (c3.conflictAlert) {
-    drawSectionTitle(doc, `3.3 ${c3.conflictAlert.title || "配置兼容性检查"}`);
-
-    const hasItems = Array.isArray(c3.conflictAlert.items) && c3.conflictAlert.items.length > 0;
-    if (hasItems) {
-      const severity = c3.conflictAlert.severity || 'warning';
-      const leftColor = severity === 'error' ? COLORS.risk_red : severity === 'warning' ? "#E67E22" : COLORS.safe_green;
-      const bgColor = severity === 'error' ? COLORS.risk_red_bg : severity === 'warning' ? "#FEF9E7" : COLORS.safe_green_bg;
-
-      const itemLines = (c3.conflictAlert.items || []).length;
-      const extraH = c3.conflictAlert.cost_estimate ? 16 : 0;
-      const boxH = 18 + itemLines * 14 + extraH + 12;
-
-      doc.rect(55, doc.y, 5, boxH).fill(leftColor);
-      doc.rect(60, doc.y, 480, boxH).fill(bgColor);
-
-      let yy = doc.y + 10;
-      const alertTitle = severity === 'warning' ? `⚠️ ${c3.conflictAlert.title || "配置升级提醒"}` : (c3.conflictAlert.title || "配置升级提醒");
-      doc.fillColor(leftColor).fontSize(12).text(alertTitle, 70, yy);
-      yy += 18;
-
-      (c3.conflictAlert.items || []).forEach((item) => {
-        doc.fillColor(COLORS.text_body).fontSize(10).text(`· ${item}`, 70, yy, { width: 460 });
-        yy += 14;
-      });
-
-      if (c3.conflictAlert.cost_estimate) {
-        yy += 2;
-        doc.fillColor(leftColor).fontSize(10).text(c3.conflictAlert.cost_estimate, 70, yy, { width: 460 });
-        yy += 14;
-      }
-
-      doc.y = doc.y + boxH + 12;
-    } else if (c3.conflictAlert.noConflictText) {
-      const text = String(c3.conflictAlert.noConflictText || '');
-      const boxH = 44;
-      doc.rect(55, doc.y, 5, boxH).fill(COLORS.safe_green);
-      doc.rect(60, doc.y, 480, boxH).fill(COLORS.safe_green_bg);
-      doc.fillColor(COLORS.safe_green).fontSize(12).text("✓ 配置兼容性检查", 70, doc.y + 10);
-      doc.fillColor(COLORS.text_body).fontSize(10).text(text, 70, doc.y + 26, { width: 460 });
-      doc.y = doc.y + boxH + 12;
-    }
+      doc.rect(55, doc.y, 485, rowH).fill(bgColor);
+      doc.fillColor(COLORS.risk_red).fontSize(11).text("✕", 65, doc.y + 6);
+      doc.fillColor(COLORS.text_body).fontSize(10).text(text, 85, doc.y + 6, { width: 445 });
+      doc.y += rowH;
+    });
+    doc.y += 15;
   }
 
-  // 可选升级项 — 分页保护：计算实际块高度
-  const upgrades = (c3.upgradeOptions && c3.upgradeOptions.items) || [
-    { name: "隔音升级+", desc: "Rw基础上+5dB，需三玻两腔", costHint: "+约180元/㎡", stars: 4 },
-    { name: "热工升级+", desc: "K值降0.3，需注胶式断桥", costHint: "+约120元/㎡", stars: 3 },
-    { name: "安全升级+", desc: "夹胶玻璃+儿童限位器", costHint: "+约80元/㎡", stars: 5 }
-  ];
+  // B节：安全底线
+  const safetyItems = c3.safetyItems || [];
+  if (safetyItems.length > 0) {
+    drawSectionTitle(doc, "3.2 安全底线（有老幼家庭必须满足）");
 
-  const cardW = (485 - 16) / 3;
-  // 先算出所有卡片中最高的 desc 高度，统一卡片高度
-  const cardPadding = { top: 8, nameH: 20, gap: 4, bottom: 24 };
-  let maxDescH = 0;
-  upgrades.forEach((u) => {
-    doc.fontSize(9);
-    const h = doc.heightOfString(u.desc || '', { width: cardW - 16 });
-    if (h > maxDescH) maxDescH = h;
-  });
-  const cardH = cardPadding.top + cardPadding.nameH + cardPadding.gap + maxDescH + cardPadding.bottom + 16;
+    safetyItems.forEach((item, i) => {
+      const text = typeof item === 'string' ? item : String(item);
+      const rowH = 26;
+      const bgColor = i % 2 === 0 ? COLORS.bg_card : "#FFFFFF";
 
-  // V-03 fix: 动态计算升级块高度
-  const _hasCtaBlock = !!(c3.upgradeOptions && c3.upgradeOptions.l2_entry && c3.upgradeOptions.l2_entry.action);
-  const _upgradeBlockH = 30 + 12 + cardH + 12 + (_hasCtaBlock ? 70 : 0);
-  if (doc.y + _upgradeBlockH > doc.page.height - 60) {
-    doc.addPage();
-  }
+      doc.rect(55, doc.y, 485, rowH).fill(bgColor);
+      doc.fillColor(COLORS.warn_orange).fontSize(11).text("⚠", 65, doc.y + 6);
+      doc.fillColor(COLORS.text_body).fontSize(10).text(text, 85, doc.y + 6, { width: 445 });
+      doc.y += rowH;
+    });
+    doc.y += 15;
 
-  drawSectionTitle(doc, "3.4 可选升级项");
-  doc.y += 12;
-
-  const cardY = doc.y;
-  upgrades.forEach((u, i) => {
-    const x = 55 + i * (cardW + 8);
-    doc.roundedRect(x, cardY, cardW, cardH, 4).stroke(COLORS.brand_blue);
-    doc.fillColor(COLORS.brand_navy).fontSize(12).text(u.name, x + 8, cardY + cardPadding.top);
-    doc.fillColor(COLORS.text_body).fontSize(9).text(u.desc, x + 8, cardY + cardPadding.top + cardPadding.nameH + cardPadding.gap, { width: cardW - 16 });
-    doc.fillColor(COLORS.warn_orange).fontSize(9.5).text(u.costHint, x + 8, cardY + cardH - 20);
-    const stars = "★".repeat(u.stars || 3) + "☆".repeat(5 - (u.stars || 3));
-    doc.fillColor(COLORS.warn_orange).fontSize(9).text(stars, x + cardW - 50, cardY + cardH - 18);
-  });
-  doc.y = cardY + cardH + 12;
-
-  if (c3.upgradeOptions && c3.upgradeOptions.l2_entry && c3.upgradeOptions.l2_entry.action) {
-    const ctaY = doc.y;
-    doc.rect(55, ctaY, 485, 60)
-       .strokeColor('#1B3F72')
-       .lineWidth(0.8)
-       .stroke();
-    doc.fontSize(10).fillColor('#1B3F72')
-       .text(c3.upgradeOptions.l2_entry.text || '如需评估哪项升级性价比最高，可咨询李Sir', 65, ctaY + 14, { width: 465 });
-    doc.fontSize(10).fillColor('#4A7FBF')
-       .text(c3.upgradeOptions.l2_entry.action, 65, ctaY + 36, { width: 465 });
-    doc.y = ctaY + 70;
+    // 预算警告（如有）
+    if (c3.safetyBudgetWarning) {
+      const warningText = String(c3.safetyBudgetWarning);
+      doc.rect(55, doc.y, 5, 40).fill(COLORS.warn_orange);
+      doc.rect(60, doc.y, 480, 40).fill("#FEF9E7");
+      doc.fillColor(COLORS.warn_orange).fontSize(10).text(warningText, 70, doc.y + 12, { width: 460 });
+      doc.y += 55;
+    }
   }
 }
 
