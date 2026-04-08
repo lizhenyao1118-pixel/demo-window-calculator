@@ -1,4 +1,4 @@
-# product/CHANGELOG.md
+# product/PRODUCT_CHANGELOG.md
 # 门窗诊断系统 · 产品决策历史
 > 记录所有重大产品决策、架构发现、验收结论。
 > 技术实现变更记录在代码仓库，此处只记录决策层事件。

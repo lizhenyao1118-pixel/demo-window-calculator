@@ -1,4 +1,4 @@
-# product/PLAYBOOK.md
+# product/PRODUCT_PLAYBOOK.md
 # 门窗诊断系统 · 执行手册
 > 标准化产品工作的操作流程。新任务开始前先查此手册，确认适用的执行路径。
 > 最后更新：2026-04-05
@@ -162,9 +162,9 @@ P1问题：[列表或"无"]
 
 | 文件 | 更新时机 | 更新内容 |
 |------|---------|---------|
-| `CLAUDE.md` | 版本状态变化 / 决策变更 | 当前状态快照、已确认决策、技术债列表 |
-| `CHANGELOG.md` | 每个重大决策事件后 | 新增条目，包含触发、发现、决议 |
-| `PLAYBOOK.md` | 流程优化后 | 更新或新增PLAY条目 |
+| `PRODUCT_CLAUDE.md` | 版本状态变化 / 决策变更 | 当前状态快照、已确认决策、技术债列表 |
+| `PRODUCT_CHANGELOG.md` | 每个重大决策事件后 | 新增条目，包含触发、发现、决议 |
+| `PRODUCT_PLAYBOOK.md` | 流程优化后 | 更新或新增PLAY条目 |
 
 ### CHANGELOG条目格式
 ```markdown
@@ -176,3 +176,31 @@ P1问题：[列表或"无"]
 **决议**：[最终采纳的方案]
 **原则确立**（如有）：[从此事件提炼的通用原则]
 ```
+
+---
+
+## PLAY-07：迭代收尾清单
+
+每个 SPEC 执行完成后，按顺序执行以下动作，全部完成才算该 SPEC 关闭：
+
+1. [ ] npm test 通过（无退化）
+2. [ ] git commit（含 SPEC 编号的 commit message）
+3. [ ] 更新 product/PRODUCT_CORE_LOGIC.md（或 CORE_LOGIC.md）
+       · 基线版本号和 commit hash
+       · 废弃项（如有）
+       · 待执行迭代项状态更新
+4. [ ] 更新 product/PRODUCT_CLAUDE.md（版本号、架构变更说明）
+5. [ ] 更新 content-ops/CONTENTOPS_CHANGELOG.md（追加本次变更记录）
+6. [ ] 将最新 CORE_LOGIC.md 上传至 Claude.ai Project（替换旧版）
+
+---
+
+## PLAY-08：文档操作规范
+
+**所有文档变更指令必须包含完整相对路径，禁止仅使用文件名。**
+
+正确示例：在 product/PRODUCT_PLAYBOOK.md 末尾追加…
+错误示例：在 PLAYBOOK.md 末尾追加…
+
+原因：product/ 和 content-ops/ 存在同名文件，
+      仅用文件名会导致写入错误目录，且难以发现。

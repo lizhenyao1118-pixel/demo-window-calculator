@@ -1,4 +1,4 @@
-# product/CLAUDE.md
+# product/PRODUCT_CLAUDE.md
 # 门窗诊断系统 · AI协作上下文
 > 本文件是Claude在此Project的操作手册。每次对话开始时优先读取。
 > 最后更新：2026-04-07 · sprint8/a-8a
@@ -27,13 +27,13 @@
 
 | 项目 | 状态 |
 |------|------|
-| 版本号 | v3.9.8 · sprint8/a-8a |
-| 测试覆盖 | 138/138 passing（commit 915db5b，删除getRwRequired死代码）|
+| 版本号 | v4.0.1 · sprint8/a-8a |
+| 测试覆盖 | 145/145 passing（commit 3fc2560） |
 | 核心逻辑基线 | 已建立，见 CORE_LOGIC.md |
 | 生产部署 | generateReport + createTender 已上线 |
 | 超时设置 | 20秒 |
-| PDF页数 | 9页（V-01~V-06视觉修复完成） |
-| 商家侧 | B-13供应商报价录入已完成（Sprint 8A） |
+| PDF页数 | 9页 |
+| 四章重构 | v4.0.1 完成，ch2甲方定位/ch3红线清单（禁止项+安全底线）/ch4配置推导 |
 
 ---
 
@@ -156,3 +156,29 @@
 验收严重级别：P0（发布阻塞）/ P1（推广前修复）/ P2（迭代优化）
 
 已知通过验收的视觉修复：V-01 ~ V-06（深蓝封面背景、预算可视化条形图、红线视觉样式）
+
+## 十一、技术执行工具选择规范
+
+### 判断原则
+
+| 场景特征 | 使用工具 |
+|---------|---------|
+| 单文件、单位置、新增代码、改动<30行 | Claude Code |
+| 多文件同步、涉及删除/替换、多步骤有依赖、改动>30行 | PowerShell + Python 脚本 |
+
+### Claude Code 适用场景
+- 单一明确任务，一句话可完整描述
+- 只新增代码，不涉及删除或替换现有逻辑
+- 读取文件内容用于分析（只读任务）
+
+### PowerShell + Python 适用场景
+- createTender / generateReport 双文件同步改动
+- 需要精确行号的替换/删除操作
+- 3步以上有顺序依赖的改动
+- Claude Code 出现「读文件死循环」时立即切换
+
+### PowerShell 操作规范（Windows 环境）
+- 多行脚本统一用 @'...'@ | Out-File -FilePath xxx.py -Encoding utf8
+- head 替换为 Select-Object -First N
+- 大段替换优先用行号切片，不用字符串匹配
+- 字符串匹配替换必须加 assert old in text 前置校验

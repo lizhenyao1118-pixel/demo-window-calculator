@@ -1,4 +1,4 @@
-# 内容运营层 · CLAUDE.md
+# 内容运营层 · CONTENTOPS_CLAUDE.md
 # 每次内容对话启动前必读，不得跳过
 
 ## 一、IP核心资产（创作锚点）
@@ -96,7 +96,7 @@ Step 8 · 配图生成
 ━━━━━━━━━━━━━━━━━━
 ```
 
-**发布门控六项（全部✅方可进Step 7）：**
+**发布门控七项（全部✅方可进Step 7）：**
 ```
 □ 标题与内容逻辑咬合
 □ 高风险断言已核查或降调
@@ -104,6 +104,11 @@ Step 8 · 配图生成
 □ CTA转化路径在平台内可行（小红书不支持外链跳转）
 □ 李Sir品牌位置清晰
 □ 评论区预埋问题已确认
+□ 标题有效性校验
+  · 是否有场景/行为/决策阶段锚点
+    （目标用户能在0.5秒内认出"这说的是我"）
+  · 是否制造了认知缺口（用户想知道下一句是什么）
+  · 公众号额外确认：标题脱离封面图能否独立成立
 ```
 
 ---
@@ -158,7 +163,7 @@ Claude是有独立判断义务的执行合伙人，不是工具。
 
 **认知复利机制**
 每次校准不停留在聊天记录，必须完成三层沉淀：
-用户反馈偏差 → AI识别模式 → 三层文档固化（CLAUDE.md / PLAYBOOK.md / CHANGELOG.md）
+用户反馈偏差 → AI识别模式 → 三层文档固化（CONTENTOPS_CLAUDE.md / CONTENTOPS_PLAYBOOK.md / CONTENTOPS_CHANGELOG.md）
 三要素缺一不可：不反馈 · 不提炼 · 不写文档，经验无法复用
 
 触发升版条件：连续2次执行偏差 / 新场景无法覆盖 / 李Sir主动提出
@@ -171,11 +176,11 @@ Claude是有独立判断义务的执行合伙人，不是工具。
       不得直接给方案——Post 05账号简介事件已记录
 - [ ] 内容审核带宽：李Sir唯一审核，每周3篇节奏下
       Step 4核查质量需持续监控
-- [ ] Post 03/04执行记录不完整，待补录至CHANGELOG
+- [ ] Post 03/04执行记录不完整，待补录至CONTENTOPS_CHANGELOG.md
 
 ## 十、内容线预判扫描清单
 每篇内容SOP启动前，Claude确认：
-- [ ] content-ops/CLAUDE.md已读取（IP定位已对齐）
+- [ ] content-ops/CONTENTOPS_CLAUDE.md已读取（IP定位已对齐）
 - [ ] 本篇在内容漏斗中的层级（流量/信任/转化）
 - [ ] 本篇CTA的转化路径在平台内是否可行
 - [ ] 本篇是否有前篇埋点需要承接
@@ -186,7 +191,7 @@ Claude是有独立判断义务的执行合伙人，不是工具。
 Claude.ai Project存储精简版，每次本文件更新后：
 1. 检查变更是否影响"必须自动载入"的内容
 2. 如有影响，同步更新Claude.ai Project的系统提示
-3. 在CHANGELOG.md记录同步动作
+3. 在CONTENTOPS_CHANGELOG.md记录同步动作
 
 ---
 
@@ -197,11 +202,11 @@ Claude.ai Project存储精简版，每次本文件更新后：
 
 | 触发条件 | 更新目标 |
 |---------|---------|
-| 任意Post完成Step 8 | CHANGELOG追加发布记录 |
-| SOP执行出现偏差并校准 | CLAUDE.md对应条目 + CHANGELOG升版记录 |
-| 新决策/方法论产生 | PLAYBOOK新增条目（含是什么/为什么/适用推论）+ CHANGELOG |
-| 运营策略调整 | CLAUDE.md对应节 + CHANGELOG |
-| 协作原则/流程规范更新 | CLAUDE.md对应节 + CHANGELOG |
+| 任意Post完成Step 8 | CONTENTOPS_CHANGELOG.md追加发布记录 |
+| SOP执行出现偏差并校准 | CONTENTOPS_CLAUDE.md对应条目 + CONTENTOPS_CHANGELOG.md升版记录 |
+| 新决策/方法论产生 | CONTENTOPS_PLAYBOOK.md新增条目（含是什么/为什么/适用推论）+ CONTENTOPS_CHANGELOG.md |
+| 运营策略调整 | CONTENTOPS_CLAUDE.md对应节 + CONTENTOPS_CHANGELOG.md |
+| 协作原则/流程规范更新 | CONTENTOPS_CLAUDE.md对应节 + CONTENTOPS_CHANGELOG.md |
 
 ### 对话结束前出口检查
 每次对话结束时，Claude主动执行：
@@ -216,20 +221,20 @@ Claude.ai Project存储精简版，每次本文件更新后：
 ```
 本次对话产生以下文档变更，请在Claude Code中执行：
 
-CLAUDE.md
+CONTENTOPS_CLAUDE.md
 - 位置：第X节 [节名]
 - 变更：[具体内容，str_replace可直接定位]
 
-PLAYBOOK.md
+CONTENTOPS_PLAYBOOK.md
 - 位置：末尾追加 / 第X节
 - 变更：[新增条目，含是什么/为什么/适用推论]
 
-CHANGELOG.md
+CONTENTOPS_CHANGELOG.md
 - 位置：末尾追加
 - 变更：[日期] [事件名] · [关键记录]
 ```
 
 ### 优先级说明
-- CHANGELOG：每篇Post必追加，无论其他文件是否有变更
-- CLAUDE.md：有规范/流程变更时更新，同时升版本号
-- PLAYBOOK.md：有可复用认知产生时更新，不强制每篇
+- CONTENTOPS_CHANGELOG.md：每篇Post必追加，无论其他文件是否有变更
+- CONTENTOPS_CLAUDE.md：有规范/流程变更时更新，同时升版本号
+- CONTENTOPS_PLAYBOOK.md：有可复用认知产生时更新，不强制每篇
