@@ -58,7 +58,7 @@ const TERM = {
   tierB: '舒适均衡 B档',
   tierC: '品质进阶 C档',
   tierD: '定制高端 D档',
-  suggestUpgrade: '建议升至',
+  suggestUpgrade: '可提供更高安全余量',
   suggestAdjust: '建议适当上调'
 };
 
@@ -978,7 +978,8 @@ function getSafetyItems(familyRisk, budgetTier) {
   }
   
   if ((hasChild || hasElder) && budgetTier === 'A') {
-    budgetWarning = `⚠️ 上述安全配件成本通常超出${getTierLabel('A')}预算，${TERM.suggestUpgrade}${getTierLabel('B')}以保障安全`;
+    const nextSpec = BUDGET_SPEC['B'];
+    budgetWarning = `⚠️ 上述安全配件成本通常超出${getTierLabel('A')}预算，${nextSpec.label}（${nextSpec.price_range}）${TERM.suggestUpgrade}，或预约李Sir审核`;
   }
   
   return { items, budgetWarning };
@@ -1055,7 +1056,7 @@ function getRiskWarnings(answers, resolved, riskTrigger) {
   const spec = BUDGET_SPEC[budget_tier];
   const nextTier = getNextTier(budget_tier);
   const nextSpec = nextTier ? BUDGET_SPEC[nextTier] : null;
-  const upgradeHint = nextSpec ? `建议升至${nextSpec.label}（${nextSpec.price_range}）` : null;
+  const upgradeHint = nextSpec ? `${nextSpec.label}（${nextSpec.price_range}）可提供更高安全余量` : null;
   
   // 风险1：高层风险（16层以上）
   if (riskTrigger.highFloor) {
