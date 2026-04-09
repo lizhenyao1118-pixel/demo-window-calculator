@@ -969,7 +969,10 @@ Page({
         }
         break;
       case 3:
-        if (!formData.noise_type || !formData.noise_dist) {
+        if (!formData.noise_type) {
+          isValid = false; message = '请选择噪声环境类型';
+        } else if (formData.noise_type !== 'quiet' && !formData.noise_dist) {
+          // 安静环境不需要距离，其他类型需要
           isValid = false; message = '请完善噪声环境信息';
         }
         break;

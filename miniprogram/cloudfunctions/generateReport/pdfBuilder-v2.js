@@ -548,7 +548,17 @@ function renderChapter2(doc, c2) {
   doc.y = renderMetricBlock(mP3, doc.y);
 
   drawSectionTitle(doc, "2.2 核心指标");
-  doc.fillColor("#E67E22").fontSize(9).text("★ 基于您选择的隔声优先目标，这是商家方案必须重点回应的指标", 55, doc.y, { width: 485 });
+  const painPointLabelMap = {
+    sound: '隔声优先',
+    heat: '隔热优先',
+    wind: '抗风优先',
+    safety: '安全防护优先',
+    price: '性价比优先',
+    view: '采光视野优先',
+    vent: '通风优先'
+  };
+  const priorityLabel = painPointLabelMap[c2.painPoint] || '性能优先';
+  doc.fillColor("#E67E22").fontSize(9).text(`★ 基于您选择的${priorityLabel}目标，这是商家方案必须重点回应的指标`, 55, doc.y, { width: 485 });
   doc.y += 16;
   doc.y = renderMetricBlock(mCore, doc.y);
 

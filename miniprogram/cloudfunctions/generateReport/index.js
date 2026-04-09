@@ -212,54 +212,67 @@ exports.main = async (event, context) => {
     // 3. 招标与小程序码（先创建招标以便在 PDF 中嵌入二维码）
     let tenderId = null;
     let qrCodeBuffer = null;
+
+    const callWithTimeout = (fn, ms) => Promise.race([
+      fn(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error(`timeout_${ms}ms`)), ms))
+    ]);
+
+    const tenderSections = {
+      parameterTable: {
+        K_target: computed.K_target,
+        Rw_required: computed.Rw_required,
+        SHGC_target: computed.SHGC_target,
+        P3_required: computed.P3_required,
+        safety_items: computed.safety_items
+      },
+      budgetTier: sections && sections.chapter3 && sections.chapter3.budgetComparison ? sections.chapter3.budgetComparison.currentTier : null,
+      climateZone: computed.climateZone || computed.climate_zone || computed.climateZoneCN || null
+    };
+
+    const tenderAnswers = {
+      ...assessmentData,
+      Q1: assessmentData && (assessmentData.Q1 || assessmentData.city) ? (assessmentData.Q1 || assessmentData.city) : adaptedData.city,
+      Q3: assessmentData && (assessmentData.Q3 || assessmentData.floor) ? (assessmentData.Q3 || assessmentData.floor) : adaptedData.floor,
+      Q7: assessmentData && (assessmentData.Q7 || assessmentData.window_type || assessmentData.windowType) ? (assessmentData.Q7 || assessmentData.window_type || assessmentData.windowType) : adaptedData.window_type
+    };
+
     try {
-      const tenderSections = {
-        parameterTable: {
-          K_target: computed.K_target,
-          Rw_required: computed.Rw_required,
-          SHGC_target: computed.SHGC_target,
-          P3_required: computed.P3_required,
-          safety_items: computed.safety_items
-        },
-        budgetTier: sections && sections.chapter3 && sections.chapter3.budgetComparison ? sections.chapter3.budgetComparison.currentTier : null,
-        climateZone: computed.climateZone || computed.climate_zone || computed.climateZoneCN || null
-      };
-
-      const tenderAnswers = {
-        ...assessmentData,
-        Q1: assessmentData && (assessmentData.Q1 || assessmentData.city) ? (assessmentData.Q1 || assessmentData.city) : adaptedData.city,
-        Q3: assessmentData && (assessmentData.Q3 || assessmentData.floor) ? (assessmentData.Q3 || assessmentData.floor) : adaptedData.floor,
-        Q7: assessmentData && (assessmentData.Q7 || assessmentData.window_type || assessmentData.windowType) ? (assessmentData.Q7 || assessmentData.window_type || assessmentData.windowType) : adaptedData.window_type
-      };
-
-      const createTenderRes = await cloud.callFunction({
-        name: 'createTender',
-        data: {
-          reportId: reportId || pdfNo,
-          answers: tenderAnswers,
-          sections: tenderSections,
-          ownerOpenId: OPENID
-        }
-      });
+      const createTenderRes = await callWithTimeout(
+        () => cloud.callFunction({
+          name: 'createTender',
+          data: {
+            reportId: reportId || pdfNo,
+            answers: tenderAnswers,
+            sections: tenderSections,
+            ownerOpenId: OPENID
+          }
+        }),
+        5000
+      );
       tenderId = createTenderRes && createTenderRes.result ? createTenderRes.result.tenderId : null;
       console.log('[Cloud] createTender 返回：', createTenderRes && createTenderRes.result ? createTenderRes.result : null);
       console.log('[Cloud] tenderId：', tenderId);
+
       if (tenderId) {
         try {
-          const qrRes = await cloud.openapi.wxacode.getUnlimited({
-            scene: tenderId,
-            page: 'pages/vendor/fill',
-            width: 280
-          });
+          const qrRes = await callWithTimeout(
+            () => cloud.openapi.wxacode.getUnlimited({
+              scene: tenderId,
+              page: 'pages/vendor/fill',
+              width: 280
+            }),
+            3000
+          );
           qrCodeBuffer = qrRes && qrRes.buffer ? qrRes.buffer : null;
           console.log('[Cloud] 小程序码生成成功，buffer长度：', qrCodeBuffer ? qrCodeBuffer.length : 0);
         } catch (qrErr) {
-          console.error('[Cloud] 小程序码生成失败（非阻断）：', qrErr);
+          console.error('[Cloud] 小程序码生成失败（非阻断）：', qrErr.message);
           qrCodeBuffer = null;
         }
       }
     } catch (e) {
-      console.error('[Cloud] createTender 失败（非阻断）：', e);
+      console.error('[Cloud] createTender 超时或失败（非阻断）：', e.message);
       tenderId = null;
       qrCodeBuffer = null;
     }

@@ -116,26 +116,46 @@ describe('buildRedlineChecklist', () => {
 });
 
 describe('buildPerformanceChecks', () => {
-  test('DM13: sound+thermal - checks.length===3', () => {
+  test('DM13: Rw>30 + thermal - checks.length===3 (隔声+热工)', () => {
     const a = fixtures.createPure(fixtures.guangzhouFull, { pain_points: ['sound', 'thermal'], pain_point: 'sound' });
-    const r = buildPerformanceChecks(a);
+    const resolved = { Rw_required: 35, K_target: 2.0, SHGC_target: 0.35 };
+    const r = buildPerformanceChecks(a, resolved);
     expect(r.length).toBe(3);
     expect(r.some(i => String(i.id).includes('sound'))).toBe(true);
     expect(r.some(i => String(i.id).includes('thermal'))).toBe(true);
   });
 
-  test('DM14: 仅sound - checks.length===2', () => {
+  test('DM14: 仅Rw>30 (无thermal) - checks.length===2 (仅隔声)', () => {
     const a = fixtures.createPure(fixtures.guangzhouFull, { pain_points: ['sound'], pain_point: 'sound' });
-    const r = buildPerformanceChecks(a);
+    const resolved = { Rw_required: 35, K_target: 2.0, SHGC_target: 0.35 };
+    const r = buildPerformanceChecks(a, resolved);
     expect(r.length).toBe(2);
     expect(r.some(i => String(i.id).includes('thermal'))).toBe(false);
   });
 
-  test('DM15: 无sound/thermal - checks.length===1(默认)', () => {
+  test('DM15: Rw<=30 (无隔声需求) - checks.length===1(默认)', () => {
     const a = fixtures.createPure(fixtures.guangzhouFull, { pain_points: ['security'], pain_point: 'safety' });
-    const r = buildPerformanceChecks(a);
+    const resolved = { Rw_required: 28, K_target: 2.0, SHGC_target: 0.35 };
+    const r = buildPerformanceChecks(a, resolved);
     expect(r.length).toBe(1);
     expect(r[0].id).toBe('perf_general');
+  });
+
+  test('DM15b: 热工主诉+Rw>30 - 应包含隔声条目 (SPEC-K修复验证)', () => {
+    const a = fixtures.createPure(fixtures.shanghaiThermal, { pain_points: ['thermal'], pain_point: 'heat' });
+    const resolved = { Rw_required: 33, K_target: 1.8, SHGC_target: 0.30 };
+    const r = buildPerformanceChecks(a, resolved);
+    expect(r.length).toBe(3); // 隔声2条 + 热工1条
+    expect(r.some(i => String(i.id).includes('sound'))).toBe(true);
+    expect(r.some(i => String(i.id).includes('thermal'))).toBe(true);
+  });
+
+  test('DM15c: 抗风主诉+Rw>30 - 应包含隔声条目 (SPEC-K修复验证)', () => {
+    const a = fixtures.createPure(fixtures.guangzhouFull, { pain_points: ['wind'], pain_point: 'wind', noise_type: 'main_road', noise_dist: 'lt20' });
+    const resolved = { Rw_required: 41, K_target: 2.0, SHGC_target: 0.35 };
+    const r = buildPerformanceChecks(a, resolved);
+    expect(r.length).toBe(2); // 仅隔声2条 (无thermal)
+    expect(r.some(i => String(i.id).includes('sound'))).toBe(true);
   });
 });
 

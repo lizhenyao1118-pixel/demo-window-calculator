@@ -761,39 +761,47 @@ function buildRedlineChecklist(answers, resolved) {
   return { mandatory, recommended };
 }
 
-function buildPerformanceChecks(answers) {
+function buildPerformanceChecks(answers, resolved) {
   const checks = [];
+  const Rw_required = Number(getField(resolved, 'Rw') || 0);
+
+  // 隔声专项条目：由 Rw_required > 30 触发，与 pain_point 无关
+  if (Rw_required > 30) {
+    checks.push({
+      id: 'perf_sound_compare',
+      text: '关窗前后分别在室内录制一段环境音（约 10 秒），对比主观感受差异（仅作为居住体验参考，不等同于实验室检测）。如感知差异不明显，可要求商家说明原因或提出改进方案。'
+    });
+    checks.push({
+      id: 'perf_sound_report',
+      text: `要求商家提供同系列产品的隔声检测报告（第三方实验室），核对 Rw 值是否达到本文件 1.2 节${TERM.paramLabel}。无报告的商家应在合同中明确性能承诺。`
+    });
+  }
+
+  // 热工专项条目
   const pp = Array.isArray(answers.pain_points)
     ? answers.pain_points
     : (Array.isArray(answers.painPoint) ? answers.painPoint : []);
   const ppFromSingle = (typeof answers.pain_point === 'string' && answers.pain_point) ? [answers.pain_point] : (typeof answers.painPoint === 'string' ? [answers.painPoint] : []);
   const painList = (pp.length > 0 ? pp : ppFromSingle).filter(Boolean);
 
-  if (painList.includes('sound')) {
-    checks.push({
-      id: 'perf_sound_compare',
-      num: '⑭',
-      text: '关窗前后分别在室内录制一段环境音（约 10 秒），对比主观感受差异（仅作为居住体验参考，不等同于实验室检测）。如感知差异不明显，可要求商家说明原因或提出改进方案。'
-    });
-    checks.push({
-      id: 'perf_sound_report',
-      num: '⑮',
-      text: `要求商家提供同系列产品的隔声检测报告（第三方实验室），核对 Rw 值是否达到本文件 1.2 节${TERM.paramLabel}。无报告的商家应在合同中明确性能承诺。`
-    });
-  }
-
   if (painList.includes('thermal') || painList.includes('heat')) {
     checks.push({
       id: 'perf_thermal_ir',
-      num: '⑯',
       text: '冬季室内外温差明显时，用红外热像仪（或手机热像配件）拍摄窗框接缝处，检查是否存在明显热桥/漏热点。如发现异常，要求商家说明原因并补救。'
     });
   }
 
+  // 动态编号：从 ⑭ 开始连续编号
+  let numCounter = 14;
+  checks.forEach(check => {
+    check.num = numToCircled(numCounter);
+    numCounter++;
+  });
+
   if (checks.length === 0) {
     checks.push({
       id: 'perf_general',
-      num: '⑭',
+      num: numToCircled(14),
       text: '如商家承诺了特定性能指标，建议在合同中明确达标条件及未达标的补救方案。'
     });
   }
@@ -801,10 +809,19 @@ function buildPerformanceChecks(answers) {
   return checks;
 }
 
+// 数字转带圈数字辅助函数 (11-20)
+function numToCircled(n) {
+  const map = {
+    11: '⑪', 12: '⑫', 13: '⑬', 14: '⑭', 15: '⑮',
+    16: '⑯', 17: '⑰', 18: '⑱', 19: '⑲', 20: '⑳'
+  };
+  return map[n] || String(n);
+}
+
 function buildChapter4Data(answers, budgetSpec, resolved, riskTrigger, isRisk, sharedRedlineChecklist) {
   const deadline = '请于14个工作日内';
   const family_risk = Array.isArray(answers.family_risk) ? answers.family_risk : [];
-  const performanceChecks = buildPerformanceChecks(answers);
+  const performanceChecks = buildPerformanceChecks(answers, resolved);
 
   return {
     title: '下一步怎么用：问商家什么 & 怎么验收',
@@ -978,8 +995,7 @@ function getSafetyItems(familyRisk, budgetTier) {
   }
   
   if ((hasChild || hasElder) && budgetTier === 'A') {
-    const nextSpec = BUDGET_SPEC['B'];
-    budgetWarning = `⚠️ 上述安全配件成本通常超出${getTierLabel('A')}预算，${nextSpec.label}（${nextSpec.price_range}）${TERM.suggestUpgrade}，或预约李Sir审核`;
+    budgetWarning = `⚠️ 上述安全配件成本通常超出${getTierLabel('A')}预算覆盖范围；舒适均衡 B档（900–1400 元/㎡）价格区间可覆盖该类配置。`;
   }
   
   return { items, budgetWarning };
