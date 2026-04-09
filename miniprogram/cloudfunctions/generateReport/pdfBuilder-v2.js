@@ -1047,6 +1047,8 @@ async function buildPDF(sections, outputPath, opts) {
   return new Promise((resolve, reject) => {
     try {
       const doc = new PDFDocument({ size: "A4", margin: 0, bufferPages: true });
+      const _origAddPage = doc.addPage.bind(doc);
+      doc.addPage = function(...args) { _origAddPage(...args); doc.y = 45; return doc; };
       const stream = fs.createWriteStream(outputPath);
       
       stream.on('error', reject);
