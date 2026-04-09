@@ -264,7 +264,7 @@ function renderCover(doc, cover) {
      .strokeColor('#E0E0E0').lineWidth(0.5).stroke();
 
   doc.fillColor('#AAAAAA').fontSize(8.5)
-     .text('本文件共四章', 55, structDivY + 10, { width: 485, align: 'center' });
+     .text('本文件共4章', 55, structDivY + 10, { width: 485, align: 'center' });
 
   const chDefs = [
     { num: '01', title: '性能需求诊断',     desc: '生活诉求转化为可量化技术参数' },
@@ -354,7 +354,7 @@ function renderChapter1(doc, c1) {
   if (c1.needsAnalysis && c1.needsAnalysis.needsTable) {
     const rows = Array.isArray(c1.needsAnalysis.needsTable) ? c1.needsAnalysis.needsTable : [];
     const tableTop = doc.y;
-    const colWidths = [90, 130, 265];
+    const colWidths = [90, 145, 250];
     const rowHeight = 28;
     const tableWidth = 485;
     const startX = 55;
@@ -604,6 +604,8 @@ function renderChapter2(doc, c2) {
 }
 
 function renderChapter3(doc, c3) {
+  // M02: 确保章节标题和3.1节在同一页，避免跨页断裂
+  if (842 - doc.y < 200) doc.addPage();
   drawChapterHeader(doc, "第三", "本案采购红线清单", COLORS.brand_navy);
 
   // 渲染说明文字
@@ -1059,9 +1061,9 @@ async function buildPDF(sections, outputPath, opts) {
       
       renderCover(doc, sections.cover);
       doc.addPage(); renderChapter1(doc, sections.chapter1);
-      renderChapter2(doc, sections.chapter2);
-      renderChapter3(doc, sections.chapter3);
-      renderChapter4(doc, sections.chapter4, opts || {});
+      doc.addPage(); renderChapter2(doc, sections.chapter2);
+      doc.addPage(); renderChapter3(doc, sections.chapter3);
+      doc.addPage(); renderChapter4(doc, sections.chapter4, opts || {});
       
       if (sections.attachments && sections.attachments.photos && sections.attachments.photos.length > 0) {
         renderAttachments(doc, sections.attachments);

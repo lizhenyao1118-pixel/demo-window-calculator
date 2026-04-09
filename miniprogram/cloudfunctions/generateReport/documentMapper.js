@@ -1150,8 +1150,8 @@ function getRiskWarnings(answers, resolved, riskTrigger) {
       title: '高层建筑风压风险',
       desc: `您的项目位于第${floor}层（超过16层），风压要求显著高于普通住宅。P3≥${getField(resolved, 'P3')}kPa 需要高强度型材支撑。`,
       suggest: budget_tier === 'A' 
-        ? (upgradeHint ? `${upgradeHint}或预约李Sir审核` : '建议升级预算档位或预约李Sir审核')
-        : '建议选用壁厚≥1.8mm的系统窗，或预约李Sir审核型材截面',
+        ? (upgradeHint ? `${upgradeHint}可覆盖该配置要求` : '建议升级预算档位可覆盖该配置要求')
+        : '建议选用壁厚≥1.8mm的系统窗，可覆盖该配置要求型材截面',
       question: '请提供：① P3检测报告编号；② 型材截面图/壁厚检测报告；③ 固定方式与螺丝间距方案。'
     });
   }
@@ -1162,7 +1162,7 @@ function getRiskWarnings(answers, resolved, riskTrigger) {
       title: '高区位置风压风险', 
       desc: `您的楼层高度比为${(band.ratio * 100).toFixed(0)}%（超过50%），属于${band.label}，风荷载较大。`,
       suggest: budget_tier === 'A'
-        ? (upgradeHint ? `${upgradeHint}或增加型材壁厚` : '建议升级预算档位或增加型材壁厚')
+        ? (upgradeHint ? `${upgradeHint}或加厚型材可提升安全余量` : '建议升级预算档位或加厚型材可提升安全余量')
         : '建议增加型材壁厚，或选择抗风压等级更高的产品系列',
       question: '请明确：① 主受力壁厚承诺值与检测方式；② 角码/注胶工艺；③ 防水排水结构与等压腔方案。'
     });
@@ -1184,7 +1184,7 @@ function getRiskWarnings(answers, resolved, riskTrigger) {
     risks.push({
       title: '儿童安全条款需专项验收',
       desc: '限位器与夹胶玻璃需由第三方核验，不可自验',
-      suggest: '建议预约李Sir到场监督竣工验收',
+      suggest: '限位器与夹胶玻璃需第三方到场核验，不可自验',
       question: '限位器开启角度≤100mm、执手高度≥1500mm如何验收？夹胶玻璃型号与3C标识如何核对？'
     });
   }

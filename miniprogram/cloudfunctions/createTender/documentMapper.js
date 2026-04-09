@@ -1114,7 +1114,7 @@ function getRiskWarnings(answers, resolved, riskTrigger) {
     risks.push({
       title: '儿童安全条款需专项验收',
       desc: '限位器与夹胶玻璃需由第三方核验，不可自验',
-      suggest: '建议预约李Sir到场监督竣工验收',
+      suggest: '限位器与夹胶玻璃需第三方到场核验，不可自验',
       question: '限位器开启角度≤100mm、执手高度≥1500mm如何验收？夹胶玻璃型号与3C标识如何核对？'
     });
   }
