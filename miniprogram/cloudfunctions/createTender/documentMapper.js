@@ -1102,7 +1102,7 @@ function getRiskWarnings(answers, resolved, riskTrigger) {
   if (riskTrigger.budgetConflict) {
     risks.push({
       title: '预算与楼层匹配建议',
-      desc: `您选择${spec.label}（${spec.price_range}）用于第${floor}层（${band.label}），在高层风压要求下仍建议考虑升级以获得更高安全余量`,
+      desc: `您选择${spec.label}（${spec.price_range}）用于第${floor}层（${band.label}），高层风压场景下，升级可获得更高安全余量`,
       suggest: upgradeHint ? `${upgradeHint}，或请李Sir筛选当前档位中高性价比的加厚型材方案` : '建议升级预算档位，或请李Sir筛选当前档位中高性价比的加厚型材方案',
       question: '如果不升级预算，哪些指标可以做到、哪些必须写入合同红线？对应差价如何计算？'
     });
@@ -1114,7 +1114,7 @@ function getRiskWarnings(answers, resolved, riskTrigger) {
     risks.push({
       title: '儿童安全条款需专项验收',
       desc: '限位器与夹胶玻璃需由第三方核验，不可自验',
-      suggest: '限位器与夹胶玻璃需第三方到场核验，不可自验',
+      suggest: '务必要求第三方监理到场核验，不可仅凭商家自验',
       question: '限位器开启角度≤100mm、执手高度≥1500mm如何验收？夹胶玻璃型号与3C标识如何核对？'
     });
   }
