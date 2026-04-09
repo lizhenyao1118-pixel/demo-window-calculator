@@ -1434,7 +1434,10 @@ function mapToSections(resolved, answers, pdfNo) {
           note: `${getClimateName(climateZone)}区 ${getThermalModifier(normalizedAnswers)}`,
           isCore: painTag.coreMetric === 'SHGC'
         }
-      ]
+      ],
+      // SPEC-G2 step2: derivation placeholders (null = not implemented yet)
+      acousticDerivation: null,
+      thermalDerivation: null
     },
     
     chapter3: {
