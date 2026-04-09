@@ -257,6 +257,41 @@ function renderCover(doc, cover) {
   doc.roundedRect(55, guideY, 485, 54, 6).fill("#F0F7FF").stroke(COLORS.border);
   doc.fillColor(COLORS.text_body).fontSize(10)
     .text(guideText, 69, guideY + 10, { width: 457, align: "left", lineGap: 4 });
+
+  // ── 章节结构导览（补充封面下半空白）──────────────────────────
+  const structDivY = guideY + 54 + 20;   // ≈ 404
+  doc.moveTo(55, structDivY).lineTo(540, structDivY)
+     .strokeColor('#E0E0E0').lineWidth(0.5).stroke();
+
+  doc.fillColor('#AAAAAA').fontSize(8.5)
+     .text('本文件共四章', 55, structDivY + 10, { width: 485, align: 'center' });
+
+  const chDefs = [
+    { num: '01', title: '性能需求诊断',     desc: '生活诉求转化为可量化技术参数' },
+    { num: '02', title: '采购技术底线',     desc: '甲方视角的最低性能验收要求' },
+    { num: '03', title: '红线禁止清单',     desc: '不合格配置与材料一票否决项' },
+    { num: '04', title: '配置推导 · 答题表', desc: '商家报价填写与现场验收节点' },
+  ];
+  const chStartY = structDivY + 28;
+  chDefs.forEach((ch, i) => {
+    const col = i % 2;
+    const row = Math.floor(i / 2);
+    const x = 55 + col * 245;
+    const y = chStartY + row * 74;
+    doc.roundedRect(x, y, 232, 64, 5).fill('#F5F7FA');
+    doc.fillColor(COLORS.brand_navy).fontSize(20).text(ch.num, x + 14, y + 12);
+    doc.fillColor(COLORS.text_body).fontSize(10).text(ch.title, x + 50, y + 15);
+    doc.fillColor('#999999').fontSize(8.5).text(ch.desc, x + 50, y + 32, { width: 170 });
+  });
+  // chDefs 末行 y ≈ chStartY + 74 + 64 = chStartY + 138 ≈ 586
+
+  // 品牌水印行（锚定底部）
+  doc.fillColor('#CCCCCC').fontSize(7.5)
+     .text(
+       '本文件由李Sir门窗诊断系统生成 · 技术参数基于国家标准及气候数据库',
+       55, 752, { width: 485, align: 'center' }
+     );
+  // ──────────────────────────────────────────────────────────────
 }
 
 function renderChapter1(doc, c1) {
@@ -462,14 +497,14 @@ function renderChapter1(doc, c1) {
 
       const _totalBfnH = boxH + 20;
       if (doc.y + _totalBfnH > doc.page.height - 60) doc.addPage();
-      const y = doc.y + 6;
+      const y = doc.y + 14;
       doc.rect(boxX, y, boxW, boxH).fill('#FFF8E1');
       doc.rect(boxX, y, boxW, boxH).lineWidth(1).strokeColor('#E0C36A').stroke();
 
       doc.fillColor(COLORS.text_body).fontSize(titleSize).text(titleText, boxX + padding.left, y + padding.top, { width: titleW });
       doc.fillColor(COLORS.text_body).fontSize(bodySize).text(bodyText, boxX + padding.left, y + padding.top + titleH + 4, { width: bodyW, align: 'left', lineGap: 2 });
       doc.fillColor(COLORS.text_body);
-      doc.y = y + boxH + 18;
+      doc.y = y + boxH + 14;
     }
   } else {
     doc.fillColor(COLORS.text_body).fontSize(10.5)
@@ -615,6 +650,7 @@ function renderChapter3(doc, c3) {
 
     // 预算警告（如有）
     if (c3.safetyBudgetWarning) {
+      if (842 - doc.y < 80) doc.addPage();
       const warningText = String(c3.safetyBudgetWarning);
       doc.rect(55, doc.y, 5, 40).fill(COLORS.warn_orange);
       doc.rect(60, doc.y, 480, 40).fill("#FEF9E7");
@@ -668,7 +704,7 @@ function renderRedlineChecklist(doc, checklist) {
       doc.rect(51, startY + 1, 3, 30).fill(COLORS.risk_red);
       doc.fillColor(COLORS.text_body).fontSize(10).text(line1, 55, startY, { width: 485, lineGap: 2 });
       doc.fillColor(COLORS.text_secondary).fontSize(9).text(confirmLine, 55, doc.y, { width: 485, lineGap: 2 });
-      doc.y += 10;
+      doc.y += 16;
 
       if (842 - doc.y < 80) doc.addPage();
     });
@@ -687,7 +723,7 @@ function renderRedlineChecklist(doc, checklist) {
 
       doc.fillColor(COLORS.text_body).fontSize(10).text(line1, 55, doc.y, { width: 485, lineGap: 2 });
       doc.fillColor(COLORS.text_secondary).fontSize(9).text(confirmLine, 55, doc.y, { width: 485, lineGap: 2 });
-      doc.y += 8;
+      doc.y += 12;
 
       if (842 - doc.y < 60) doc.addPage();
     });
@@ -909,6 +945,7 @@ function renderChapter4(doc, c4, opts) {
   }
   
   if (c4.acceptance && c4.acceptance.nodes && c4.acceptance.nodes.length > 0) {
+    if (842 - doc.y < 150) doc.addPage();
     drawSectionTitle(doc, c4.acceptance.title || "4.4 验收节点");
     const nodes = c4.acceptance.nodes;
     nodes.forEach((node) => {
@@ -926,6 +963,14 @@ function renderChapter4(doc, c4, opts) {
   }
   
   renderPerformanceChecks(doc, c4.performanceChecks);
+
+  // L-02：底部锚定——最后一页内容稀少时，将免责声明吸附至页底
+  const _disclaimerH = 150;
+  const _bottomMargin = 20;
+  const _anchorY = 842 - _disclaimerH - _bottomMargin;
+  if (_anchorY - doc.y > 220) {
+    doc.y = _anchorY;
+  }
 }
 
 function renderAttachments(doc, attachments) {
@@ -946,7 +991,7 @@ function drawDisclaimerSection(doc) {
     doc.addPage();
   }
 
-  doc.moveDown(0.8);
+  doc.moveDown(0.3);
   const y = doc.y;
   doc.moveTo(DISCLAIMER_LEFT, y)
      .lineTo(DISCLAIMER_RIGHT, y)
