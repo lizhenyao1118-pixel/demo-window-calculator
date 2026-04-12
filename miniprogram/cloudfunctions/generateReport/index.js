@@ -336,6 +336,7 @@ exports.main = async (event, context) => {
       isDisclaimer: sections.cover.isRisk,
       reportId,
       tenderId,
+      snapshot: sections,
       warnings: computed.warnings || [],
       computed: {
         K_target: computed.K_target,
