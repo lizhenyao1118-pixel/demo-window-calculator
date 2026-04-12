@@ -1314,6 +1314,24 @@ function buildAnalysisParagraph(answers, resolved) {
 // 主映射函数
 // ═══════════════════════════════════════════════════════════════
 
+/**
+ * mapToSections 返回值结构契约
+ * ⚠️ 修改任何字段名时，必须同步检查 result.wxml 绑定路径
+ *
+ * summary:     { K_target, Rw_required, SHGC_target, P3_required, wind_zone, airRec, waterRec }
+ * cover:       { pdfNo, issueDate, city, district, climateLabel, floorDesc, painTag, isRisk,
+ *               hasSafety, degradedCity, degradedMsg, disclaimer }
+ * chapter1:    { basicInfo, needsAnalysis: { needsTable[], coreTension, budgetFitnessNote,
+ *               sealGrades, parameterNote }, city, district, climateLabel, windZone, ... }
+ * chapter2:    { positionStatement, painPoint, metrics[] }
+ * chapter3:    { title, sourceNote, redlineChecklist: { mandatory[], recommended[] },
+ *               forbidden[], safetyItems[], safetyBudgetWarning, conflictAlert,
+ *               is_dual_tier, dualTierSpecs[] }
+ * chapter4:    { title, intro, merchantNotice,
+ *               merchantQuestionnaire: { section3: { questions[] } },
+ *               acceptance: { nodes[] }, performanceChecks[], redlineChecklist }
+ * attachments: { photos[] }
+ */
 function mapToSections(resolved, answers, pdfNo) {
   assertResolved(resolved);
 
@@ -1356,7 +1374,20 @@ function mapToSections(resolved, answers, pdfNo) {
     !!resolved.hasSafetyClause;
   const sharedRedlineChecklist = buildRedlineChecklist(normalizedAnswers, { ...resolved, safetyForced });
 
+  const needsAnalysis = build1_2(normalizedAnswers, resolved);
+  const resolvedSealGrades = needsAnalysis.sealGrades || { airRec: 4, waterRec: 3 };
+
   return {
+    summary: {
+      K_target:    getField(resolved, 'K'),
+      Rw_required: getField(resolved, 'Rw'),
+      SHGC_target: getField(resolved, 'SHGC'),
+      P3_required: getField(resolved, 'P3'),
+      wind_zone:   resolved.wind_zone || '',
+      airRec:      resolvedSealGrades.airRec,
+      waterRec:    resolvedSealGrades.waterRec
+    },
+
     cover: {
       pdfNo: pdfNo,
       issueDate: issueDate,
@@ -1374,7 +1405,7 @@ function mapToSections(resolved, answers, pdfNo) {
     
     chapter1: {
       basicInfo: build1_1(normalizedAnswers),
-      needsAnalysis: build1_2(normalizedAnswers, resolved),
+      needsAnalysis: needsAnalysis,
       city: normalizedAnswers.city,
       district: normalizedAnswers.district || '',
       climateLabel: getClimateLabel(climateZone),
@@ -1465,7 +1496,19 @@ function mapToSections(resolved, answers, pdfNo) {
       forbidden: getForbiddenItems(normalizedAnswers.budget_tier, getField(resolved, 'K'), window_features, getField(resolved, 'Rw')),
       safetyItems: safety.items,
       safetyBudgetWarning: safety.budgetWarning,
-      conflictAlert: buildChapter3ConflictAlert(budgetSpec, resolved)
+      conflictAlert: buildChapter3ConflictAlert(budgetSpec, resolved),
+      is_dual_tier: budgetSpec.is_dual_tier || false,
+      dualTierSpecs: (budgetSpec.is_dual_tier && Array.isArray(budgetSpec.recommendedConfig))
+        ? budgetSpec.recommendedConfig.map(c => ({
+            label: c.label || '',
+            profile: c.spec && c.spec.profile
+              ? ('壁厚≥' + c.spec.profile.min_wall_thickness + 'mm') : '',
+            hardware: c.spec && c.spec.hardware
+              ? ('铰链≥' + c.spec.hardware.min_load_kg + 'kg') : '',
+            priceRange: c.spec && c.spec.price_range ? c.spec.price_range : '',
+            upgradeReasons: Array.isArray(c.upgradeReasons) ? c.upgradeReasons : []
+          }))
+        : []
     },
     
     chapter4: {
