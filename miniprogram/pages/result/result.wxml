@@ -3,7 +3,8 @@
   <!-- L1 摘要卡：始终可见 -->
   <view class="cover-card">
     <text class="cover-sub">门窗需求定制招标文件</text>
-    <text class="cover-title">{{cover.city}} · {{cover.floorDesc}}</text>
+    <text class="cover-title">{{cover.city}}</text>
+    <text class="cover-sub">{{cover.floorDesc}}</text>
     <text class="cover-date">生成于 {{cover.issueDate}}</text>
   </view>
 
@@ -123,8 +124,7 @@
         <text class="upgrade-item">· {{item}}</text>
       </view>
       <view class="upgrade-divider"></view>
-      <text class="upgrade-rec">最低满足配置：{{chapter3.conflictAlert.minTier}}</text>
-      <text class="upgrade-rec">成本影响：{{chapter3.conflictAlert.costDelta}}</text>
+      <text class="upgrade-rec">{{chapter3.conflictAlert.cost_estimate}}</text>
     </view>
 
     <view class="two-col" wx:if="{{chapter3.is_dual_tier}}">
@@ -140,8 +140,7 @@
       <view class="redline-item" wx:for="{{chapter3.redlineChecklist}}" wx:key="index">
         <view class="redline-dot"></view>
         <view class="redline-content">
-          <text class="redline-title">{{item.title}}</text>
-          <text class="redline-desc">{{item.desc}}</text>
+          <text class="redline-title">{{item.text}}</text>
         </view>
       </view>
     </view>
@@ -155,17 +154,14 @@
     <view class="qa-form">
       <view class="qa-item"
             wx:for="{{chapter4.merchantQuestionnaire.section3.questions}}" wx:key="*this">
-        <text class="qa-label">{{item.id}} · {{item.text}}</text>
-        <view class="qa-input-mock">
-          <text class="qa-placeholder">{{item.hint}}</text>
-        </view>
+        <text class="qa-label">{{item}}</text>
       </view>
     </view>
 
     <view class="inspection-section"
           wx:for="{{chapter4.acceptance.nodes}}" wx:key="phase">
-      <text class="inspection-phase">{{item.phase}}</text>
-      <view wx:for="{{item.checkpoints}}" wx:key="*this" wx:for-item="node">
+      <text class="inspection-phase">{{item.title}}</text>
+      <view wx:for="{{item.items}}" wx:key="*this" wx:for-item="node">
         <text class="inspection-item">· {{node}}</text>
       </view>
     </view>
