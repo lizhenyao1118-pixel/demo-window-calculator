@@ -12,31 +12,37 @@
   <view class="param-grid">
     <view class="param-card">
       <text class="param-label">保温</text>
-      <text class="param-value">{{summary.K_target}}</text>
+      <text class="param-symbol">≤</text>
+      <text class="param-value">{{summary.k_target}}</text>
       <text class="param-unit">W/(m²·K) · K值</text>
     </view>
     <view class="param-card">
       <text class="param-label">隔音</text>
-      <text class="param-value">{{summary.Rw_required}}</text>
+      <text class="param-symbol">≥</text>
+      <text class="param-value">{{summary.rw_required}}</text>
       <text class="param-unit">dB · Rw值</text>
     </view>
     <view class="param-card">
       <text class="param-label">遮阳</text>
-      <text class="param-value">{{summary.SHGC_target || '—'}}</text>
+      <text class="param-symbol">≤</text>
+      <text class="param-value">{{summary.shgc_target || '—'}}</text>
       <text class="param-unit">SHGC</text>
     </view>
     <view class="param-card">
       <text class="param-label">抗风压</text>
-      <text class="param-value">{{summary.P3_required}}级</text>
+      <text class="param-symbol">≥</text>
+      <text class="param-value">{{summary.p3_required}}级</text>
       <text class="param-unit">{{summary.wind_zone}}</text>
     </view>
     <view class="param-card">
       <text class="param-label">密封性能</text>
-      <text class="param-value">气密{{summary.airRec}}级</text>
-      <text class="param-unit">水密{{summary.waterRec}}级</text>
+      <text class="param-symbol">—</text>
+      <text class="param-value">气密{{summary.air_rec}}级 / 水密{{summary.water_rec}}级</text>
+      <text class="param-unit">综合反映安装工艺质量</text>
     </view>
     <view class="param-card">
       <text class="param-label">安全</text>
+      <text class="param-symbol">—</text>
       <text class="param-value" style="font-size:14px;">需专项核查</text>
       <text class="param-unit">查看完整报告</text>
     </view>

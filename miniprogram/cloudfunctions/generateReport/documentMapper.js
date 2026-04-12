@@ -1318,7 +1318,7 @@ function buildAnalysisParagraph(answers, resolved) {
  * mapToSections 返回值结构契约
  * ⚠️ 修改任何字段名时，必须同步检查 result.wxml 绑定路径
  *
- * summary:     { K_target, Rw_required, SHGC_target, P3_required, wind_zone, airRec, waterRec }
+ * summary:     { k_target, rw_required, shgc_target, p3_required, wind_zone, air_rec, water_rec }
  * cover:       { pdfNo, issueDate, city, district, climateLabel, floorDesc, painTag, isRisk,
  *               hasSafety, degradedCity, degradedMsg, disclaimer }
  * chapter1:    { basicInfo, needsAnalysis: { needsTable[], coreTension, budgetFitnessNote,
@@ -1379,13 +1379,13 @@ function mapToSections(resolved, answers, pdfNo) {
 
   return {
     summary: {
-      K_target:    getField(resolved, 'K'),
-      Rw_required: getField(resolved, 'Rw'),
-      SHGC_target: getField(resolved, 'SHGC'),
-      P3_required: getField(resolved, 'P3'),
+      k_target:    getField(resolved, 'K'),
+      rw_required: getField(resolved, 'Rw'),
+      shgc_target: getField(resolved, 'SHGC'),
+      p3_required: getField(resolved, 'P3'),
       wind_zone:   resolved.wind_zone || '',
-      airRec:      resolvedSealGrades.airRec,
-      waterRec:    resolvedSealGrades.waterRec
+      air_rec:     resolvedSealGrades.airRec,
+      water_rec:   resolvedSealGrades.waterRec
     },
 
     cover: {
