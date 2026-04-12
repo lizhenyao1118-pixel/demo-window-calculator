@@ -3,8 +3,8 @@
   <!-- L1 摘要卡：始终可见 -->
   <view class="cover-card">
     <text class="cover-sub">门窗需求定制招标文件</text>
-    <text class="cover-title">{{cover.city}} · {{cover.buildingType}}</text>
-    <text class="cover-date">生成于 {{cover.generatedDate}}</text>
+    <text class="cover-title">{{cover.city}} · {{cover.floorDesc}}</text>
+    <text class="cover-date">生成于 {{cover.issueDate}}</text>
   </view>
 
   <view class="section-label">关键参数指标</view>
@@ -58,10 +58,10 @@
 
     <view class="param-grid">
       <view class="param-card {{item.isCore ? 'param-card-core' : ''}}"
-            wx:for="{{chapter1.metrics}}" wx:key="name">
-        <text class="param-label">{{item.name}}</text>
+            wx:for="{{chapter1.needsAnalysis.needsTable}}" wx:key="dimension">
+        <text class="param-label">{{item.dimension}}</text>
         <text class="param-value">{{item.value}}</text>
-        <text class="param-unit">{{item.unit}}</text>
+        <text class="param-unit">{{item.basis}}</text>
       </view>
     </view>
 
@@ -137,7 +137,7 @@
     </view>
 
     <view class="redline-list">
-      <view class="redline-item" wx:for="{{chapter3.redLines}}" wx:key="index">
+      <view class="redline-item" wx:for="{{chapter3.redlineChecklist}}" wx:key="index">
         <view class="redline-dot"></view>
         <view class="redline-content">
           <text class="redline-title">{{item.title}}</text>
@@ -154,7 +154,7 @@
 
     <view class="qa-form">
       <view class="qa-item"
-            wx:for="{{chapter4.qaTable.questions}}" wx:key="id">
+            wx:for="{{chapter4.merchantQuestionnaire.section3.questions}}" wx:key="*this">
         <text class="qa-label">{{item.id}} · {{item.text}}</text>
         <view class="qa-input-mock">
           <text class="qa-placeholder">{{item.hint}}</text>
@@ -163,9 +163,9 @@
     </view>
 
     <view class="inspection-section"
-          wx:for="{{chapter4.inspectionNodes}}" wx:key="phase">
+          wx:for="{{chapter4.acceptance.nodes}}" wx:key="phase">
       <text class="inspection-phase">{{item.phase}}</text>
-      <view wx:for="{{item.items}}" wx:key="index" wx:for-item="node">
+      <view wx:for="{{item.checkpoints}}" wx:key="*this" wx:for-item="node">
         <text class="inspection-item">· {{node}}</text>
       </view>
     </view>
