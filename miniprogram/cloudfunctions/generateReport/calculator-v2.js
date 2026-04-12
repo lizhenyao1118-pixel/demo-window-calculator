@@ -157,7 +157,7 @@ function resolveConflicts(computed, answers) {
 
   if (hasFamilySafety && budget_tier === "A") {
     risk_flags.safety_budget_conflict = true;
-    notes.push("安全防护条款成本高于A档预算，建议升级至B档");
+    notes.push("安全防护条款成本高于A档预算，A档覆盖范围不足以满足本案安全配置要求");
   }
 
   return { ...computed, risk_flags, conflict_notes: notes };

@@ -644,7 +644,7 @@ function buildParameterNote({ windPressure, soundInsulation, thermal, shgc, safe
   }
   lines.push(`⑦ **安全等级**：${inputs.hasBigWindow ? '落地窗 + ' : ''}${inputs.hasChild ? '儿童家庭' : ''}依据 GB 15763.3 强制要求夹胶安全玻璃构造。`);
   const block2 = lines.join('\n');
-  const block3 = '其中安全等级依据 GB 15763.3 强制条款，不可降级。即使为控制成本，亦不建议放宽安全配置。';
+  const block3 = '其中安全等级依据 GB 15763.3 强制条款，属于强制性要求，不可降级。';
   return { block1, block2, block3 };
 }
 
@@ -677,7 +677,7 @@ function buildCoreTension(answers, resolved) {
     sentences.push(`${conflicts.hardest}与${conflicts.secondHardest}存在配置重合，导致本案成本高于同档位普通场景。`);
   }
 
-  sentences.push('基于以上分析，本表各项为本项目的推荐目标值。商家方案如仅能满足最低可接受值，应在报价中说明原因，并由业主确认是否接受；低于最低值的方案，建议不予优先考虑。');
+  sentences.push('基于以上分析，本表各项为本项目的推荐目标值。商家方案如仅能满足最低可接受值，可在报价中注明，由业主确认是否接受；低于最低值的方案，可在比价时排除。');
 
   return sentences.join('');
 }
