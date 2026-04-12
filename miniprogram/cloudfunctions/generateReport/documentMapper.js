@@ -398,7 +398,7 @@ function build1_2(answers, resolved) {
     if (!dominated || !forced) return null;
     return {
       type: 'budget_fitness_warning',
-      text: '根据您的需求分析，本项目存在强制性安全配置要求（如钢化玻璃、夹胶玻璃等），该类配置的市场成本通常高于当前所选预算档位的覆盖范围。建议您在比价时适当上调预算预期，或与商家沟通安全配置的具体加价幅度，以确保核心安全需求不因预算约束而被削减。'
+      text: '根据您的需求分析，本项目存在强制性安全配置要求（如钢化玻璃、夹胶玻璃等），该类配置的市场成本通常高于当前所选预算档位的覆盖范围。安全配置为本案强制性技术要求，不随预算档位调整。'
     };
   })();
 
@@ -841,7 +841,7 @@ function buildPerformanceChecks(answers, resolved) {
     checks.push({
       id: 'perf_general',
       num: numToCircled(14),
-      text: '如商家承诺了特定性能指标，建议在合同中明确达标条件及未达标的补救方案。'
+      text: '如商家承诺了特定性能指标，达标条件及未达标的补救方案为采购合同应载明事项。'
     });
   }
 
@@ -868,7 +868,7 @@ function buildChapter4Data(answers, budgetSpec, resolved, riskTrigger, isRisk, s
     intro: {
       title: '使用说明',
       items: [
-        '① 建议同时将本答题表发送给 3-5 家商家，要求 3-5 个工作日内回复——回复速度本身也是态度的一部分',
+        '① 将本答题表同步发送给 3-5 家商家，要求 3-5 个工作日内回复——回复速度本身也是态度的一部分',
         `② 优先选择填写完整、回答具体的商家；对关键项含糊其辞者${TERM.excludeSoft}`,
         '③ 对比同一格的内容（壁厚/玻璃配置/质保年限），而不是只对比总价，可以大幅降低被偷工减料的风险'
       ]
@@ -906,7 +906,7 @@ function buildChapter4Data(answers, budgetSpec, resolved, riskTrigger, isRisk, s
         ]
       },
       signature: {
-        text: '下列签名表示填写人已确认上述内容的真实性；如进入签约，建议将关键指标写入合同。填写人确认：__________',
+        text: '下列签名表示填写人已确认上述内容的真实性；如进入签约，本文件所列关键指标为合同技术条款的组成部分。填写人确认：__________',
         fields: []
       }
     },

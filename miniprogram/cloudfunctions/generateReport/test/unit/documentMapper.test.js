@@ -470,7 +470,7 @@ describe('Sprint 7 C-短期文案优化', () => {
   test('DM-36: 商家签名行应包含合同建议', async () => {
     const pdfContent = await buildPdfTextForAnswers(fixtures.guangzhouFull, 'S7-DM36');
     expect(pdfContent).toContain('下列签名表示填写人已确认上述内容的真实性');
-    expect(pdfContent).toContain('建议将关键指标写入合同');
+    expect(pdfContent).toContain('本文件所列关键指标为合同技术条款的组成部分');
     expect(pdfContent).not.toContain('商家签名（无需公章）');
   });
 
