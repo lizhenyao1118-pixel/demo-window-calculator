@@ -1,3 +1,4 @@
+// DEPRECATED: 已由 result 页 L1 摘要卡替代，保留仅供 git 历史参考，不删除文件。
 Page({
   data: {
     arbitrator: null,
