@@ -109,6 +109,9 @@
       <view wx:for="{{chapter3.conflictAlert.items}}" wx:key="index">
         <text class="upgrade-item">· {{item}}</text>
       </view>
+      <view wx:if="{{chapter3.conflictAlert.hasNoConflict && chapter3.conflictAlert.noConflictText}}">
+        <text class="upgrade-item">{{chapter3.conflictAlert.noConflictText}}</text>
+      </view>
       <view class="upgrade-divider"></view>
       <text class="upgrade-rec">{{chapter3.conflictAlert.cost_estimate}}</text>
     </view>

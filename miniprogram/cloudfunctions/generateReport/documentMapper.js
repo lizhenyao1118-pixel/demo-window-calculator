@@ -743,6 +743,7 @@ function buildChapter3ConflictAlert(budgetSpec, resolved) {
     title: hasConflicts ? '配置升级提醒' : '配置兼容性检查',
     items: hasConflicts ? notes : [],
     noConflictText: hasConflicts ? null : '经分析，您的需求配置与所选预算档位无明显冲突。',
+    hasNoConflict: !hasConflicts,
     severity: (conflictMeta && conflictMeta.severity) ? conflictMeta.severity : 'warning',
     cost_estimate: hasConflicts
       ? (Number(budgetSpec.cost_delta) === 0
