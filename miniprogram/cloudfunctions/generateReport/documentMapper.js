@@ -746,7 +746,7 @@ function buildChapter3ConflictAlert(budgetSpec, resolved) {
     severity: (conflictMeta && conflictMeta.severity) ? conflictMeta.severity : 'warning',
     cost_estimate: hasConflicts
       ? (Number(budgetSpec.cost_delta) === 0
-        ? `预计玻璃成本增加：视实际玻璃配置而定（请商家在报价中单独列出玻璃部分的加价幅度）；相对于 ${tier} 档标准配置（${base.name}）`
+        ? `预计玻璃成本增加：视实际玻璃配置而定（可要求商家在报价中单独列明玻璃部分加价幅度）；相对于 ${tier} 档标准配置（${base.name}）`
         : `预计玻璃成本增加：${budgetSpec.cost_delta}元/㎡（相对于 ${tier} 档标准配置：${base.name}）`)
       : null
   };
