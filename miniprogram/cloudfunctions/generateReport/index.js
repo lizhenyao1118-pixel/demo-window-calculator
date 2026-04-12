@@ -328,13 +328,6 @@ exports.main = async (event, context) => {
     }
 
     // 8. 返回成功（保留原有逻辑）
-    // DEBUG
-    console.log('[DEBUG] summary:', JSON.stringify({
-      k_target: computed.K_target,
-      rw_required: computed.Rw_required,
-      sealGrades: sealGrades
-    }));
-
     return {
       success: true,
       fileID: uploadRes.fileID,
