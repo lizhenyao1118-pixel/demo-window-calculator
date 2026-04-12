@@ -137,8 +137,14 @@
     </view>
 
     <view class="redline-list">
-      <view class="redline-item" wx:for="{{chapter3.redlineChecklist}}" wx:key="index">
+      <view class="redline-item" wx:for="{{chapter3.redlineChecklist.mandatory}}" wx:key="index">
         <view class="redline-dot"></view>
+        <view class="redline-content">
+          <text class="redline-title">{{item.text}}</text>
+        </view>
+      </view>
+      <view class="redline-item" wx:for="{{chapter3.redlineChecklist.recommended}}" wx:key="index">
+        <view class="redline-dot redline-dot-gray"></view>
         <view class="redline-content">
           <text class="redline-title">{{item.text}}</text>
         </view>
