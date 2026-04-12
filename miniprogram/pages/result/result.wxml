@@ -1,110 +1,177 @@
-<view class="container">
-  <!-- 风险版水印（仅在强制生成时显示） -->
-  <view class="risk-watermark" wx:if="{{isDisclaimer}}">
-    ⚠️ 配置冲突提示版
+<scroll-view scroll-y class="page">
+
+  <!-- L1 摘要卡：始终可见 -->
+  <view class="cover-card">
+    <text class="cover-sub">门窗需求定制招标文件</text>
+    <text class="cover-title">{{cover.city}} · {{cover.buildingType}}</text>
+    <text class="cover-date">生成于 {{cover.generatedDate}}</text>
   </view>
 
-  <!-- 顶部风险条 -->
-  <view class="risk-bar risk-bar--{{riskClass}}" wx:if="{{riskLevel}}">
-    <view class="risk-bar__inner">
-      <view class="risk-badge risk-badge--{{riskClass}}">{{riskLevel}}风险</view>
-      <text class="risk-reason">{{riskReason}}</text>
+  <view class="section-label">关键参数指标</view>
+  <view class="param-grid">
+    <view class="param-card">
+      <text class="param-label">保温</text>
+      <text class="param-value">{{computed.k_target}}</text>
+      <text class="param-unit">W/(m²·K) · K值</text>
+    </view>
+    <view class="param-card">
+      <text class="param-label">隔音</text>
+      <text class="param-value">{{computed.rw_required}}</text>
+      <text class="param-unit">dB · Rw值</text>
+    </view>
+    <view class="param-card">
+      <text class="param-label">遮阳</text>
+      <text class="param-value">{{computed.shgc_target || '—'}}</text>
+      <text class="param-unit">SHGC</text>
+    </view>
+    <view class="param-card">
+      <text class="param-label">抗风压</text>
+      <text class="param-value">{{computed.p3_required}}级</text>
+      <text class="param-unit">{{computed.wind_zone}}</text>
+    </view>
+    <view class="param-card">
+      <text class="param-label">密封性能</text>
+      <text class="param-value">气密{{computed.air_rec}}级</text>
+      <text class="param-unit">水密{{computed.water_rec}}级</text>
+    </view>
+    <view class="param-card">
+      <text class="param-label">安全</text>
+      <text class="param-value" style="font-size:14px;">需专项核查</text>
+      <text class="param-unit">查看完整报告</text>
     </view>
   </view>
 
-  <!-- 页面头部 -->
-  <view class="page-header">
-    <text class="page-title">您的门窗标准</text>
-    <text class="page-subtitle">根据您的房屋条件定制生成</text>
+  <!-- 付费按钮：未解锁时可见 -->
+  <view wx:if="{{!isPaid}}" class="unlock-btn" bindtap="onUnlock">
+    <text class="unlock-btn-text">¥99 限时免费，直接发给商家比价</text>
+    <text class="unlock-btn-sub">含完整技术参数与验收标准，商家看到就知道你懂行</text>
   </view>
 
-  <!-- 参数卡片区 -->
-  <view class="section" wx:if="{{paramCards && paramCards.length > 0}}">
-    <text class="section-title">关键参数指标</text>
+  <!-- 四章内容：付费后可见 -->
+  <view wx:if="{{isPaid}}">
+
+    <!-- 第1章 -->
+    <view class="chapter-header">
+      <text class="chapter-num">第一章</text>
+      <text class="chapter-title">性能需求诊断</text>
+    </view>
+
     <view class="param-grid">
-      <view wx:for="{{paramCards}}" wx:key="label" class="param-card {{item.colorClass}}">
-        <text class="param-icon">{{item.icon}}</text>
-        <text class="param-label">{{item.label}}</text>
-        <block wx:if="{{item.value}}">
-          <text class="param-prefix">{{item.prefix}}</text>
-          <text class="param-value">{{item.value}}</text>
-          <text class="param-unit">{{item.unit}}</text>
-        </block>
-        <text class="param-sublabel">{{item.sublabel}}</text>
+      <view class="param-card {{item.isCore ? 'param-card-core' : ''}}"
+            wx:for="{{chapter1.metrics}}" wx:key="name">
+        <text class="param-label">{{item.name}}</text>
+        <text class="param-value">{{item.value}}</text>
+        <text class="param-unit">{{item.unit}}</text>
       </view>
     </view>
-  </view>
 
-  <!-- 反向映射区 -->
-  <view class="section" wx:if="{{reverseMappings.length}}">
-    <text class="section-title">这些标准是怎么来的</text>
-    <view class="mapping-list">
-      <view wx:for="{{reverseMappings}}" wx:key="index" class="mapping-item mapping-item--{{item.mappingType}}">
-        <text class="mapping-title">{{item.title}}</text>
-        <text class="mapping-desc">{{item.description}}</text>
+    <view wx:if="{{chapter1.redLines.safetyBudgetWarning}}" class="upgrade-block">
+      <text class="upgrade-title">{{chapter1.redLines.safetyBudgetWarning.title}}</text>
+      <view wx:for="{{chapter1.redLines.safetyBudgetWarning.items}}" wx:key="index">
+        <text class="upgrade-item">· {{item}}</text>
       </view>
     </view>
-  </view>
 
-  <!-- 文件信息卡片 -->
-  <view class="file-card">
-    <view class="file-name">门窗招标技术文件_{{formData.city}}_{{timestamp}}.pdf</view>
-    <view class="file-meta">
-      <text>生成时间：{{timestamp}}</text>
-      <text wx:if="{{isDisclaimer}}" class="risk-tag">风险提示</text>
-    </view>
-    
-    <!-- 配置摘要 -->
-    <view class="config-summary">
-      <view class="config-item">
-        <text class="label">城市：</text>
-        <text>{{formData.city}} {{formData.district}}</text>
+    <view class="redline-list">
+      <view class="redline-item" wx:for="{{chapter1.redLines.forbidden}}" wx:key="index">
+        <view class="redline-dot"></view>
+        <view class="redline-content">
+          <text class="redline-title">{{item.title}}</text>
+          <text class="redline-desc">{{item.desc}}</text>
+        </view>
       </view>
-      <view class="config-item">
-        <text class="label">楼层：</text>
-        <text>{{formData.floor}}/{{formData.totalFloors}}层</text>
-      </view>
-      <view class="config-item">
-        <text class="label">预算档位：</text>
-        <text class="{{isDisclaimer ? 'risk-text' : ''}}">{{formData.budgetTier}}档</text>
-      </view>
-      <view class="config-item" wx:if="{{formData.priority}}">
-        <text class="label">优先项：</text>
-        <text>{{formData.priority}}</text>
+      <view class="redline-item" wx:for="{{chapter1.redLines.safetyItems}}" wx:key="index">
+        <view class="redline-dot"></view>
+        <view class="redline-content">
+          <text class="redline-title">{{item.title}}</text>
+          <text class="redline-desc">{{item.desc}}</text>
+        </view>
       </view>
     </view>
-  </view>
 
-  <!-- CTA按钮区 -->
-  <view class="cta-wrap">
-    <button class="btn-primary" bindtap="downloadPDF"><text class="btn-price-origin">¥99</text><text class="btn-text-main">限时免费，直接发给商家比价</text></button>
-    <text class="btn-hint">含完整技术参数与验收标准，商家看到就知道你懂行</text>
-  </view>
-
-  <!-- L2入口：专家审核（风险版 - 强提示） -->
-  <view class="l2-entry" wx:if="{{isDisclaimer}}">
-    <view class="l2-title">⚠️ 配置存在风险，建议人工复核</view>
-    <view class="l2-desc">
-      当前配置可能存在安全隐患，建议添加李Sir微信获取专业审核与优化方案。
+    <!-- 第2章 -->
+    <view class="chapter-header">
+      <text class="chapter-num">第二章</text>
+      <text class="chapter-title">采购技术底线</text>
     </view>
-    <!-- 修改：改为普通按钮，bindtap触发二维码 -->
-    <button class="btn-l2" bindtap="showQRCode">
-      查看微信二维码（添加李Sir）
-    </button>
-    <view class="l2-note">长按二维码识别，备注"门窗审核"</view>
+
+    <text class="position-statement">{{chapter2.positionStatement}}</text>
+
+    <view class="table-wrap">
+      <view class="table-head">
+        <text class="col-a">配置项</text>
+        <text class="col-b">最低规格</text>
+        <text class="col-c">验证方式</text>
+      </view>
+      <view class="table-row {{index % 2 === 1 ? 'alt' : ''}}"
+            wx:for="{{chapter2.metrics}}" wx:key="name">
+        <text class="col-a th">{{item.name}}</text>
+        <text class="col-b">{{item.value}}</text>
+        <text class="col-c">{{item.std}}</text>
+      </view>
+    </view>
+
+    <!-- 第3章 -->
+    <view class="chapter-header">
+      <text class="chapter-num">第三章</text>
+      <text class="chapter-title">红线清单</text>
+    </view>
+
+    <view wx:if="{{chapter3.conflictAlert}}" class="upgrade-block">
+      <text class="upgrade-title">{{chapter3.conflictAlert.title}}</text>
+      <view wx:for="{{chapter3.conflictAlert.items}}" wx:key="index">
+        <text class="upgrade-item">· {{item}}</text>
+      </view>
+      <view class="upgrade-divider"></view>
+      <text class="upgrade-rec">最低满足配置：{{chapter3.conflictAlert.minTier}}</text>
+      <text class="upgrade-rec">成本影响：{{chapter3.conflictAlert.costDelta}}</text>
+    </view>
+
+    <view class="two-col" wx:if="{{chapter3.is_dual_tier}}">
+      <view class="col-card" wx:for="{{chapter3.dualTierSpecs}}" wx:key="label">
+        <text class="col-label">{{item.label}}</text>
+        <text class="col-item">{{item.glass}}</text>
+        <text class="col-item">{{item.profile}}</text>
+        <text class="col-item">{{item.hardware}}</text>
+      </view>
+    </view>
+
+    <view class="redline-list">
+      <view class="redline-item" wx:for="{{chapter3.redLines}}" wx:key="index">
+        <view class="redline-dot"></view>
+        <view class="redline-content">
+          <text class="redline-title">{{item.title}}</text>
+          <text class="redline-desc">{{item.desc}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 第4章 -->
+    <view class="chapter-header">
+      <text class="chapter-num">第四章</text>
+      <text class="chapter-title">商家答题表 · 验收节点</text>
+    </view>
+
+    <view class="qa-form">
+      <view class="qa-item"
+            wx:for="{{chapter4.qaTable.questions}}" wx:key="id">
+        <text class="qa-label">{{item.id}} · {{item.text}}</text>
+        <view class="qa-input-mock">
+          <text class="qa-placeholder">{{item.hint}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="inspection-section"
+          wx:for="{{chapter4.inspectionNodes}}" wx:key="phase">
+      <text class="inspection-phase">{{item.phase}}</text>
+      <view wx:for="{{item.items}}" wx:key="index" wx:for-item="node">
+        <text class="inspection-item">· {{node}}</text>
+      </view>
+    </view>
+
+    <view class="footer-note">本文件由门窗诊断系统生成 · 仅供采购参考</view>
+
   </view>
 
-  <!-- 正常版的L2入口（弱化显示） -->
-  <view class="l2-entry-normal" wx:if="{{!isDisclaimer}}">
-    <view class="divider">—— 增值服务 ——</view>
-    <!-- 修改：去掉open-type，改为tap事件 -->
-    <button class="btn-l2-light" bindtap="showQRCode">
-      需要专家把关？点击查看微信二维码
-    </button>
-  </view>
-
-  <!-- 重新评估 -->
-  <view class="footer-action">
-    <text class="link-text" bindtap="restart">重新评估需求</text>
-  </view>
-</view>
+</scroll-view>

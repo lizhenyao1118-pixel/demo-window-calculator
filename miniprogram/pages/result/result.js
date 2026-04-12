@@ -30,6 +30,21 @@ Page({
   },
 
   onLoad(options) {
+    // 原生渲染：从globalData读取snapshot
+    const app = getApp();
+    const snapshot = app.globalData.currentReport;
+    if (snapshot) {
+      this.setData({
+        cover: snapshot.cover || {},
+        chapter1: snapshot.chapter1 || {},
+        chapter2: snapshot.chapter2 || {},
+        chapter3: snapshot.chapter3 || {},
+        chapter4: snapshot.chapter4 || {},
+        computed: app.globalData.reportComputed || {},
+        isPaid: false,
+      });
+    }
+
     // 解析参数
     const isDisclaimer = options.type === 'disclaimer' || options.disclaimer === 'true';
     const formData = wx.getStorageSync('survey_draft_v1')?.data || {};
@@ -109,6 +124,11 @@ Page({
       console.error('[AB] init failed:', err);
     }
   },
+
+  onUnlock() {
+    this.setData({ isPaid: true });
+  },
+
   // 新增：获取二维码临时URL
   getQRCodeUrl() {
     wx.cloud.getTempFileURL({
