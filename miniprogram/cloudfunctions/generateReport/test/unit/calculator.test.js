@@ -187,7 +187,7 @@ describe('calculateAll', () => {
       budget_tier: 'A'
     });
     expect(r.risk_flags && r.risk_flags.safety_budget_conflict).toBe(true);
-    expect(String((r.conflict_notes || []).join(','))).toContain('建议升级至B档');
+    expect(String((r.conflict_notes || []).join(','))).toContain('A档覆盖范围不足以满足本案安全配置要求');
     expect(Array.isArray(r.safety_items)).toBe(true);
   });
 

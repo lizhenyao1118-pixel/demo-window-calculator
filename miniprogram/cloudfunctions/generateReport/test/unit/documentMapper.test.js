@@ -424,8 +424,8 @@ describe('Sprint 7 C-短期文案优化', () => {
 
   test('DM-31: 1.2节叙述段应包含弹性文案', async () => {
     const pdfContent = await buildPdfTextForAnswers(fixtures.guangzhouFull, 'S7-DM31');
-    expect(pdfContent).toContain('商家方案如仅能满足最低可接受值，应在报价中说明原因');
-    expect(pdfContent).toContain('低于最低值的方案，建议不予优先考虑');
+    expect(pdfContent).toContain('商家方案如仅能满足最低可接受值，可在报价中注明');
+    expect(pdfContent).toContain('低于最低值的方案，可在比价时排除');
   });
 
   test('DM-32: 玻璃差价提示应标明档位标准配置基准', async () => {
