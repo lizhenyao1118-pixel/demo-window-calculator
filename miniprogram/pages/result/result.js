@@ -4,8 +4,7 @@ Page({
     formData: {},
     timestamp: '',
     fileID: '',
-    qrImageUrl: '', // 空字符串，等待转换
-    // 原始File ID保留用于调试
+    qrImageUrl: '',
     qrFileID: 'cloud://cloud1-7grn8mcy176fcc2b.636c-cloud1-7grn8mcy176fcc2b-1407149429/qr-code/lisir-wechat.jpg',
     layer1Bucket: 0,
     layer2Bucket: 0,
@@ -13,12 +12,13 @@ Page({
     expTitle: '标准标题',
     expPosition: 'top',
     expVariant: 'A',
-    arbitrator: null,
-    paramCards: [],
-    reverseMappings: [],
-    riskLevel: '',
-    riskReason: '',
-    riskClass: '',
+    cover: {},
+    chapter1: {},
+    chapter2: {},
+    chapter3: {},
+    chapter4: {},
+    summary: {},
+    isPaid: false,
     experimentConfig: [
       { variant: 'A', title: '标准标题', position: 'top' },
       { variant: 'B', title: '强调标题', position: 'top' },
@@ -30,25 +30,32 @@ Page({
   },
 
   onLoad(options) {
-    // 原生渲染：从globalData读取snapshot
+    // 原生渲染：从 globalData 读取 snapshot，带 Storage 降级
     const app = getApp();
-    const snapshot = app.globalData.currentReport;
+    const snapshot = app.globalData.currentReport
+      || wx.getStorageSync('report_snapshot');
+    const summary = (snapshot && snapshot.summary)
+      || app.globalData.reportSummary
+      || wx.getStorageSync('report_summary')
+      || {};
+    const savedPaid = wx.getStorageSync('report_paid') || false;
+
     if (snapshot) {
       this.setData({
-        cover: snapshot.cover || {},
+        cover:    snapshot.cover    || {},
         chapter1: snapshot.chapter1 || {},
         chapter2: snapshot.chapter2 || {},
         chapter3: snapshot.chapter3 || {},
         chapter4: snapshot.chapter4 || {},
-        computed: app.globalData.reportComputed || {},
-        isPaid: false,
+        summary:  summary,
+        isPaid:   savedPaid
       });
     }
 
     // 解析参数
     const isDisclaimer = options.type === 'disclaimer' || options.disclaimer === 'true';
     const formData = wx.getStorageSync('survey_draft_v1')?.data || {};
-    
+
     this.setData({
       isDisclaimer: isDisclaimer,
       formData: formData,
@@ -58,27 +65,12 @@ Page({
     if (options.fileID) {
       this.setData({ fileID: options.fileID });
     }
-    // 关键：转换File ID为临时HTTPS链接
+
+    // 转换 File ID 为临时 HTTPS 链接
     this.getQRCodeUrl();
 
-    // 从本地存储读取 arbitrator 数据并构建参数卡片
-    const arbitrator = wx.getStorageSync('arbitrator');
-    if (arbitrator) {
-      const paramCards = this._buildParamCards(arbitrator.params || {});
-      const reverseMappings = this._buildReverseMappings(arbitrator);
-      const riskClassMap = { '高': 'high', '中': 'medium', '低': 'low' };
-      this.setData({
-        arbitrator,
-        paramCards,
-        reverseMappings,
-        riskLevel: arbitrator.riskLevel || '',
-        riskReason: arbitrator.riskReason || '',
-        riskClass: riskClassMap[arbitrator.riskLevel] || 'low',
-      });
-    }
-
+    // AB 测试初始化
     try {
-      const app = getApp();
       const groups =
         (app && app.globalData && (app.globalData.abTestGroups || app.globalData.abGroups)) ||
         wx.getStorageSync('ab_test_groups') ||
@@ -127,27 +119,23 @@ Page({
 
   onUnlock() {
     this.setData({ isPaid: true });
+    wx.setStorageSync('report_paid', true);
   },
 
-  // 新增：获取二维码临时URL
   getQRCodeUrl() {
     wx.cloud.getTempFileURL({
       fileList: [this.data.qrFileID],
       success: res => {
         if (res.fileList && res.fileList[0] && res.fileList[0].tempFileURL) {
-          this.setData({
-            qrImageUrl: res.fileList[0].tempFileURL
-          });
+          this.setData({ qrImageUrl: res.fileList[0].tempFileURL });
           console.log('二维码URL获取成功:', res.fileList[0].tempFileURL);
         } else {
           console.error('获取二维码URL失败:', res);
-          // 备用：尝试直接使用File ID（部分基础库支持）
           this.setData({ qrImageUrl: this.data.qrFileID });
         }
       },
       fail: err => {
         console.error('获取二维码URL错误:', err);
-        // 备用方案
         this.setData({ qrImageUrl: this.data.qrFileID });
       }
     });
@@ -155,57 +143,41 @@ Page({
 
   showQRCode() {
     const qrUrl = this.data.qrImageUrl;
-    
     if (!qrUrl) {
-      wx.showToast({
-        title: '图片加载中，请稍后再试',
-        icon: 'none'
-      });
+      wx.showToast({ title: '图片加载中，请稍后再试', icon: 'none' });
       return;
     }
-
     wx.previewImage({
       current: qrUrl,
       urls: [qrUrl],
       success: () => {
         console.log('L2转化：用户查看微信二维码');
-        // 可在此埋点统计转化率
         this.trackConversion('qrcode_view');
       },
       fail: (err) => {
         console.error('预览二维码失败：', err);
-        wx.showToast({
-          title: '图片加载失败',
-          content: '可能是网络问题，请重试或联系客服',
-          showCancel: false
-        });
+        wx.showToast({ title: '图片加载失败', icon: 'none' });
       }
     });
   },
 
-  // 新增：转化追踪
   trackConversion(type) {
-    // 未来可接入正式埋点
     console.log(`[Analytics] ${type} at ${new Date().toISOString()}`);
   },
 
-  // 下载PDF
   downloadPDF() {
     if (!this.data.fileID) {
       wx.showToast({ title: '文件生成中，请稍后再试', icon: 'none' });
       return;
     }
-
     wx.showLoading({ title: '下载中...' });
-    
     wx.cloud.downloadFile({
       fileID: this.data.fileID,
       success: res => {
         wx.hideLoading();
-        // 保存到本地
         wx.saveFile({
           tempFilePath: res.tempFilePath,
-          success: saved => {
+          success: () => {
             wx.showModal({
               title: '下载成功',
               content: '文件已保存到本地，请在微信"文件"中查看',
@@ -222,15 +194,12 @@ Page({
     });
   },
 
-  // 在线预览（临时文件）
   previewPDF() {
     if (!this.data.fileID) {
       wx.showToast({ title: '文件生成中', icon: 'none' });
       return;
     }
-
     wx.showLoading({ title: '加载中...' });
-    
     wx.cloud.downloadFile({
       fileID: this.data.fileID,
       success: res => {
@@ -248,49 +217,22 @@ Page({
     });
   },
 
-  // 客服会话回调（L2转化追踪）
   onContact(e) {
     console.log('L2入口点击：', e.detail);
-    // 可在此处上报分析数据
     wx.showToast({ title: '正在跳转客服...', icon: 'none' });
   },
 
-  // 重新开始
   restart() {
     wx.removeStorageSync('survey_draft_v1');
     wx.redirectTo({ url: '/pages/index/index' });
   },
 
   formatTime(date) {
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    const hour = date.getHours().toString().padStart(2, '0');
+    const year  = date.getFullYear();
+    const month  = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day    = date.getDate().toString().padStart(2, '0');
+    const hour   = date.getHours().toString().padStart(2, '0');
     const minute = date.getMinutes().toString().padStart(2, '0');
     return `${year}-${month}-${day} ${hour}:${minute}`;
-  },
-
-  _buildParamCards(params) {
-    return [
-      { label: '保温', sublabel: 'K值', value: params.K != null ? params.K : '—', unit: 'W/(m²·K)', prefix: '≤', colorClass: 'c-blue', icon: '🌡️' },
-      { label: '隔音', sublabel: 'Rw值', value: params.Rw != null ? params.Rw : '—', unit: 'dB', prefix: '≥', colorClass: 'c-green', icon: '🔊' },
-      { label: '遮阳', sublabel: 'SHGC', value: params.SHGC != null ? params.SHGC : '—', unit: '', prefix: '≤', colorClass: 'c-amber', icon: '☀️' },
-      { label: '抗风压', sublabel: params.windZone || '', value: params.P3 != null ? params.P3 : '—', unit: '级', prefix: '≥', colorClass: 'c-teal', icon: '💨' },
-      { label: '密封性能', sublabel: `气密${params.airRec || 4}级/水密${params.waterRec || 3}级`, value: '', unit: '', prefix: '', colorClass: 'c-purple', icon: '🔒' },
-      { label: '安全', sublabel: '', value: params.safety != null ? params.safety : '常规', unit: '', prefix: '', colorClass: 'c-pink', icon: '🛡️' },
-    ];
-  },
-
-  _buildReverseMappings(arbitrator) {
-    if (!arbitrator || !Array.isArray(arbitrator.sections)) return [];
-    const severityOrder = { error: 0, warning: 1, info: 2 };
-    const sorted = [...arbitrator.sections]
-      .sort((a, b) => (severityOrder[a.severity] ?? 3) - (severityOrder[b.severity] ?? 3));
-    return sorted.slice(0, 3).map((item, index) => ({
-      ...item,
-      title: item.reason,
-      description: item.action,
-      mappingType: index < 2 ? 'data' : 'action',
-    }));
   }
 });
