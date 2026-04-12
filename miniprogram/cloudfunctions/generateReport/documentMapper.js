@@ -51,7 +51,7 @@ const FIELD_MAP = {
 
 const TERM = {
   paramLabel: '本案目标值',
-  threshold: '推荐技术门槛',
+  threshold: '采购技术底线',
   excludeSoft: '建议不予优先考虑',
   excludeHard: '方案即视为不合格',
   tierA: '经济实用 A档',
