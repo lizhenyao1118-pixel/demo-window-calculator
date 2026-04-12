@@ -533,7 +533,7 @@ function buildNeedsTable(resolved, answers, sealGrades) {
     },
     {
       dimension: '传热系数',
-      value: `K≤${kText} W/(m²·K)${thermalRange ? `（推荐范围${thermalRange}）` : ''}`,
+      value: `K≤${kText} W/(m²·K)${thermalRange ? `（参考范围${thermalRange}）` : ''}`,
       basis: `${STANDARDS_MAP.thermal.short} · ${kBasisText}`
     },
     {
@@ -633,9 +633,9 @@ function buildParameterNote({ windPressure, soundInsulation, thermal, shgc, safe
       } else if (isHighFloor) {
         reason = '，以提升高层抗渗能力';
       }
-      waterText += `${waterParts.join(' + ')}，由基础 ${sealGrades.waterMin} 级上调至推荐 ${sealGrades.waterRec} 级${reason}。`;
+      waterText += `${waterParts.join(' + ')}，由基础 ${sealGrades.waterMin} 级上调至本案目标 ${sealGrades.waterRec} 级${reason}。`;
     } else {
-      waterText += `基础 ${sealGrades.waterMin} 级，推荐 ${sealGrades.waterRec} 级。`;
+      waterText += `基础 ${sealGrades.waterMin} 级，本案目标 ${sealGrades.waterRec} 级。`;
     }
     lines.push(waterText);
   } else {
