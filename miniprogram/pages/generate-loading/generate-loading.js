@@ -40,6 +40,11 @@ Page({
           return;
         }
 
+        // 写入 globalData
+        const app = getApp();
+        app.globalData.currentReport = res.result.snapshot;
+        app.globalData.reportComputed = res.result.computed;
+
         // 新增：从云函数结果构建 arbitrator 对象
         const computed = res.result.computed || {};
 
