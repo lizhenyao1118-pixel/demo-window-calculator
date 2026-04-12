@@ -328,6 +328,13 @@ exports.main = async (event, context) => {
     }
 
     // 8. 返回成功（保留原有逻辑）
+    // DEBUG
+    console.log('[DEBUG] summary:', JSON.stringify({
+      k_target: computed.K_target,
+      rw_required: computed.Rw_required,
+      sealGrades: sealGrades
+    }));
+
     return {
       success: true,
       fileID: uploadRes.fileID,
@@ -336,7 +343,18 @@ exports.main = async (event, context) => {
       isDisclaimer: sections.cover.isRisk,
       reportId,
       tenderId,
-      snapshot: sections,
+      snapshot: {
+        ...sections,
+        summary: {
+          k_target:    computed.K_target,
+          rw_required: computed.Rw_required,
+          shgc_target: computed.SHGC_target,
+          p3_required: computed.P3_required,
+          wind_zone:   computed.wind_zone,
+          air_rec:     sealGrades.airRec,
+          water_rec:   sealGrades.waterRec
+        }
+      },
       warnings: computed.warnings || [],
       computed: {
         K_target: computed.K_target,

@@ -50,6 +50,7 @@ Page({
         summary:  summary,
         isPaid:   savedPaid
       });
+      console.log('summary:', JSON.stringify(this.data.summary));
     }
 
     // 解析参数

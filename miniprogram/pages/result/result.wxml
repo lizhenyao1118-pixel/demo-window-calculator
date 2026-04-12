@@ -31,7 +31,7 @@
     <view class="param-card">
       <text class="param-label">抗风压</text>
       <text class="param-symbol">≥</text>
-      <text class="param-value">{{summary.p3_required}}级</text>
+      <text class="param-value">{{summary.p3_required}}kPa</text>
       <text class="param-unit">{{summary.wind_zone}}</text>
     </view>
     <view class="param-card">
@@ -54,9 +54,8 @@
     <text class="unlock-btn-sub">含完整技术参数与验收标准，商家看到就知道你懂行</text>
   </view>
 
-  <!-- 四章内容：始终渲染，未付费时遮罩覆盖（方案B升级仅需改遮罩样式） -->
-  <view class="chapters-wrap">
-    <view wx:if="{{!isPaid}}" class="chapters-mask" bindtap="onUnlock"></view>
+  <!-- 四章内容：仅付费后渲染 -->
+  <view wx:if="{{isPaid}}" class="chapters-wrap">
 
     <!-- 第1章 -->
     <view class="chapter-header">
