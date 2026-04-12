@@ -2,7 +2,7 @@
 # CORE_LOGIC.md
 > 本文件是系统核心逻辑的唯一权威来源。
 > 所有迭代决策必须对照此文件，发现冲突时以此文件为准。
-> 建立时间：2026-04-07 | 代码基线：v4.0.1（145/145，commit adffb92）
+> 建立时间：2026-04-07 | 代码基线：v4.0.1（146/146，commit 3fc2560）
 
 ---
 
@@ -126,6 +126,7 @@
 | 冲突提示指令型语言 | 违反原则5 | 已改为信息呈现型陈述（SPEC-01） |
 | Rw边界修复（技术债标注） | v3.9.4已落地，v3.9.9代码验证：low_e_argon rw_max=34，切换点Rw_req≥35，triple_pane交通噪声排除均已实现 | 无需操作，已关闭 |
 | estimateCostDelta(glassKey, tier) | tier 参数语义错误 | 改为 (perf_glass_key, glass_key)（SPEC-03/04） |
+| result-summary 页面 | 已由 result 页 L1 摘要卡替代，文件保留供 git 历史参考 | result 页原生渲染 |
 
 ---
 
@@ -146,10 +147,19 @@
 
 | 项目 | 状态 | 备注 |
 |------|------|------|
-| Rw边界修复 | ✅ 已关闭 | v3.9.4落地，v3.9.9验证（145/145） |
+| Rw边界修复 | ✅ 已关闭 | v3.9.4落地，v3.9.9验证（146/146） |
 | 定价决策（L2） | 🔲 待产品验证 | 需种子用户数据支撑 |
 | 小红书→小程序转化漏斗 | 🔲 待建立 | 引流后跨平台损耗未量化 |
 | SPEC-E | ✅ 已完成 | pdfBuilder-v2.js 渲染层重构：chapter3 改为渲染红线清单（禁止项+安全底线）；已删除 conflictAlert 临时兼容字段（v4.0.1） |
+
+### 输出层架构重构（SPEC-C01~C04，2026-04-12）
+
+| 编号 | 文件 | 内容 | 状态 |
+|------|------|------|----- |
+| C01 | documentMapper.js | 新增 summary 专属对象、chapter3双档字段、mapToSections契约注释 | ✅ 已完成 |
+| C02 | generate-loading.js | 移除 arbitrator 死代码，增加 Storage 三项持久化 | ✅ 已完成 |
+| C03 | result.js | Storage 降级路径，移除 arbitrator 消费侧死代码 | ✅ 已完成 |
+| C04 | result.wxml/wxss | computed→summary，遮罩付费墙，修复 chapter1/3 绑定错误，新增 redline-dot-gray | ✅ 已完成 |
 
 ---
 
