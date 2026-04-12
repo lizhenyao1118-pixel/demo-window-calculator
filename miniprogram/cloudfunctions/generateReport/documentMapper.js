@@ -50,7 +50,7 @@ const FIELD_MAP = {
 };
 
 const TERM = {
-  paramLabel: '推荐目标值',
+  paramLabel: '本案目标值',
   threshold: '推荐技术门槛',
   excludeSoft: '建议不予优先考虑',
   excludeHard: '方案即视为不合格',
@@ -517,8 +517,8 @@ function buildNeedsTable(resolved, answers, sealGrades) {
 
   const sg = sealGrades || { airMin: 4, airRec: 4, airGap: 0, waterMin: 3, waterRec: 4, waterGap: 1, isFixed: false };
   const fixedNote = sg.isFixed ? '（固定窗推荐值+1级）' : '';
-  const airValue = `推荐目标值：≥${sg.airRec}级`;
-  const waterValue = `推荐目标值：≥${sg.waterRec}级`;
+  const airValue = `本案目标值：≥${sg.airRec}级`;
+  const waterValue = `本案目标值：≥${sg.waterRec}级`;
 
   return [
     {
@@ -677,7 +677,7 @@ function buildCoreTension(answers, resolved) {
     sentences.push(`${conflicts.hardest}与${conflicts.secondHardest}存在配置重合，导致本案成本高于同档位普通场景。`);
   }
 
-  sentences.push('基于以上分析，本表各项为本项目的推荐目标值。商家方案如仅能满足最低可接受值，可在报价中注明，由业主确认是否接受；低于最低值的方案，可在比价时排除。');
+  sentences.push('基于以上分析，本表各项为本项目的性能目标值。商家方案如仅能满足最低可接受值，可在报价中注明，由业主确认是否接受；低于最低值的方案，可在比价时排除。');
 
   return sentences.join('');
 }
