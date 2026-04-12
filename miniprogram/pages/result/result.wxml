@@ -12,28 +12,28 @@
   <view class="param-grid">
     <view class="param-card">
       <text class="param-label">保温</text>
-      <text class="param-value">{{computed.K_target}}</text>
+      <text class="param-value">{{summary.K_target}}</text>
       <text class="param-unit">W/(m²·K) · K值</text>
     </view>
     <view class="param-card">
       <text class="param-label">隔音</text>
-      <text class="param-value">{{computed.Rw_required}}</text>
+      <text class="param-value">{{summary.Rw_required}}</text>
       <text class="param-unit">dB · Rw值</text>
     </view>
     <view class="param-card">
       <text class="param-label">遮阳</text>
-      <text class="param-value">{{computed.SHGC_target || '—'}}</text>
+      <text class="param-value">{{summary.SHGC_target || '—'}}</text>
       <text class="param-unit">SHGC</text>
     </view>
     <view class="param-card">
       <text class="param-label">抗风压</text>
-      <text class="param-value">{{computed.P3_required}}级</text>
-      <text class="param-unit">{{computed.wind_zone}}</text>
+      <text class="param-value">{{summary.P3_required}}级</text>
+      <text class="param-unit">{{summary.wind_zone}}</text>
     </view>
     <view class="param-card">
       <text class="param-label">密封性能</text>
-      <text class="param-value">气密{{computed.airRec}}级</text>
-      <text class="param-unit">水密{{computed.waterRec}}级</text>
+      <text class="param-value">气密{{summary.airRec}}级</text>
+      <text class="param-unit">水密{{summary.waterRec}}级</text>
     </view>
     <view class="param-card">
       <text class="param-label">安全</text>
@@ -48,8 +48,9 @@
     <text class="unlock-btn-sub">含完整技术参数与验收标准，商家看到就知道你懂行</text>
   </view>
 
-  <!-- 四章内容：付费后可见 -->
-  <view wx:if="{{isPaid}}">
+  <!-- 四章内容：始终渲染，未付费时遮罩覆盖（方案B升级仅需改遮罩样式） -->
+  <view class="chapters-wrap">
+    <view wx:if="{{!isPaid}}" class="chapters-mask" bindtap="onUnlock"></view>
 
     <!-- 第1章 -->
     <view class="chapter-header">
@@ -66,28 +67,8 @@
       </view>
     </view>
 
-    <view wx:if="{{chapter1.redLines.safetyBudgetWarning}}" class="upgrade-block">
-      <text class="upgrade-title">{{chapter1.redLines.safetyBudgetWarning.title}}</text>
-      <view wx:for="{{chapter1.redLines.safetyBudgetWarning.items}}" wx:key="index">
-        <text class="upgrade-item">· {{item}}</text>
-      </view>
-    </view>
-
-    <view class="redline-list">
-      <view class="redline-item" wx:for="{{chapter1.redLines.forbidden}}" wx:key="index">
-        <view class="redline-dot"></view>
-        <view class="redline-content">
-          <text class="redline-title">{{item.title}}</text>
-          <text class="redline-desc">{{item.desc}}</text>
-        </view>
-      </view>
-      <view class="redline-item" wx:for="{{chapter1.redLines.safetyItems}}" wx:key="index">
-        <view class="redline-dot"></view>
-        <view class="redline-content">
-          <text class="redline-title">{{item.title}}</text>
-          <text class="redline-desc">{{item.desc}}</text>
-        </view>
-      </view>
+    <view wx:if="{{chapter1.needsAnalysis.budgetFitnessNote}}" class="upgrade-block">
+      <text class="upgrade-item">{{chapter1.needsAnalysis.budgetFitnessNote.text}}</text>
     </view>
 
     <!-- 第2章 -->
@@ -130,9 +111,9 @@
     <view class="two-col" wx:if="{{chapter3.is_dual_tier}}">
       <view class="col-card" wx:for="{{chapter3.dualTierSpecs}}" wx:key="label">
         <text class="col-label">{{item.label}}</text>
-        <text class="col-item">{{item.glass}}</text>
         <text class="col-item">{{item.profile}}</text>
         <text class="col-item">{{item.hardware}}</text>
+        <text class="col-item">{{item.priceRange}}</text>
       </view>
     </view>
 
@@ -147,6 +128,19 @@
         <view class="redline-dot redline-dot-gray"></view>
         <view class="redline-content">
           <text class="redline-title">{{item.text}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view wx:if="{{chapter3.safetyBudgetWarning}}" class="upgrade-block">
+      <text class="upgrade-item">{{chapter3.safetyBudgetWarning}}</text>
+    </view>
+
+    <view wx:if="{{chapter3.safetyItems.length > 0}}" class="redline-list">
+      <view class="redline-item" wx:for="{{chapter3.safetyItems}}" wx:key="index">
+        <view class="redline-dot"></view>
+        <view class="redline-content">
+          <text class="redline-title">{{item}}</text>
         </view>
       </view>
     </view>

@@ -255,3 +255,23 @@ page { background: #f5f5f0; }
   line-height: 1.8;
   display: block;
 }
+
+/* 付费墙遮罩结构（方案B升级时只需修改此处样式） */
+.chapters-wrap { position: relative; }
+.chapters-mask {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(255,255,255,0.85);
+  z-index: 10;
+}
+
+/* 红线清单推荐项灰色圆点 */
+.redline-dot-gray {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #bbb;
+  margin-top: 4px;
+  flex-shrink: 0;
+  margin-right: 10px;
+}
