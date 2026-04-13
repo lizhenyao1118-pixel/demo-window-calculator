@@ -41,6 +41,28 @@ Page({
     const savedPaid = wx.getStorageSync('report_paid') || false;
 
     if (snapshot) {
+      // 注入 levelBar 刻度条位置（Phase 3）
+      if (snapshot.chapter1 &&
+          snapshot.chapter1.needsAnalysis &&
+          snapshot.chapter1.needsAnalysis.needsTable) {
+        snapshot.chapter1.needsAnalysis.needsTable.forEach(function(row) {
+          if (row.levelBar) {
+            const lb = row.levelBar;
+            const low  = parseFloat(lb.lowValue)  || 0;
+            const high = parseFloat(lb.highValue) || 100;
+            const mid  = parseFloat(lb.midValue)  || low;
+            let pos;
+            if (lb.direction === 'descending') {
+              pos = (low - mid) / (low - high) * 100;
+            } else {
+              pos = (mid - low) / (high - low) * 100;
+            }
+            pos = Math.min(Math.max(Math.round(pos), 5), 95);
+            lb._barPosition = pos + '%';
+          }
+        });
+      }
+
       this.setData({
         cover:    snapshot.cover    || {},
         chapter1: snapshot.chapter1 || {},
@@ -221,6 +243,10 @@ Page({
   onContact(e) {
     console.log('L2入口点击：', e.detail);
     wx.showToast({ title: '正在跳转客服...', icon: 'none' });
+  },
+
+  onL2Entry() {
+    wx.navigateTo({ url: '/pages/tender/list' });
   },
 
   restart() {

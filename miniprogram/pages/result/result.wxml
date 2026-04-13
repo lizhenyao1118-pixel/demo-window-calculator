@@ -57,33 +57,86 @@
   <!-- 四章内容：仅付费后渲染 -->
   <view wx:if="{{isPaid}}" class="chapters-wrap">
 
-    <!-- 第1章 -->
+    <!-- ===== 第一章 ===== -->
     <view class="chapter-header">
       <text class="chapter-num">第一章</text>
       <text class="chapter-title">性能需求诊断</text>
     </view>
 
-    <view class="param-grid">
-      <view class="param-card {{item.isCore ? 'param-card-core' : ''}}"
-            wx:for="{{chapter1.needsAnalysis.needsTable}}" wx:key="dimension">
-        <text class="param-label">{{item.dimension}}</text>
-        <text class="param-value">{{item.value}}</text>
-        <text class="param-unit">{{item.basis}}</text>
+    <!-- M1-1 项目身份信息 -->
+    <view class="info-grid">
+      <view class="info-row">
+        <text class="info-key">城市 / 气候区</text>
+        <text class="info-val">{{chapter1.basicInfo.city}} · {{chapter1.basicInfo.climateLabel}}</text>
+      </view>
+      <view class="info-row">
+        <text class="info-key">楼层</text>
+        <text class="info-val">{{chapter1.basicInfo.floorDesc}}</text>
+      </view>
+      <view class="info-row">
+        <text class="info-key">朝向 / 窗型</text>
+        <text class="info-val">{{chapter1.basicInfo.orientation}} · {{chapter1.basicInfo.windowType}}</text>
+      </view>
+      <view class="info-row">
+        <text class="info-key">供暖方式</text>
+        <text class="info-val">{{chapter1.basicInfo.heatingType}}</text>
+      </view>
+      <view class="info-row">
+        <text class="info-key">家庭构成</text>
+        <text class="info-val">{{chapter1.basicInfo.familyDesc}}</text>
+      </view>
+      <view class="info-row">
+        <text class="info-key">核心诉求</text>
+        <text class="info-val info-tag">{{chapter1.basicInfo.painPoint}}</text>
       </view>
     </view>
 
+    <!-- M1-2 核心诉求声明 -->
+    <view class="tension-block">
+      <text class="tension-text">{{chapter1.needsAnalysis.coreTension}}</text>
+    </view>
+
+    <!-- M1-3 性能参数三层 -->
+    <view class="needs-card" wx:for="{{chapter1.needsAnalysis.needsTable}}" wx:key="dimension">
+      <view class="needs-header">
+        <text class="needs-dimension">{{item.dimension}}</text>
+        <text class="needs-value">{{item.value}}</text>
+      </view>
+      <text class="needs-derivation">{{item.derivation}}</text>
+      <view wx:if="{{item.levelBar}}" class="level-bar-wrap">
+        <view class="level-bar-track">
+          <view class="level-bar-fill" style="width:{{item.levelBar._barPosition}}"></view>
+          <view class="level-bar-marker" style="left:{{item.levelBar._barPosition}}"></view>
+        </view>
+        <view class="level-bar-labels">
+          <text class="level-label-low">{{item.levelBar.lowLabel}}</text>
+          <text class="level-label-high">{{item.levelBar.highLabel}}</text>
+        </view>
+        <view class="level-bar-mid-row">
+          <text class="level-mid-hint" style="left:{{item.levelBar._barPosition}}">本案要求 {{item.levelBar.midValue}}{{item.levelBar.unit}}</text>
+        </view>
+      </view>
+      <view wx:if="{{item.marketReality}}" class="market-reality">
+        <text class="market-tag {{item.marketReality.tag === '普遍可达' ? 'tag-green' : 'tag-orange'}}">{{item.marketReality.tag}}</text>
+        <text class="market-desc">{{item.marketReality.description}}</text>
+      </view>
+    </view>
+
+    <!-- M1-4 强制条款提示 -->
     <view wx:if="{{chapter1.needsAnalysis.budgetFitnessNote}}" class="upgrade-block">
       <text class="upgrade-item">{{chapter1.needsAnalysis.budgetFitnessNote.text}}</text>
     </view>
 
-    <!-- 第2章 -->
+    <!-- ===== 第二章 ===== -->
     <view class="chapter-header">
       <text class="chapter-num">第二章</text>
       <text class="chapter-title">采购技术底线</text>
     </view>
 
+    <!-- M2-1 定位说明 -->
     <text class="position-statement">{{chapter2.positionStatement}}</text>
 
+    <!-- M2-2 技术指标表 -->
     <view class="table-wrap">
       <view class="table-head">
         <text class="col-a">配置项</text>
@@ -98,67 +151,111 @@
       </view>
     </view>
 
-    <!-- 第3章 -->
+    <!-- M2-3 商家回应识别提示 -->
+    <view wx:if="{{chapter2.responseGuide}}" class="response-guide">
+      <view class="response-item">
+        <text class="response-icon response-ok">✓</text>
+        <text class="response-text">{{chapter2.responseGuide.complete}}</text>
+      </view>
+      <view class="response-item">
+        <text class="response-icon response-warn">△</text>
+        <text class="response-text">{{chapter2.responseGuide.evasion}}</text>
+      </view>
+      <view class="response-item">
+        <text class="response-icon response-bad">✕</text>
+        <text class="response-text">{{chapter2.responseGuide.reject}}</text>
+      </view>
+    </view>
+
+    <!-- ===== 第三章 ===== -->
     <view class="chapter-header">
       <text class="chapter-num">第三章</text>
       <text class="chapter-title">红线清单</text>
     </view>
 
-    <view wx:if="{{chapter3.conflictAlert}}" class="upgrade-block">
-      <text class="upgrade-title">{{chapter3.conflictAlert.title}}</text>
-      <view wx:for="{{chapter3.conflictAlert.items}}" wx:key="index">
-        <text class="upgrade-item">· {{item}}</text>
-      </view>
-      <view wx:if="{{chapter3.conflictAlert.hasNoConflict && chapter3.conflictAlert.noConflictText}}">
-        <text class="upgrade-item">{{chapter3.conflictAlert.noConflictText}}</text>
-      </view>
-      <view class="upgrade-divider"></view>
-      <text class="upgrade-rec">{{chapter3.conflictAlert.cost_estimate}}</text>
-    </view>
+    <!-- M3-1 章节定位说明 -->
+    <text class="chapter-intro">以下红线由第一章性能诊断结果动态生成，每条对应一项可量化指标。任何一项不满足，即视为方案不合格，无需进入比价环节。</text>
 
-    <view class="two-col" wx:if="{{chapter3.is_dual_tier}}">
-      <view class="col-card" wx:for="{{chapter3.dualTierSpecs}}" wx:key="label">
-        <text class="col-label">{{item.label}}</text>
-        <text class="col-item">{{item.profile}}</text>
-        <text class="col-item">{{item.hardware}}</text>
-        <text class="col-item">{{item.priceRange}}</text>
-      </view>
-    </view>
-
+    <!-- M3-2 禁止项清单 + 用户侧含义 -->
     <view class="redline-list">
       <view class="redline-item" wx:for="{{chapter3.redlineChecklist.mandatory}}" wx:key="index">
         <view class="redline-dot"></view>
         <view class="redline-content">
           <text class="redline-title">{{item.text}}</text>
+          <text wx:if="{{item.userMeaning}}" class="redline-meaning">{{item.userMeaning}}</text>
         </view>
       </view>
       <view class="redline-item" wx:for="{{chapter3.redlineChecklist.recommended}}" wx:key="index">
         <view class="redline-dot redline-dot-gray"></view>
         <view class="redline-content">
           <text class="redline-title">{{item.text}}</text>
+          <text wx:if="{{item.userMeaning}}" class="redline-meaning">{{item.userMeaning}}</text>
         </view>
       </view>
     </view>
 
-    <view wx:if="{{chapter3.safetyBudgetWarning}}" class="upgrade-block">
+    <!-- M3-3 安全底线（条件显示） -->
+    <view wx:if="{{chapter3.safetyBudgetWarning}}" class="upgrade-block safety-block">
       <text class="upgrade-item">{{chapter3.safetyBudgetWarning}}</text>
     </view>
-
-    <view wx:if="{{chapter3.safetyItems.length > 0}}" class="redline-list">
+    <view wx:if="{{chapter3.safetyItems.length > 0}}" class="redline-list safety-list">
       <view class="redline-item" wx:for="{{chapter3.safetyItems}}" wx:key="index">
-        <view class="redline-dot"></view>
+        <view class="redline-dot safety-dot"></view>
         <view class="redline-content">
           <text class="redline-title">{{item}}</text>
         </view>
       </view>
     </view>
 
-    <!-- 第4章 -->
-    <view class="chapter-header">
-      <text class="chapter-num">第四章</text>
-      <text class="chapter-title">商家答题表 · 验收节点</text>
+    <!-- M3-4 配置兼容性说明 -->
+    <view class="compat-block">
+      <view wx:if="{{chapter3.conflictAlert.hasNoConflict}}">
+        <text class="compat-ok">✓ {{chapter3.conflictAlert.noConflictText}}</text>
+      </view>
+      <view wx:if="{{!chapter3.conflictAlert.hasNoConflict}}">
+        <text class="compat-warn-title">{{chapter3.conflictAlert.title}}</text>
+        <view wx:for="{{chapter3.conflictAlert.items}}" wx:key="index">
+          <text class="upgrade-item">· {{item}}</text>
+        </view>
+        <text wx:if="{{chapter3.conflictAlert.cost_estimate}}" class="upgrade-rec">{{chapter3.conflictAlert.cost_estimate}}</text>
+      </view>
     </view>
 
+    <!-- ===== 第四章 ===== -->
+    <view class="chapter-header">
+      <text class="chapter-num">第四章</text>
+      <text class="chapter-title">下一步行动</text>
+    </view>
+
+    <!-- M4-1 行动主线三步（最显眼位置） -->
+    <view class="action-steps">
+      <view class="action-step" wx:for="{{chapter4.actionSteps}}" wx:key="step">
+        <view class="action-step-num">
+          <text class="action-num-text">{{item.step}}</text>
+        </view>
+        <view class="action-step-body">
+          <text class="action-step-title">{{item.title}}</text>
+          <text class="action-step-desc">{{item.description}}</text>
+          <text wx:if="{{item.hint}}" class="action-step-hint">{{item.hint}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- M4-2 场景化风险提示 -->
+    <view wx:if="{{chapter4.isRisk}}" class="risks-section">
+      <text class="section-sub-title">本案风险提示</text>
+      <view class="risk-card" wx:for="{{chapter4.risks.items}}" wx:key="title">
+        <text class="risk-title">{{item.title}}</text>
+        <text class="risk-desc">{{item.desc}}</text>
+        <view class="risk-question-wrap">
+          <text class="risk-q-label">面对商家时问：</text>
+          <text class="risk-question">{{item.question}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- M4-3 商家答题表 -->
+    <text class="section-sub-title">商家答题表</text>
     <view class="qa-form">
       <view class="qa-item"
             wx:for="{{chapter4.merchantQuestionnaire.section3.questions}}" wx:key="*this">
@@ -166,12 +263,22 @@
       </view>
     </view>
 
+    <!-- M4-4 验收节点 -->
+    <text class="section-sub-title">验收节点</text>
     <view class="inspection-section"
-          wx:for="{{chapter4.acceptance.nodes}}" wx:key="phase">
+          wx:for="{{chapter4.acceptance.nodes}}" wx:key="title">
       <text class="inspection-phase">{{item.title}}</text>
-      <view wx:for="{{item.items}}" wx:key="*this" wx:for-item="node">
-        <text class="inspection-item">· {{node}}</text>
+      <view class="inspection-item-wrap"
+            wx:for="{{item.items}}" wx:key="text" wx:for-item="node">
+        <text class="inspection-item">· {{node.text}}</text>
+        <text wx:if="{{node.reason}}" class="inspection-reason">→ {{node.reason}}</text>
       </view>
+    </view>
+
+    <!-- M4-5 专业审计入口 -->
+    <view class="l2-entry" bindtap="onL2Entry">
+      <text class="l2-entry-text">商家填回来的内容，需要专业核查？</text>
+      <text class="l2-entry-action">进入招标管理 →</text>
     </view>
 
     <view class="footer-note">本文件由门窗诊断系统生成 · 仅供采购参考</view>
