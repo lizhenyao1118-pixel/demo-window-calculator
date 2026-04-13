@@ -2,7 +2,7 @@
 # CORE_LOGIC.md
 > 本文件是系统核心逻辑的唯一权威来源。
 > 所有迭代决策必须对照此文件，发现冲突时以此文件为准。
-> 建立时间：2026-04-07 | 代码基线：v4.0.8 + SPEC-C01~C04 + Step8-coreTension重写（146/146，最新 commit 698f06a）
+> 建立时间：2026-04-07 | 代码基线：Phase 3 完成 commit 762ec91（146/146）
 
 ---
 
@@ -164,6 +164,7 @@
 | C02 | generate-loading.js | 移除 arbitrator 死代码，增加 Storage 三项持久化 | ✅ 已完成 |
 | C03 | result.js | Storage 降级路径，移除 arbitrator 消费侧死代码 | ✅ 已完成 |
 | C04 | result.wxml/wxss | computed→summary，遮罩付费墙，修复 chapter1/3 绑定错误，新增 redline-dot-gray | ✅ 已完成 |
+| Phase 3 | result.wxml/wxss/js | 渲染层重写，消费 SNAPSHOT_SCHEMA_v1.0 全部新字段，M1-1至M4-5 | ✅ 已完成 |
 
 ---
 
@@ -184,6 +185,8 @@
 | 2026-04-13 | ⚠️ 核对 | L2审查为产品决策，非代码执行 | 前置：先对齐审查框架，再决定是否进入执行 |
 | 2026-04-13 | ✅ 确认 | buildCoreTension 按 pain_point 场景化重写 | 参考 buildAnalysisParagraph 分支结构；不使用 pain_points[0]；commit 698f06a |
 | 2026-04-13 | ✅ 完成 | 输出层重构 Phase 1（Steps 1–7）+ Phase 2（Step 8）全部完成 | documentMapper.js 双文件同步；146/146；commit 698f06a |
+| 2026-04-13 | ✅ 完成 | Phase 3 渲染层重写（result.wxml/wxss/js） | M1-1至M4-5全部模块；levelBar position 在 result.js onLoad 注入；l2_entry 跳转 pages/tender/list；146/146；commit 762ec91 |
+| 2026-04-13 | ✅ 确认 | userMeaning 始终展开显示 | 方案A，小字显示在红线title下方，无折叠交互 |
 
 ### 历史归档
 
