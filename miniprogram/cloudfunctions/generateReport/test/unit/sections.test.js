@@ -53,13 +53,13 @@ describe('mapToSections', () => {
     expect(safety.stars).toBe(5);
   });
 
-  test('SEC02: 1.2第三句为行动导向术语（含基于以上分析）', () => {
+  test('SEC02: 1.2核心诉求段为场景化声明式陈述', () => {
     const assessment = buildAssessment(fixtures.shanghaiThermal);
     const resolved = calculateAll(assessment);
     const sections = mapToSections(resolved, buildAnswers(fixtures.shanghaiThermal), 'UNIT-SEC02');
     const tension = String((((sections.chapter1 || {}).needsAnalysis) || {}).coreTension || '');
-    expect(tension).toContain('基于以上分析');
-    expect(tension).toContain('最低可接受值');
+    expect(tension).toContain('通过门窗热工性能，减少夏季太阳辐射得热');
+    expect(tension.length).toBeGreaterThan(20);
   });
 
   test('SEC03: 档位标签统一为完整名称', () => {

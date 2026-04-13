@@ -81,7 +81,7 @@ describe('build1_2', () => {
     const resolved = { P3_required: 3.0, Rw_required: 33, K_target: 2.4, SHGC_target: 0.30, kRange: '2.2~2.4', climateZoneCN: '夏热冬暖', appliedFactor: null };
     const r = build1_2(a, resolved);
     const kRow = (r.needsTable || []).find(x => x.dimension === '传热系数') || {};
-    expect(String(kRow.value || '')).toContain('推荐范围');
+    expect(String(kRow.value || '')).toContain('参考范围');
   });
 });
 
@@ -348,7 +348,7 @@ describe('B-14 A中期 七维参数表与结构化等级', () => {
     const resolved = { P3_required: 2.6, Rw_required: 30, K_target: 2.3, SHGC_target: 0.35, kRange: '2.3~2.5', climateZoneCN: '夏热冬冷', appliedFactor: null };
     const r = build1_2(a, resolved);
     const airRow = (r.needsTable || []).find(x => x.dimension === '气密性') || {};
-    expect(String(airRow.value || '')).toContain('推荐目标值：≥4级');
+    expect(String(airRow.value || '')).toContain('本案目标值：≥4级');
     expect(String(airRow.value || '')).not.toContain('最低可接受值');
   });
 
@@ -418,14 +418,14 @@ describe('Sprint 7 C-短期文案优化', () => {
 
   test('DM-30: 参数表气密水密格式应为推荐/最低分层', async () => {
     const pdfContent = await buildPdfTextForAnswers(fixtures.guangzhouFull, 'S7-DM30');
-    expect(pdfContent).toContain('推荐目标值：≥6级');
-    expect(pdfContent).toContain('推荐目标值：≥6级');
+    expect(pdfContent).toContain('本案目标值：≥6级');
+    expect(pdfContent).toContain('本案目标值：≥6级');
   });
 
   test('DM-31: 1.2节叙述段应包含弹性文案', async () => {
     const pdfContent = await buildPdfTextForAnswers(fixtures.guangzhouFull, 'S7-DM31');
-    expect(pdfContent).toContain('商家方案如仅能满足最低可接受值，可在报价中注明');
-    expect(pdfContent).toContain('低于最低值的方案，可在比价时排除');
+    expect(pdfContent).toContain('让关窗后室内安静到可以安睡');
+    expect(pdfContent).toContain('不再被室外车流声干扰');
   });
 
   test('DM-32: 玻璃差价提示应标明档位标准配置基准', async () => {
@@ -571,7 +571,7 @@ describe('Sprint 7 A-中期（逻辑层）端到端', () => {
     });
     const pdfContent = await buildPdfTextForAnswers(a, 'S7A-E2E-04');
     expect(pdfContent).not.toMatch(/台风季/);
-    expect(pdfContent).toContain('基础 3 级，推荐 4 级');
+    expect(pdfContent).toContain('住宅基础线为 4 级');
   });
 });
 

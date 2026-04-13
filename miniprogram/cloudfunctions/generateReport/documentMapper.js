@@ -649,37 +649,38 @@ function buildParameterNote({ windPressure, soundInsulation, thermal, shgc, safe
 }
 
 function buildCoreTension(answers, resolved) {
-  const sentences = [];
+  const climateZone = answers.climateZone || (resolved && resolved.climateZone) || getClimateZone(answers.city);
+  const climateName = getClimateName(climateZone);
+  const climateCode = (climateZone && climateZone.code) ? climateZone.code : 'UNKNOWN';
 
-  const painList = Array.isArray(answers.pain_points) ? answers.pain_points : [];
-  const primaryPain = painList.length > 0 ? painList[0] : null;
-
-  const mainConstraintMap = {
-    sound: '隔声降噪',
-    thermal: '保温节能',
-    security: '安全防盗',
-    view: '采光视野',
-    economy: '省钱经济'
+  const orientationMap = {
+    east: '东', west: '西', south: '南', north: '北',
+    southeast: '东南', southwest: '西南', northeast: '东北', northwest: '西北',
   };
-  const fallbacks = {
-    sound: '隔声降噪',
-    heat: '保温节能',
-    safety: '安全防盗',
-    view: '采光视野',
-    price: '省钱经济'
-  };
-  const mainConstraint = mainConstraintMap[primaryPain] || fallbacks[answers.pain_point] || '综合性能';
+  const orientationCN = orientationMap[answers.orientation] || answers.orientation || '';
 
-  sentences.push(`您的项目位于${answers.city || ''}第${answers.floor || ''}层，${mainConstraint}是本案的主要技术制约。`);
+  const pain = answers.pain_point;
 
-  const conflicts = detectConflicts(answers, resolved);
-  if (conflicts.hasConflict) {
-    sentences.push(`${conflicts.hardest}与${conflicts.secondHardest}存在配置重合，导致本案成本高于同档位普通场景。`);
+  if (pain === 'sound') {
+    return '您所处环境的噪声水平，意味着关窗后室内仍可能达到持续开着电视的背景音量。本次采购的核心目标是：让关窗后室内安静到可以安睡、正常交谈，不再被室外车流声干扰。';
   }
 
-  sentences.push('基于以上分析，本表各项为本项目的性能目标值。商家方案如仅能满足最低可接受值，可在报价中注明，由业主确认是否接受；低于最低值的方案，可在比价时排除。');
+  if (pain === 'heat') {
+    if (climateCode === 'HD' || climateCode === 'SC') {
+      return `${climateName}气候区的冬季，门窗是建筑外壳热损失最大的部位。本次采购的核心目标是：达到当地节能标准要求的传热系数，减少冬季采暖热损失。`;
+    }
+    return `您的${orientationCN}向朝向加上${climateName}气候，意味着夏季空调负荷显著高于同楼层其他朝向。本次采购的核心目标是：通过门窗热工性能，减少夏季太阳辐射得热，降低制冷能耗。`;
+  }
 
-  return sentences.join('');
+  if (pain === 'safety') {
+    return '本案存在儿童家庭和落地窗/低窗台场景，安全配置为法规强制要求。安全配置不随预算档位调整，相关成本需在选择预算档位时一并考虑。';
+  }
+
+  const painLabelMap = {
+    sound: '隔声降噪', heat: '热工节能', wind: '抗风安全', safety: '安全防护', price: '性价比',
+  };
+  const painPointDesc = painLabelMap[pain] || '综合性能';
+  return `本案涉及${painPointDesc}等多项技术约束，各项要求均来自您的具体居住情况和当地标准。以下参数表为本案各项技术底线，商家方案须逐项满足。`;
 }
 
 function detectConflicts(answers, resolved) {
