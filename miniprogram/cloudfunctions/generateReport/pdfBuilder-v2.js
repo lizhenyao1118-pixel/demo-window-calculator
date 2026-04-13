@@ -955,7 +955,7 @@ function renderChapter4(doc, c4, opts) {
       doc.fillColor(COLORS.brand_mid).fontSize(11).text(nodeTitle, 55, doc.y);
       doc.y += 15;
       (node.items || []).forEach((item) => {
-        doc.fillColor(COLORS.text_body).fontSize(10).text(` · ${item}`, 65, doc.y, { width: 475 });
+        doc.fillColor(COLORS.text_body).fontSize(10).text(` · ${typeof item === 'string' ? item : item.text}`, 65, doc.y, { width: 475 });
         doc.y += 12;
       });
       doc.y += 5;

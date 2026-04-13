@@ -1133,7 +1133,11 @@ function buildAcceptanceNodes(family_risk, window_type) {
       }
     }
   }
-  return [base[0], base[1], { ...final, items }];
+  const wrapItems = (node) => ({
+    ...node,
+    items: node.items.map(item => typeof item === 'string' ? { text: item, reason: '' } : item)
+  });
+  return [wrapItems(base[0]), wrapItems(base[1]), wrapItems({ ...final, items })];
 }
 
 // 更新后的风险提示（含新价格区间和档位区分）

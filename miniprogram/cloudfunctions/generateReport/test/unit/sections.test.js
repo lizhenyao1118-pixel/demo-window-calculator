@@ -107,7 +107,11 @@ describe('mapToSections', () => {
     const nodes = (((sections.chapter4 || {}).acceptance || {}).nodes) || [];
     const final = nodes[2] || {};
     const items = Array.isArray(final.items) ? final.items : [];
-    const item13 = items.find(x => typeof x === 'string' && x.startsWith('⑬')) || '';
+    const item13Raw = items.find(x => {
+      const t = typeof x === 'string' ? x : (x && x.text) || '';
+      return t.startsWith('⑬');
+    });
+    const item13 = item13Raw ? (typeof item13Raw === 'string' ? item13Raw : item13Raw.text) : '';
     expect(item13).toContain('适老配件');
   });
 });
