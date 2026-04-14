@@ -2,7 +2,7 @@
 # CORE_LOGIC.md
 > 本文件是系统核心逻辑的唯一权威来源。
 > 所有迭代决策必须对照此文件，发现冲突时以此文件为准。
-> 建立时间：2026-04-07 | 代码基线：commit 06a9668（146/146）
+> 建立时间：2026-04-07 | 代码基线：v4.0.8 + SPEC-C01~C04 + SPEC-OUTPUT-v1.1 + SPEC-M4-3 · commit `4448ea3` · branch `sprint8/a-8a`
 
 ---
 
@@ -10,7 +10,13 @@
 
 把业主从商家剧本里的被动选购者，变成手握技术标准的真正甲方。
 
-实现路径：9题生活化问题 → 技术参数计算 → 四章PDF招标文件
+**"真正甲方"的准确定义：**
+不是懂门窗技术，不是能和商家在专业层面辩论，不是知道所有参数的含义和背后的物理逻辑。
+而是：知道自己走在正确的路上。
+在采购过程中的每一个决策节点，感受到"我有依据、我没有被忽悠、我知道下一步是什么"。
+这种感受不来自信息量，来自在关键时刻知道自己该说什么。
+
+实现路径：9题生活化问题 → 技术参数计算 → 四章招标文件（三阶段过程把控工具）
 
 护城河：需求判断的准确性（不是物理模拟的精度，不是功能的丰富性）
 
@@ -41,7 +47,7 @@
   第1章：性能需求诊断（来自性能层）
   第2章：采购技术底线（来自性能层，甲方要求视角，含定位声明）
   第3章：红线清单（从性能层动态生成，否定式；禁止项+安全底线双栏渲染）
-  第4章：配置推导说明 + 商家答题表 + 验收节点
+  第4章：三阶段过程把控（下单前/安装前/安装后）
   输出方式：小程序原生WXML渲染（PDF路线/WebView路线已关闭）
 ```
 
@@ -125,12 +131,13 @@
 | getRwRequired() fallback | 死代码（已删除，commit 915db5b）| calculator-v2.js为唯一Rw数据源 |
 | 档位模板式红线生成 | 导致条款错配 | 性能层动态生成 |
 | 冲突提示指令型语言 | 违反原则5 | 已改为信息呈现型陈述（SPEC-01） |
-| Rw边界修复（技术债标注） | v3.9.4已落地，v3.9.9代码验证：low_e_argon rw_max=34，切换点Rw_req≥35，triple_pane交通噪声排除均已实现 | 无需操作，已关闭 |
+| Rw边界修复（技术债标注） | v3.9.4已落地，v3.9.9代码验证完成 | 无需操作，已关闭 |
 | estimateCostDelta(glassKey, tier) | tier 参数语义错误 | 改为 (perf_glass_key, glass_key)（SPEC-03/04） |
 | result-summary 页面 | 已由 result 页 L1 摘要卡替代，文件保留供 git 历史参考 | result 页原生渲染 |
 | generatePDF 云函数（PDF路线） | @sparticuz/chromium 从 GitHub 拉取二进制，微信云函数网络不通 | 原生渲染 |
 | 云托管PDF路线（Puppeteer） | 腾讯云构建环境无法拉取外部Docker镜像，卡死（2026-04验证） | 原生渲染 |
 | WebView HTML路线 | 微信平台业务域名限制，云存储URL无法作为web-view src，卡死（2026-04验证） | 原生渲染 |
+| 第三章 userMeaning 渲染层输出 | 解释文字与"在关键时刻知道该说什么"设计目标相悖 | 迁移至首页Q&A（MVP方式B）；数据层字段保留 |
 
 ---
 
@@ -154,17 +161,16 @@
 | Rw边界修复 | ✅ 已关闭 | v3.9.4落地，v3.9.9验证（146/146） |
 | 定价决策（L2） | 🔲 待产品验证 | 需种子用户数据支撑 |
 | 小红书→小程序转化漏斗 | 🔲 待建立 | 引流后跨平台损耗未量化 |
-| SPEC-E | ✅ 已完成 | pdfBuilder-v2.js 渲染层重构：chapter3 改为渲染红线清单（禁止项+安全底线）；已删除 conflictAlert 临时兼容字段（v4.0.1） |
-
-### 输出层架构重构（SPEC-C01~C04，2026-04-12）
-
-| 编号 | 文件 | 内容 | 状态 |
-|------|------|------|----- |
-| C01 | documentMapper.js | 新增 summary 专属对象、chapter3双档字段、mapToSections契约注释 | ✅ 已完成 |
-| C02 | generate-loading.js | 移除 arbitrator 死代码，增加 Storage 三项持久化 | ✅ 已完成 |
-| C03 | result.js | Storage 降级路径，移除 arbitrator 消费侧死代码 | ✅ 已完成 |
-| C04 | result.wxml/wxss | computed→summary，遮罩付费墙，修复 chapter1/3 绑定错误，新增 redline-dot-gray | ✅ 已完成 |
-| Phase 3 | result.wxml/wxss/js | 渲染层重写，消费 SNAPSHOT_SCHEMA_v1.0 全部新字段，M1-1至M4-5 | ✅ 已完成 |
+| SPEC-E | ✅ 已完成 | pdfBuilder-v2.js 渲染层重构 |
+| 输出层架构重构（SPEC-C01~C04） | ✅ 已完成 | commit 66a17a5 · 146/146 |
+| v1.1-P1 | documentMapper.js | needsTable三层扩展、responseGuide、userMeaning、threePhaseIntro、inspectionChecklist、fieldGrades、consistencyClause、acceptance.reason | ✅ 已完成 commit db56601 |
+| v1.1-P2 | result.wxml/wxss | threePhaseIntro(M4-1)、inspectionChecklist(M4-4)、userMeaning清除、标题字段驱动 | ✅ 已完成 commit 6cc19e4 |
+| M4-3 | documentMapper.js + result.wxml/wxss | 答题表四段完整渲染、section_redline动态生成、glassDetailSpec升级A级 | ✅ 已完成 commit b0b540a |
+| 水密性 levelBar 溢出修复 | 🔲 待执行 | `_barPosition` 加 `Math.min(95, pos)` 上限，不阻塞发布 |
+| 清除 DEBUG log（index.js 331-332行） | 🔲 待执行 | 只删两行，不改周边逻辑 |
+| 部署 generateReport | 🔲 待执行 | 前置：NTP时间同步检查 |
+| 首页 Q&A 内容库建立 | 🔲 待执行 | 消费 userMeaning 内容；MVP方式B，独立维护不做关联跳转 |
+| 进场核查拍摄清单渲染实现 | 🔲 待执行 | M4-4，基于 CONTENT_DEFINITION_v1.1.md 第九节 |
 
 ---
 
@@ -179,21 +185,26 @@
 | 日期 | 类型 | 决策内容 | 约束／原因 |
 |------|------|---------|-----------|
 | 2026-04-13 | ❌ 关闭 | 遮罩付费墙方案 | 已改为 wx:if 条件渲染，不得重开 |
-| 2026-04-13 | ✅ 确认 | L1摘要卡6格字段名全小写 | summary字段在index.js return里，documentMapper字段名须保持小写 |
-| 2026-04-13 | ✅ 确认 | 四章内容 wx:if="{{isPaid}}" 条件渲染 | 不得改回遮罩方案 |
-| 2026-04-13 | ⚠️ 核对 | 清除DEBUG log（index.js 331-332行） | 只删两行，不改周边逻辑，完成标准：部署后生产日志无输出 |
-| 2026-04-13 | ⚠️ 核对 | L2审查为产品决策，非代码执行 | 前置：先对齐审查框架，再决定是否进入执行 |
-| 2026-04-13 | ✅ 确认 | buildCoreTension 按 pain_point 场景化重写 | 参考 buildAnalysisParagraph 分支结构；不使用 pain_points[0]；commit 698f06a |
-| 2026-04-13 | ✅ 完成 | 输出层重构 Phase 1（Steps 1–7）+ Phase 2（Step 8）全部完成 | documentMapper.js 双文件同步；146/146；commit 698f06a |
-| 2026-04-13 | ✅ 完成 | Phase 3 渲染层重写（result.wxml/wxss/js） | M1-1至M4-5全部模块；levelBar position 在 result.js onLoad 注入；l2_entry 跳转 pages/tender/list；146/146；commit 762ec91 |
-| 2026-04-13 | ✅ 确认 | userMeaning 始终展开显示 | 方案A，小字显示在红线title下方，无折叠交互 |
-| 2026-04-14 | ✅ 完成 | 验收节点 items string[]→{text,reason}[]，wrapItems兼容补丁 | pdfBuilder-v2.js + sections.test.js 同步修复；commit c887d02 |
-| 2026-04-14 | ✅ 完成 | levelBar注入（6参数行）+ userMeaning注入（14红线）+ acceptance源头更新 | generateReport/createTender双文件同步；146/146；commit 06a9668 |
-| 2026-04-14 | ⚠️ 遗留 | 水密性levelBar刻度点溢出右边界 | midValue=highValue时position=100%超出容器；修复方案：_barPosition计算加Math.min(95,pos)上限；不阻塞发布 |
+| 2026-04-13 | ⚠️ 待执行 | 清除DEBUG log（index.js 331-332行） | 只删两行，不改周边逻辑，完成标准：部署后生产日志无输出 |
+| 2026-04-14 | ✅ 确认 | 第三章 userMeaning 迁移至首页Q&A | MVP方式B：独立维护，不做红线关联跳转；渲染层第三章不消费；数据层字段保留；后续升级方向：方式A（"？"图标直达） |
+| 2026-04-14 | ✅ 确认 | 第四章重构：三阶段过程把控 | 过程把控>文件收集；三节点：下单前/安装前（进场）/安装后（竣工）；报告是预期结果证明，不是交付确定性来源 |
+| 2026-04-14 | ✅ 确认 | 产品分层价值阶梯（L1/L2/L3）及L3介入模型 | L3三节点：设计审查（远程看配置单）/ 进场核查（用户拍+李Sir判断）/ 竣工验收（用户自检提交+李Sir结论） |
+| 2026-04-14 | ✅ 确认 | 答题表字段A/B/C可获取性分级 + 配置一致性承诺条款 | 基于Perplexity中国大陆门窗市场审查；A级直接要求/B级缺失须说明/一致性条款覆盖全部字段 |
+| 2026-04-14 | ✅ 确认 | 进场核查拍摄清单三层分级 | 必须拍/尽量拍/不靠照片靠文件；基于Perplexity可操作性审查；拍"能证明身份的证据"，不拍"需要专业判断的细节" |
+| 2026-04-14 | ✅ 完成 | 输出层三文档升版v1.1 | OUTPUT_LAYER_DESIGN / SNAPSHOT_SCHEMA / CONTENT_DEFINITION 均已更新；基线 commit 66a17a5 |
 
 ### 历史归档
 
-（暂无）
+| 日期 | 类型 | 决策内容 | 约束／原因 |
+|------|------|---------|-----------|
+| 2026-04-13 | ✅ 确认 | L1摘要卡6格字段名全小写 | summary字段在index.js return里，documentMapper字段名须保持小写 |
+| 2026-04-13 | ✅ 确认 | 四章内容 wx:if="{{isPaid}}" 条件渲染 | 不得改回遮罩方案 |
+| 2026-04-13 | ✅ 确认 | buildCoreTension 按 pain_point 场景化重写 | 参考 buildAnalysisParagraph 分支结构；不使用 pain_points[0]；commit 698f06a |
+| 2026-04-13 | ✅ 完成 | 输出层重构 Phase 1（Steps 1–7）+ Phase 2（Step 8）全部完成 | documentMapper.js 双文件同步；146/146；commit 698f06a |
+| 2026-04-15 | ✅ 完成 | SPEC-OUTPUT-v1.1 Phase1 documentMapper 字段扩展 | commit db56601；needsTable derivation/levelBar/marketReality、responseGuide、userMeaning、actionSteps/threePhaseIntro/inspectionChecklist、fieldGrades/consistencyClause、acceptance.reason |
+| 2026-04-15 | ✅ 完成 | SPEC-OUTPUT-v1.1 Phase2 渲染层重构 | commit 6cc19e4；threePhaseIntro替换actionSteps(M4-1)、inspectionChecklist新增(M4-4)、userMeaning渲染层清除、章节标题字段驱动 |
+| 2026-04-15 | ✅ 完成 | SPEC-M4-3 答题表四段完整渲染 | commit b0b540a；section_redline从sharedRedlineChecklist.mandatory动态生成；glassDetailSpec从gradeC升至gradeA；冗余consistency-clause-wrap已删除(4448ea3) |
+| 2026-04-15 | ✅ 确认 | section_redline 红线承诺段格式 | 逐项displayId+text+逐项打勾；clauseNote作为合同附件声明；数据源=chapter3同一批红线，无冗余 |
 
 ---
 
