@@ -933,7 +933,7 @@ function buildChapter4Data(answers, budgetSpec, resolved, riskTrigger, isRisk, s
   const performanceChecks = buildPerformanceChecks(answers, resolved);
 
   return {
-    title: '下一步怎么用：问商家什么 & 怎么验收',
+    title: '三阶段过程把控',
     subtitle: '把这份文件变成面试商家、比较报价、验收施工的行动工具',
     intro: {
       title: '使用说明',

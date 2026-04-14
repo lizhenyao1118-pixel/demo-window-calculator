@@ -182,14 +182,12 @@
         <view class="redline-dot"></view>
         <view class="redline-content">
           <text class="redline-title">{{item.text}}</text>
-          <text wx:if="{{item.userMeaning}}" class="redline-meaning">{{item.userMeaning}}</text>
         </view>
       </view>
       <view class="redline-item" wx:for="{{chapter3.redlineChecklist.recommended}}" wx:key="index">
         <view class="redline-dot redline-dot-gray"></view>
         <view class="redline-content">
           <text class="redline-title">{{item.text}}</text>
-          <text wx:if="{{item.userMeaning}}" class="redline-meaning">{{item.userMeaning}}</text>
         </view>
       </view>
     </view>
@@ -224,19 +222,25 @@
     <!-- ===== 第四章 ===== -->
     <view class="chapter-header">
       <text class="chapter-num">第四章</text>
-      <text class="chapter-title">下一步行动</text>
+      <text class="chapter-title">{{chapter4.title}}</text>
     </view>
 
-    <!-- M4-1 行动主线三步（最显眼位置） -->
-    <view class="action-steps">
-      <view class="action-step" wx:for="{{chapter4.actionSteps}}" wx:key="step">
-        <view class="action-step-num">
-          <text class="action-num-text">{{item.step}}</text>
+    <!-- M4-1 三阶段过程框架 -->
+    <view class="three-phase-wrap">
+      <view class="three-phase-card" wx:for="{{chapter4.threePhaseIntro.phases}}" wx:key="phase">
+        <view class="phase-header">
+          <view class="phase-num-badge">
+            <text class="phase-num-text">{{item.phase}}</text>
+          </view>
+          <view class="phase-header-body">
+            <text class="phase-title">{{item.title}}</text>
+            <text class="phase-timing">{{item.timing}}</text>
+          </view>
         </view>
-        <view class="action-step-body">
-          <text class="action-step-title">{{item.title}}</text>
-          <text class="action-step-desc">{{item.description}}</text>
-          <text wx:if="{{item.hint}}" class="action-step-hint">{{item.hint}}</text>
+        <text class="phase-action">{{item.action}}</text>
+        <text wx:if="{{item.hint}}" class="phase-hint">{{item.hint}}</text>
+        <view wx:if="{{item.nextTrigger}}" class="phase-trigger-wrap">
+          <text class="phase-trigger">→ {{item.nextTrigger}}</text>
         </view>
       </view>
     </view>
@@ -263,7 +267,62 @@
       </view>
     </view>
 
-    <!-- M4-4 验收节点 -->
+    <!-- M4-3 底部：一致性承诺条款 -->
+    <view wx:if="{{chapter4.merchantQuestionnaire.consistencyClause}}" class="consistency-clause-wrap">
+      <text class="consistency-clause-text">{{chapter4.merchantQuestionnaire.consistencyClause}}</text>
+    </view>
+
+    <!-- M4-4 进场核查拍摄清单 -->
+    <view wx:if="{{chapter4.inspectionChecklist}}">
+      <text class="section-sub-title">进场核查清单</text>
+      <text class="chapter-intro">{{chapter4.inspectionChecklist.intro}}</text>
+
+      <!-- 必须拍 -->
+      <view class="ic-section">
+        <text class="ic-section-label">必须拍</text>
+        <view class="ic-list">
+          <view class="ic-item" wx:for="{{chapter4.inspectionChecklist.mustShoot}}" wx:key="id">
+            <view class="ic-item-header">
+              <text class="ic-id">{{item.id}}</text>
+              <text class="ic-subject">{{item.subject}}</text>
+            </view>
+            <text class="ic-purpose">{{item.purpose}}</text>
+            <text wx:if="{{item.warning}}" class="ic-warning">⚠ {{item.warning}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 尽量拍 -->
+      <view class="ic-section">
+        <text class="ic-section-label">建议拍</text>
+        <view class="ic-list">
+          <view class="ic-item" wx:for="{{chapter4.inspectionChecklist.shouldShoot}}" wx:key="id">
+            <view class="ic-item-header">
+              <text class="ic-id">{{item.id}}</text>
+              <text class="ic-subject">{{item.subject}}</text>
+            </view>
+            <text class="ic-purpose">{{item.purpose}}</text>
+            <text wx:if="{{item.caveat}}" class="ic-caveat">{{item.caveat}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 靠文件 -->
+      <view class="ic-section">
+        <text class="ic-section-label">靠文件核查</text>
+        <view class="ic-list">
+          <view class="ic-item" wx:for="{{chapter4.inspectionChecklist.useDocument}}" wx:key="id">
+            <view class="ic-item-header">
+              <text class="ic-id">{{item.id}}</text>
+              <text class="ic-subject">{{item.checkItem}}</text>
+            </view>
+            <text class="ic-alt">核查方式：{{item.alternative}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- M4-5 验收节点 -->
     <text class="section-sub-title">验收节点</text>
     <view class="inspection-section"
           wx:for="{{chapter4.acceptance.nodes}}" wx:key="title">
