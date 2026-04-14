@@ -325,11 +325,6 @@
       </view>
     </view>
 
-    <!-- M4-3 底部：一致性承诺条款 -->
-    <view wx:if="{{chapter4.merchantQuestionnaire.consistencyClause}}" class="consistency-clause-wrap">
-      <text class="consistency-clause-text">{{chapter4.merchantQuestionnaire.consistencyClause}}</text>
-    </view>
-
     <!-- M4-4 进场核查拍摄清单 -->
     <view wx:if="{{chapter4.inspectionChecklist}}">
       <text class="section-sub-title">进场核查清单</text>
