@@ -258,12 +258,70 @@
       </view>
     </view>
 
-    <!-- M4-3 商家答题表 -->
+    <!-- M4-3 商家答题表（四段完整结构） -->
     <text class="section-sub-title">商家答题表</text>
-    <view class="qa-form">
-      <view class="qa-item"
-            wx:for="{{chapter4.merchantQuestionnaire.section3.questions}}" wx:key="*this">
-        <text class="qa-label">{{item}}</text>
+    <text class="position-statement">{{chapter4.merchantQuestionnaire.subtitle}}</text>
+
+    <!-- 第一段：商家基本信息 -->
+    <view class="qa-section">
+      <text class="qa-section-title">基本信息</text>
+      <view class="qa-section-body">
+        <view class="qa-field-item"
+              wx:for="{{chapter4.merchantQuestionnaire.section1.fields}}"
+              wx:key="label">
+          <text class="qa-field-label">{{item.label}}</text>
+          <view wx:if="{{item.type === 'checkbox'}}" class="qa-options">
+            <text class="qa-opt"
+                  wx:for="{{item.options}}" wx:key="*this" wx:for-item="opt">{{opt}}</text>
+          </view>
+          <view wx:else class="qa-input-mock">
+            <text class="qa-placeholder">{{item.placeholder}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 第二段：技术答题表（列名列表，方案A） -->
+    <view class="qa-section">
+      <text class="qa-section-title">技术答题表</text>
+      <text class="qa-hint">{{chapter4.merchantQuestionnaire.section2.hint}}</text>
+      <view class="qa-section-body">
+        <view class="qa-column-item"
+              wx:for="{{chapter4.merchantQuestionnaire.section2.columns}}"
+              wx:key="*this">
+          <text class="qa-column-dot">·</text>
+          <text class="qa-column-name">{{item}}</text>
+        </view>
+      </view>
+      <text class="qa-note">{{chapter4.merchantQuestionnaire.section2.note}}</text>
+    </view>
+
+    <!-- 第三段：红线承诺 -->
+    <view class="qa-section">
+      <text class="qa-section-title">红线承诺</text>
+      <text class="qa-hint">{{chapter4.merchantQuestionnaire.section_redline.intro}}</text>
+      <view class="redline-confirm-list">
+        <view class="redline-confirm-item"
+              wx:for="{{chapter4.merchantQuestionnaire.section_redline.items}}"
+              wx:key="displayId">
+          <text class="redline-confirm-id">{{item.displayId}}</text>
+          <text class="redline-confirm-text">{{item.text}}</text>
+        </view>
+      </view>
+      <view class="qa-clause-wrap">
+        <text class="qa-clause-text">{{chapter4.merchantQuestionnaire.section_redline.clauseNote}}</text>
+      </view>
+    </view>
+
+    <!-- 第四段：施工态度问答 -->
+    <view class="qa-section">
+      <text class="qa-section-title">施工态度</text>
+      <view class="qa-section-body">
+        <view class="qa-item"
+              wx:for="{{chapter4.merchantQuestionnaire.section3.questions}}"
+              wx:key="*this">
+          <text class="qa-label">{{item}}</text>
+        </view>
       </view>
     </view>
 

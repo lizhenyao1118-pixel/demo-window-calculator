@@ -967,6 +967,16 @@ function buildChapter4Data(answers, budgetSpec, resolved, riskTrigger, isRisk, s
         columns: ['品牌及系列', '型材壁厚(mm)', '玻璃配置', '检测报告编号', '含税报价(元/㎡)', '工期(天)', '质保(年)', '签名确认'],
         note: '若贵司认为在当前预算档位内难以满足某项关键指标，请在"配置建议与说明"栏中提出具体升级方案及差价估算，而非省略或模糊填写。'
       },
+      section_redline: {
+        title: '── 第三段：红线承诺 ──────────────────────────────',
+        intro: '以下为本案技术红线，请逐项书面确认。任何一项不满足须书面说明。',
+        items: (sharedRedlineChecklist.mandatory || []).map(item => ({
+          displayId: item.displayId || '',
+          text: item.text || '',
+        })),
+        clauseNote: '本表逐项响应内容作为报价文件及合同附件；如实际配置与本表响应不一致，视为偏离，须书面说明差异内容及原因。',
+      },
+
       section3: {
         title: '── 第四段：施工态度问答 ─────────────────────────',
         questions: [
@@ -980,9 +990,9 @@ function buildChapter4Data(answers, budgetSpec, resolved, riskTrigger, isRisk, s
         fields: []
       },
       fieldGrades: {
-        gradeA: ['windResistanceReport', 'airWaterTightnessReport', 'laminatedGlass3C', 'acousticReport'],
+        gradeA: ['windResistanceReport', 'airWaterTightnessReport', 'laminatedGlass3C', 'acousticReport', 'glassDetailSpec'],
         gradeB: ['thermalKReport', 'shgcData', 'profileThickness', 'thermalBarSpec', 'limiterModel', 'systemCertification'],
-        gradeC: ['glassDetailSpec'],
+        gradeC: [],
       },
       consistencyClause: '所提供报告及数据的检测配置须与本项目报价配置一致。如存在差异，须书面说明差异内容及原因。',
     },

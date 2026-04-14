@@ -714,3 +714,111 @@ page { background: #f5f5f0; }
 .ic-warning { font-size: 11px; color: #e65100; margin-top: 4px; line-height: 1.5; }
 .ic-caveat { font-size: 11px; color: #999; margin-top: 4px; font-style: italic; line-height: 1.5; }
 .ic-alt { font-size: 11px; color: #3b6bc9; margin-top: 3px; line-height: 1.5; }
+
+
+/* ===== SPEC-M4-3 新增样式 ===== */
+
+.qa-section {
+  margin-bottom: 10px;
+  background: #fff;
+  border: 0.5px solid rgba(0,0,0,0.08);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.qa-section-title {
+  font-size: 11px;
+  font-weight: 500;
+  color: #555;
+  background: #f5f5f0;
+  padding: 6px 14px;
+  display: block;
+}
+.qa-section-body {
+  padding: 0 14px;
+}
+.qa-hint {
+  font-size: 11px;
+  color: #999;
+  line-height: 1.6;
+  padding: 8px 14px;
+  display: block;
+  border-bottom: 0.5px solid rgba(0,0,0,0.04);
+}
+.qa-field-item {
+  padding: 10px 0;
+  border-bottom: 0.5px solid rgba(0,0,0,0.05);
+  display: flex;
+  flex-direction: column;
+}
+.qa-field-item:last-child { border-bottom: none; }
+.qa-field-label {
+  font-size: 11px;
+  color: #888;
+  margin-bottom: 6px;
+}
+.qa-column-item {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  padding: 6px 0;
+  border-bottom: 0.5px solid rgba(0,0,0,0.04);
+  gap: 8px;
+}
+.qa-column-item:last-child { border-bottom: none; }
+.qa-column-dot {
+  font-size: 12px;
+  color: #bbb;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.qa-column-name {
+  font-size: 12px;
+  color: #1a1a1a;
+  line-height: 1.6;
+  flex: 1;
+}
+.qa-note {
+  font-size: 11px;
+  color: #e65100;
+  line-height: 1.6;
+  padding: 8px 14px;
+  display: block;
+  background: #fff8f0;
+}
+.redline-confirm-list {
+  padding: 0 14px;
+}
+.redline-confirm-item {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  padding: 10px 0;
+  border-bottom: 0.5px solid rgba(0,0,0,0.05);
+  gap: 8px;
+}
+.redline-confirm-item:last-child { border-bottom: none; }
+.redline-confirm-id {
+  font-size: 10px;
+  color: #fff;
+  background: #e05252;
+  padding: 1px 6px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.redline-confirm-text {
+  font-size: 12px;
+  color: #1a1a1a;
+  line-height: 1.6;
+  flex: 1;
+}
+.qa-clause-wrap {
+  background: #fffbf0;
+  border-top: 0.5px solid #f0c060;
+  padding: 10px 14px;
+}
+.qa-clause-text {
+  font-size: 11px;
+  color: #a06000;
+  line-height: 1.7;
+}
