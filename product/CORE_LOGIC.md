@@ -2,7 +2,7 @@
 # CORE_LOGIC.md
 > 本文件是系统核心逻辑的唯一权威来源。
 > 所有迭代决策必须对照此文件，发现冲突时以此文件为准。
-> 建立时间：2026-04-07 | 代码基线：Phase 3 完成 commit 762ec91（146/146）
+> 建立时间：2026-04-07 | 代码基线：commit 06a9668（146/146）
 
 ---
 
@@ -187,6 +187,9 @@
 | 2026-04-13 | ✅ 完成 | 输出层重构 Phase 1（Steps 1–7）+ Phase 2（Step 8）全部完成 | documentMapper.js 双文件同步；146/146；commit 698f06a |
 | 2026-04-13 | ✅ 完成 | Phase 3 渲染层重写（result.wxml/wxss/js） | M1-1至M4-5全部模块；levelBar position 在 result.js onLoad 注入；l2_entry 跳转 pages/tender/list；146/146；commit 762ec91 |
 | 2026-04-13 | ✅ 确认 | userMeaning 始终展开显示 | 方案A，小字显示在红线title下方，无折叠交互 |
+| 2026-04-14 | ✅ 完成 | 验收节点 items string[]→{text,reason}[]，wrapItems兼容补丁 | pdfBuilder-v2.js + sections.test.js 同步修复；commit c887d02 |
+| 2026-04-14 | ✅ 完成 | levelBar注入（6参数行）+ userMeaning注入（14红线）+ acceptance源头更新 | generateReport/createTender双文件同步；146/146；commit 06a9668 |
+| 2026-04-14 | ⚠️ 遗留 | 水密性levelBar刻度点溢出右边界 | midValue=highValue时position=100%超出容器；修复方案：_barPosition计算加Math.min(95,pos)上限；不阻塞发布 |
 
 ### 历史归档
 
