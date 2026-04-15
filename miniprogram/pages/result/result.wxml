@@ -181,15 +181,12 @@
       <view class="redline-item" wx:for="{{chapter3.redlineChecklist.mandatory}}" wx:key="index">
         <view class="redline-dot"></view>
         <view class="redline-content">
+          <text wx:if="{{item.groupTitle}}" class="group-title">{{item.groupTitle}}</text>
+          <text class="item-id">{{item.displayId}}</text>
           <text class="redline-title">{{item.text}}</text>
         </view>
       </view>
-      <view class="redline-item" wx:for="{{chapter3.redlineChecklist.recommended}}" wx:key="index">
-        <view class="redline-dot redline-dot-gray"></view>
-        <view class="redline-content">
-          <text class="redline-title">{{item.text}}</text>
-        </view>
-      </view>
+      
     </view>
 
     <!-- M3-3 安全底线（条件显示） -->

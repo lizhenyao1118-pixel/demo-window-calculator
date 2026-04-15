@@ -113,10 +113,6 @@ exports.main = async (event, context) => {
   const { assessmentData } = event;
   const { OPENID } = cloud.getWXContext();
   
-  console.log('[Cloud] 接收数据：', assessmentData);
-  console.log('Raw answers.noise_type:', assessmentData && assessmentData.noise_type);
-  console.log('Raw answers.noise_dist:', assessmentData && assessmentData.noise_dist);
-  
   try {
     // 1. 生成文件名（保留原有逻辑）
     const timestamp = new Date().toISOString().slice(0,10).replace(/-/g,'');
@@ -151,15 +147,6 @@ exports.main = async (event, context) => {
       isRisk: sections.cover.isRisk
     });
     
-    // 在 const sections = mapToSections(...) 后添加
-    console.log('[Debug] sections 构建完成:', JSON.stringify({
-      cover: sections.cover,
-      chapter1_keys: Object.keys(sections.chapter1),
-      chapter2_keys: Object.keys(sections.chapter2),
-      chapter3_keys: Object.keys(sections.chapter3),
-      chapter4_keys: Object.keys(sections.chapter4)
-    }));
-   
     /* 
     // 旧代码已注释：直接构建 sections（Phase 0 逻辑）
     const isRisk = Object.keys(computed.risk_flags || {}).length > 0 || assessmentData.isDisclaimer;

@@ -91,7 +91,6 @@ describe('buildRedlineChecklist', () => {
     const r = buildRedlineChecklist(a, { safetyForced: false });
     // SPEC-05后所有条款均为强制，不再区分recommended
     expect(r.mandatory.length).toBeGreaterThan(0);
-    expect(r.recommended.length).toBe(0);
   });
 
   test('DM10: 最大覆盖 - 触发所有强制条款', () => {
@@ -99,7 +98,6 @@ describe('buildRedlineChecklist', () => {
     const r = buildRedlineChecklist(a, { safetyForced: true });
     // SPEC-05后包含15条强制红线（R01-R15）
     expect(r.mandatory.length).toBeGreaterThanOrEqual(10);
-    expect(r.recommended.length).toBe(0);
   });
 
   test('DM11: 推拉窗触发R06', () => {

@@ -33,7 +33,7 @@ describe('redlineSpec', () => {
     const resolved = { Rw_required: 35, safetyForced: false };
 
     const checklist = buildRedlineChecklist(answers, resolved);
-    const allRedlines = [...checklist.mandatory, ...checklist.recommended];
+    const allRedlines = [...checklist.mandatory];
 
     // 查找隔声相关条款
     const getText = (x) => typeof x.text === 'function' ? x.text(answers, resolved) : x.text;
@@ -56,7 +56,7 @@ describe('redlineSpec', () => {
     const resolved = { Rw_required: 0, safetyForced: false }; // 无 Rw 要求
 
     const checklist = buildRedlineChecklist(answers, resolved);
-    const allRedlines = [...checklist.mandatory, ...checklist.recommended];
+    const allRedlines = [...checklist.mandatory];
 
     // 查找隔声相关条款
     const getText = (x) => typeof x.text === 'function' ? x.text(answers, resolved) : x.text;
@@ -75,7 +75,7 @@ describe('redlineSpec', () => {
     const resolved = { Rw_required: 35, K_target: 2.0, SHGC_target: 0.35, P3_required: 3.5, safetyForced: true };
 
     const checklist = buildRedlineChecklist(answers, resolved);
-    const allRedlines = [...checklist.mandatory, ...checklist.recommended];
+    const allRedlines = [...checklist.mandatory];
 
     expect(allRedlines.length).toBeGreaterThan(0);
 

@@ -865,7 +865,7 @@ function buildRedlineChecklist(answers, resolved) {
     else recommended.push(item);
   });
 
-  return { mandatory, recommended };
+  return { mandatory };  // SPEC-REVIEW-v1.0: 移除 recommended，只保留 mandatory
 }
 
 function buildPerformanceChecks(answers, resolved) {
@@ -968,10 +968,18 @@ function buildChapter4Data(answers, budgetSpec, resolved, riskTrigger, isRisk, s
       section_redline: {
         title: '── 第三段：红线承诺 ──────────────────────────────',
         intro: '以下为本案技术红线，请逐项书面确认。任何一项不满足须书面说明。',
-        items: (sharedRedlineChecklist.mandatory || []).map(item => ({
-          displayId: item.displayId || '',
-          text: item.text || '',
-        })),
+        items: (() => {
+          let lastGroup = null;
+          return (sharedRedlineChecklist.mandatory || []).map(item => {
+            const isNewGroup = item.group !== lastGroup;
+            lastGroup = item.group;
+            return {
+              displayId: item.displayId || '',
+              text: item.text || '',
+              groupTitle: isNewGroup ? (item.group || null) : null,
+            };
+          });
+        })(),
         clauseNote: '本表逐项响应内容作为报价文件及合同附件；如实际配置与本表响应不一致，视为偏离，须书面说明差异内容及原因。',
       },
 
@@ -1177,7 +1185,12 @@ function getSafetyItems(familyRisk, budgetTier) {
   if ((hasChild || hasElder) && budgetTier === 'A') {
     budgetWarning = `⚠️ 上述安全配件成本通常超出${getTierLabel('A')}预算覆盖范围；舒适均衡 B档（900–1400 元/㎡）价格区间可覆盖该类配置。`;
   }
-  
+  // SPEC-REVIEW-v1.0: 追加适老化可选项（R15/R16）
+  if (hasElder) {
+    items.push('执手操作力≤25N');
+    items.push('门槛高度≤15mm');
+  }
+
   return { items, budgetWarning };
 }
 
