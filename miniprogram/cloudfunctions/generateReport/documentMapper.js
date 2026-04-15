@@ -970,7 +970,9 @@ function buildChapter4Data(answers, budgetSpec, resolved, riskTrigger, isRisk, s
         intro: '以下为本案技术红线，请逐项书面确认。任何一项不满足须书面说明。',
         items: (() => {
           let lastGroup = null;
-          return (sharedRedlineChecklist.mandatory || []).map(item => {
+          return (sharedRedlineChecklist.mandatory || [])
+            .filter(item => item.group !== '适老化')
+            .map(item => {
             const isNewGroup = item.group !== lastGroup;
             lastGroup = item.group;
             return {
