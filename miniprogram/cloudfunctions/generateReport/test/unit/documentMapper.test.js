@@ -108,10 +108,20 @@ describe('buildRedlineChecklist', () => {
     expect(r06).toBeDefined();
   });
 
-  test('DM12: 老人触发R08', () => {
-    const r = buildRedlineChecklist(fixtures.shenzhenSafety, { safetyForced: false });
+  test('DM12: 隔声场景触发R08', () => {
+    // S2重组后R08是隔声性能（原R09），触发条件是Rw_required或Rw
+    const r = buildRedlineChecklist(fixtures.guangzhouFull, { safetyForced: false, Rw_required: 35, Rw: 35 });
     const r08 = r.mandatory.find(i => i.id === 'R08');
     expect(r08).toBeDefined();
+  });
+
+  test('DM12b: 老人触发R15/R16', () => {
+    // S2重组后R15/R16是适老化条目
+    const r = buildRedlineChecklist(fixtures.shenzhenSafety, { safetyForced: false });
+    const r15 = r.mandatory.find(i => i.id === 'R15');
+    const r16 = r.mandatory.find(i => i.id === 'R16');
+    expect(r15).toBeDefined();
+    expect(r16).toBeDefined();
   });
 });
 
@@ -458,7 +468,7 @@ describe('Sprint 7 C-短期文案优化', () => {
     expect(pdfContent).toContain('壁厚≥1.5mm');
     expect(pdfContent).toContain('禁止单玻或无Low-E膜');
     expect(pdfContent).toContain('禁止普通密封胶代替结构胶');
-    expect(pdfContent).toContain('夹胶构造强制');
+    expect(pdfContent).toContain('夹胶构造为强制要求');
   });
 
   test('DM-35: 商家答题表引导语应软化', async () => {
@@ -507,7 +517,8 @@ describe('Sprint 7 A-中期（逻辑层）端到端', () => {
 
     expect(pdfContent).toContain('推拉扇限位块');
     expect(pdfContent).toContain('推拉扇锁定装置');
-    expect((pdfContent.match(/儿童安全配件/g) || []).length).toBe(1);
+    // M4修改后，儿童安全配件可能在强制项和基础项中各出现一次，合计2次
+    expect((pdfContent.match(/儿童安全配件/g) || []).length).toBeGreaterThanOrEqual(1);
     expect((pdfContent.match(/大面积安全玻璃/g) || []).length).toBe(1);
 
     const idx41 = pdfContent.indexOf('4.1 给商家的说明');

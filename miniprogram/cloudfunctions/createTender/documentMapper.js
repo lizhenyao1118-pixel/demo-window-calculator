@@ -152,29 +152,29 @@ const ACCEPTANCE_NODES = {
   entry: {
     title: '【进场验收】（4条）',
     items: [
-      '① 对照合同核查品牌、型号、颜色、开启方式',
-      '② 玻璃3C标志（本体印刷，非贴纸）；中空玻璃无雾气',
-      '③ 核对玻璃边部标签与合同约定一致，不能仅凭外观判断膜层',
-      '④ 索取壁厚检测报告，如有条件要求商家现场演示拆一处压线核查'
+      { text: '① 对照合同核查品牌、型号、颜色、开启方式', reason: '合同约定与实际到场产品不符的情况较为常见，进场时是最后的核查机会，发现问题可拒绝卸货' },
+      { text: '② 核查安全玻璃强制认证标识及随附证明文件；中空玻璃内无明显结露、雾化、进水现象', reason: '3C标志本体印刷是正品标志，贴纸可伪造；无雾气说明玻璃密封完好，有雾气则为批次质量问题' },
+      { text: '③ 核对玻璃边部标签与合同约定一致，不能仅凭外观判断膜层', reason: 'Low-E膜层位置影响热工性能，肉眼无法区分，边部标签是唯一可核对的依据' },
+      { text: '④ 索取壁厚检测报告或型式检验资料，必要时可要求进场抽样复检', reason: '壁厚是抗风压的核心参数，进场是核查的最后机会，实物核查优于纸质报告' },
     ]
   },
   installation: {
     title: '【安装验收】（4条）',
     items: [
-      '⑤ 随机查看固定螺丝：打在实体结构上，间距约40-60cm',
-      '⑥ 发泡剂全周饱满均匀，外露部分平整',
-      '⑦ 密封胶一圈连续、平整无裂缝，施工条件符合说明书要求',
-      '⑧ 排水孔未被胶封死，窗台外侧有向外坡度'
+      { text: '⑤ 固定件应牢固连接于承重基层，固定点数量和间距符合设计文件及安装规范', reason: '螺丝打在空心砖或间距过大，固定强度不足，高层强风时存在脱落风险' },
+      { text: '⑥ 发泡剂全周饱满均匀，外露部分平整', reason: '发泡剂填充不均会产生局部热桥和气密薄弱点，影响保温和隔声，此时处理成本最低' },
+      { text: '⑦ 密封胶一圈连续、平整无裂缝，施工条件符合说明书要求', reason: '密封胶不连续或在低温/高湿条件下施工，固化后易开裂，导致气密水密长期失效' },
+      { text: '⑧ 排水孔未被胶封死，窗台外侧有向外坡度', reason: '排水孔堵塞导致积水腐蚀，坡度不对导致雨水倒流室内，此类问题竣工后处理成本极高' },
     ]
   },
   final: {
     title: '【竣工验收】（5条）',
     items: [
-      '⑨ 打火机火焰靠近扇框交接处，无明显偏吹（简易气密自检）',
-      '⑩ 花洒淋水3分钟，室内无渗水（物业允许时）',
-      '⑪ 每扇窗反复开合5-10次，胶条压实，无异响卡阻',
-      '⑫ 外开窗确认防坠绳/限位器安装（高层必查）',
-      '⑬ 执手操作力正常，关键安全配件按合同核查'
+      { text: '⑨ 关闭所有窗扇，检查扇框四周胶条压合均匀、无明显可见缝隙；正式气密验收按合同约定检测方法执行', reason: '火焰偏吹说明存在气密缺陷，该方法简单有效，无需专业设备，可覆盖每一扇窗' },
+      { text: '⑩ 花洒淋水试验（物业允许时），室内无渗水；时长按项目所在地验收指引执行', reason: '模拟降雨验证水密性，是竣工阶段最直观的水密检验，发现问题及时要求整改' },
+      { text: '⑪ 每扇窗反复开合5-10次，胶条压实、无异响卡阻', reason: '开合异响或卡阻说明安装偏差，长期使用会加速五金磨损和密封老化' },
+      { text: '⑫ 五金系统切换顺畅，防误操作器有效；关闭状态下锁点完整咬合', reason: '锁点咬合不完整是气密水密失效的主要原因之一，同时影响防盗安全' },
+      { text: '⑬ 执手操作力正常，关键安全配件按合同核查', reason: '安全配件是本案强制要求，竣工时须逐项确认实际安装状态与合同约定一致' },
     ]
   }
 };
@@ -493,22 +493,26 @@ function buildNeedsTable(resolved, answers, sealGrades) {
     {
       dimension: '抗风压',
       value: `≥ ${getField(resolved, 'P3')} kPa`,
-      basis: `${STANDARDS_MAP.wind_pressure.short} · ${resolved.wind_zone || 'W?'}风区${(heightRatio * 100).toFixed(0)}%`
+      basis: `${STANDARDS_MAP.wind_pressure.short} · ${resolved.wind_zone || 'W?'}风区${(heightRatio * 100).toFixed(0)}%`,
+      levelBar: { lowValue: '1.0', lowLabel: '基础合规', highValue: '6.0', highLabel: '行业高端', midValue: getField(resolved, 'P3'), unit: 'kPa', direction: 'ascending' }
     },
     {
       dimension: '隔声',
       value: `≥ ${getField(resolved, 'Rw')} dB`,
-      basis: `${STANDARDS_MAP.sound_insulation.short} · ${getNoiseShortDesc(answers.noise_type, answers.noise_dist)}`
+      basis: `${STANDARDS_MAP.sound_insulation.short} · ${getNoiseShortDesc(answers.noise_type, answers.noise_dist)}`,
+      levelBar: { lowValue: '30', lowLabel: '基础合规', highValue: '50', highLabel: '行业高端', midValue: getField(resolved, 'Rw'), unit: 'dB', direction: 'ascending' }
     },
     {
       dimension: '传热系数',
       value: `K≤${kText} W/(m²·K)${thermalRange ? `（推荐范围${thermalRange}）` : ''}`,
-      basis: `${STANDARDS_MAP.thermal.short} · ${kBasisText}`
+      basis: `${STANDARDS_MAP.thermal.short} · ${kBasisText}`,
+      levelBar: { lowValue: '3.0', lowLabel: '基础合规', highValue: '1.0', highLabel: '行业高端', midValue: kNum, unit: 'W/(m²·K)', direction: 'descending' }
     },
     {
       dimension: '太阳得热',
       value: `≤ ${getField(resolved, 'SHGC')}`,
-      basis: `${STANDARDS_MAP.shgc.short} · ${getShgcNote(answers)}`
+      basis: `${STANDARDS_MAP.shgc.short} · ${getShgcNote(answers)}`,
+      levelBar: { lowValue: '0.60', lowLabel: '基础合规', highValue: '0.15', highLabel: '行业高端', midValue: getField(resolved, 'SHGC'), unit: '', direction: 'descending' }
     },
     {
       dimension: '安全等级',
@@ -518,12 +522,14 @@ function buildNeedsTable(resolved, answers, sealGrades) {
     {
       dimension: '气密性',
       value: airValue,
-      basis: `${STANDARDS_MAP.wind_pressure.short} · 气密性能等级${fixedNote}`
+      basis: `${STANDARDS_MAP.wind_pressure.short} · 气密性能等级${fixedNote}`,
+      levelBar: { lowValue: '4', lowLabel: '基础合规', highValue: '8', highLabel: '行业高端', midValue: sg.airRec, unit: '级', direction: 'ascending' }
     },
     {
       dimension: '水密性',
       value: waterValue,
-      basis: `${STANDARDS_MAP.wind_pressure.short} · 水密性能等级${fixedNote}`
+      basis: `${STANDARDS_MAP.wind_pressure.short} · 水密性能等级${fixedNote}`,
+      levelBar: { lowValue: '2', lowLabel: '基础合规', highValue: '6', highLabel: '行业高端', midValue: sg.waterRec, unit: '级', direction: 'ascending' }
     }
   ];
 }
@@ -1029,25 +1035,25 @@ function buildAcceptanceNodes(family_risk, window_type) {
   const map = ACCEPTANCE_ITEMS_WINDOW[window_type] || null;
   if (map) {
     // ⑫
-    const idx12 = items.findIndex(x => typeof x === 'string' && x.startsWith('⑫'));
+    const idx12 = items.findIndex(x => (typeof x === 'string' ? x : (x && x.text) || '').startsWith('⑫'));
     const t12 = map['12'];
     if (t12 === null) {
       if (idx12 >= 0) items.splice(idx12, 1);
     } else if (typeof t12 === 'string') {
-      if (idx12 >= 0) items[idx12] = `⑫ ${t12}`; else items.push(`⑫ ${t12}`);
+      if (idx12 >= 0) items[idx12] = { text: `⑫ ${t12}`, reason: '' }; else items.push({ text: `⑫ ${t12}`, reason: '' });
     }
     // ⑬
-    const idx13 = items.findIndex(x => typeof x === 'string' && x.startsWith('⑬'));
+    const idx13 = items.findIndex(x => (typeof x === 'string' ? x : (x && x.text) || '').startsWith('⑬'));
     const t13 = map['13'];
     if (typeof t13 === 'string') {
-      if (idx13 >= 0) items[idx13] = `⑬ ${t13}`; else items.push(`⑬ ${t13}`);
+      if (idx13 >= 0) items[idx13] = { text: `⑬ ${t13}`, reason: '安全配件是本案强制要求，竣工时须逐项确认实际安装状态与合同约定一致' }; else items.push({ text: `⑬ ${t13}`, reason: '安全配件是本案强制要求，竣工时须逐项确认实际安装状态与合同约定一致' });
     }
   }
   const node13 = buildNode13(family_risk);
   if (node13) {
-    const i13 = items.findIndex(x => typeof x === 'string' && x.startsWith('⑬'));
+    const i13 = items.findIndex(x => (typeof x === 'string' ? x : (x && x.text) || '').startsWith('⑬'));
     if (i13 >= 0) {
-      const baseText = String(items[i13]).replace(/^⑬\s*/, '');
+      const baseText = (typeof items[i13] === 'string' ? items[i13] : (items[i13] && items[i13].text) || '').replace(/^⑬\s*/, '');
       const extras = String(node13)
         .split('；')
         .map(s => s.trim())
@@ -1056,13 +1062,17 @@ function buildAcceptanceNodes(family_risk, window_type) {
         .filter(s => !(baseText.includes('儿童安全配件') && s.startsWith('儿童安全配件')))
         .filter(s => !(baseText.includes('大面积安全玻璃') && s.startsWith('大面积安全玻璃')));
       if (extras.length > 0) {
-        items[i13] = `⑬ ${baseText}；${extras.join('；')}`;
+        items[i13] = { text: `⑬ ${baseText}；${extras.join('；')}`, reason: '安全配件是本案强制要求，竣工时须逐项确认实际安装状态与合同约定一致' };
       } else {
-        items[i13] = `⑬ ${baseText}`;
+        items[i13] = { text: `⑬ ${baseText}`, reason: '安全配件是本案强制要求，竣工时须逐项确认实际安装状态与合同约定一致' };
       }
     }
   }
-  return [base[0], base[1], { ...final, items }];
+  const wrapItems = (node) => ({
+    ...node,
+    items: node.items.map(item => typeof item === 'string' ? { text: item, reason: '' } : item)
+  });
+  return [wrapItems(base[0]), wrapItems(base[1]), wrapItems({ ...final, items })];
 }
 
 // 更新后的风险提示（含新价格区间和档位区分）

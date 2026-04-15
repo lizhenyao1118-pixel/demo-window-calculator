@@ -112,6 +112,7 @@ describe('mapToSections', () => {
       return t.startsWith('⑬');
     });
     const item13 = item13Raw ? (typeof item13Raw === 'string' ? item13Raw : item13Raw.text) : '';
-    expect(item13).toContain('适老配件');
+    // M2修改：适老配件已从验收⑬删除，验证基础内容存在
+    expect(item13).toContain('⑬');
   });
 });

@@ -196,11 +196,14 @@
     <view wx:if="{{chapter3.safetyBudgetWarning}}" class="upgrade-block safety-block">
       <text class="upgrade-item">{{chapter3.safetyBudgetWarning}}</text>
     </view>
-    <view wx:if="{{chapter3.safetyItems.length > 0}}" class="redline-list safety-list">
-      <view class="redline-item" wx:for="{{chapter3.safetyItems}}" wx:key="index">
-        <view class="redline-dot safety-dot"></view>
-        <view class="redline-content">
-          <text class="redline-title">{{item}}</text>
+    <view wx:if="{{chapter3.safetyItems.length > 0}}">
+      <text class="optional-section-title">可选优化/适老增强</text>
+      <view class="redline-list safety-list">
+        <view class="redline-item" wx:for="{{chapter3.safetyItems}}" wx:key="index">
+          <view class="redline-dot safety-dot"></view>
+          <view class="redline-content">
+            <text class="redline-title">{{item}}</text>
+          </view>
         </view>
       </view>
     </view>
@@ -382,7 +385,7 @@
       <text class="inspection-phase">{{item.title}}</text>
       <view class="inspection-item-wrap"
             wx:for="{{item.items}}" wx:key="text" wx:for-item="node">
-        <text class="inspection-item">· {{node.text}}</text>
+        <text class="inspection-item {{node.optional ? 'inspection-item-optional' : ''}}">· {{node.text}}</text>
         <text wx:if="{{node.reason}}" class="inspection-reason">→ {{node.reason}}</text>
       </view>
     </view>

@@ -229,7 +229,9 @@ page { background: #f5f5f0; }
   padding: 2px 8px;
   border-radius: 4px;
 }
-.chapter-title { font-size: 16px; font-weight: 500; color: #1a1a1a; }
+.chapter-title { font-size: 32rpx; font-weight: 600; color: #1a1a1a; }
+.group-title { font-size: 28rpx; font-weight: 500; color: #333; margin: 16rpx 0 8rpx; display: block; }
+.item-id { font-size: 26rpx; width: 60rpx; display: inline-block; text-align: left; }
 
 /* 定位说明 */
 .position-statement {
@@ -254,6 +256,7 @@ page { background: #f5f5f0; }
   margin-bottom: 6px;
   display: block;
 }
+.inspection-item-optional { color: #999999; padding-left: 24rpx; font-size: 26rpx; }
 .inspection-item {
   font-size: 12px;
   color: #888;
@@ -465,6 +468,7 @@ page { background: #f5f5f0; }
 /* M3-3 安全底线样式 */
 .safety-block { border-color: #f5a623; background: #fffbf0; }
 .safety-list { margin-top: 6px; }
+.optional-section-title { font-size: 14px; font-weight: 500; color: #a06000; margin: 12px 0 8px; display: block; }
 .safety-dot {
   width: 7px;
   height: 7px;

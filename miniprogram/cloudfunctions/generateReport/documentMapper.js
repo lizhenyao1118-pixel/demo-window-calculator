@@ -16,7 +16,7 @@ const STANDARDS_MAP = {
   },
   sound_insulation: {
     code: 'GB/T 8485-2008',
-    short: 'GB/T 8485',
+    short: 'GB/T 8485-2008',
     name: '建筑门窗空气声隔声性能分级及检测方法'
   },
   thermal: {
@@ -858,14 +858,12 @@ function buildRedlineChecklist(answers, resolved) {
       item._sealGrades = sealGrades;
     }
     item.userMeaning = REDLINE_USER_MEANING[r.id] || null;
+    item.group = r.group || null; // S2: 保留分组信息
+    // S2: 使用原始ID中的R编号（R01-R16）
+    item.displayId = r.id;
     if (r.level === 'mandatory') mandatory.push(item);
     else recommended.push(item);
   });
-
-  // 连续化编号：displayId
-  let displayCounter = 1;
-  mandatory.forEach(it => { it.displayId = `R${String(displayCounter).padStart(2, '0')}`; displayCounter++; });
-  recommended.forEach(it => { it.displayId = `R${String(displayCounter).padStart(2, '0')}`; displayCounter++; });
 
   return { mandatory, recommended };
 }
@@ -1173,13 +1171,7 @@ function getSafetyItems(familyRisk, budgetTier) {
 
   if (hasChild) {
     items.push('窗台高度<900mm时，须安装儿童防坠限位器（开启角度≤100mm）');
-    items.push('玻璃须使用夹胶安全玻璃（6.38mm+），破碎后不脱落');
     items.push('执手安装高度建议≥1500mm，防止儿童误开');
-  }
-  
-  if (hasElder) {
-    items.push('执手操作力≤25N（适老标准），需厂家测试数据支持');
-    items.push('门槛高度≤15mm，防绊倒；无法避免须配套防绊坡道');
   }
   
   if ((hasChild || hasElder) && budgetTier === 'A') {
@@ -1194,7 +1186,6 @@ function buildSafetyUpgradeDesc(family_risk) {
   const parts = [];
   if (arr.includes('large_fixed')) parts.push('夹胶安全玻璃（落地窗法规强制要求）');
   if (arr.includes('child')) parts.push('儿童防坠限位器、执手高度≥1500mm');
-  if (arr.includes('elder')) parts.push('适老配件：低操作力执手（≤25N）、门槛≤15mm防绊倒');
   if (arr.includes('wide_slider')) parts.push('推拉门毛条+胶条复合密封升级');
   return parts.join(' + ') || '安全配件全套升级';
 }
@@ -1203,7 +1194,6 @@ function buildNode13(family_risk) {
   const arr = Array.isArray(family_risk) ? family_risk : [];
   const items = [];
   if (arr.includes('child')) items.push('儿童安全配件：限位器开启角度≤100mm、执手高度≥1500mm');
-  if (arr.includes('elder')) items.push('适老配件：执手操作力≤25N、门槛高度≤15mm');
   if (arr.includes('large_fixed')) items.push('大面积安全玻璃：确认夹胶玻璃安装，碰撞后无脱落');
   if (arr.includes('wide_slider')) items.push('推拉门密封：毛条+胶条完整，配合烟雾笔测试无明显气流');
   return items.length > 0 ? items.join('；') : null;
@@ -1230,22 +1220,48 @@ function buildAcceptanceNodes(family_risk, window_type) {
       if (idx13 >= 0) items[idx13] = { text: `⑬ ${t13}`, reason: '安全配件是本案强制要求，竣工时须逐项确认实际安装状态与合同约定一致' }; else items.push({ text: `⑬ ${t13}`, reason: '安全配件是本案强制要求，竣工时须逐项确认实际安装状态与合同约定一致' });
     }
   }
+  // M4: 竣工验收⑬拆分 - 强制项与可选增强项分离
   const node13 = buildNode13(family_risk);
   if (node13) {
     const i13 = items.findIndex(x => (typeof x === 'string' ? x : (x && x.text) || '').startsWith('⑬'));
     if (i13 >= 0) {
-      const baseText = (typeof items[i13] === 'string' ? items[i13] : (items[i13] && items[i13].text) || '').replace(/^⑬\s*/, '');
-      const extras = String(node13)
-        .split('；')
-        .map(s => s.trim())
-        .filter(Boolean)
-        .filter(s => !baseText.includes(s))
-        .filter(s => !(baseText.includes('儿童安全配件') && s.startsWith('儿童安全配件')))
-        .filter(s => !(baseText.includes('大面积安全玻璃') && s.startsWith('大面积安全玻璃')));
-      if (extras.length > 0) {
-        items[i13] = { text: `⑬ ${baseText}；${extras.join('；')}`, reason: '安全配件是本案强制要求，竣工时须逐项确认实际安装状态与合同约定一致' };
-      } else {
-        items[i13] = { text: `⑬ ${baseText}`, reason: '安全配件是本案强制要求，竣工时须逐项确认实际安装状态与合同约定一致' };
+      const baseItem = typeof items[i13] === 'string' ? { text: items[i13], reason: '' } : items[i13];
+      const baseText = (baseItem.text || '').replace(/^⑬\s*/, '');
+
+      // 分离强制项和可选增强项
+      const mandatoryParts = [];
+      const optionalParts = [];
+
+      // 分析node13返回的内容
+      const node13Parts = String(node13).split('；').map(s => s.trim()).filter(Boolean);
+      node13Parts.forEach(part => {
+        if (part.includes('执手高度≥1500mm')) {
+          optionalParts.push(part);
+        } else {
+          mandatoryParts.push(part);
+        }
+      });
+
+      // 构建强制项（保留原⑬）
+      let mandatoryText = `⑬ ${baseText}`;
+      if (mandatoryParts.length > 0) {
+        const filteredExtras = mandatoryParts
+          .filter(s => !baseText.includes(s))
+          .filter(s => !(baseText.includes('儿童安全配件') && s.startsWith('儿童安全配件')))
+          .filter(s => !(baseText.includes('大面积安全玻璃') && s.startsWith('大面积安全玻璃')));
+        if (filteredExtras.length > 0) {
+          mandatoryText += `；${filteredExtras.join('；')}`;
+        }
+      }
+      items[i13] = { text: mandatoryText, reason: '安全配件是本案强制要求，竣工时须逐项确认实际安装状态与合同约定一致' };
+
+      // 添加可选增强项（如果有）
+      if (optionalParts.length > 0) {
+        items.splice(i13 + 1, 0, {
+          text: `⑬ ${optionalParts.join('；')}`,
+          reason: '',
+          optional: true
+        });
       }
     }
   }
@@ -1474,7 +1490,10 @@ function mapToSections(resolved, answers, pdfNo) {
     has_family_safety: familyRisk.includes('child') || familyRisk.includes('elder')
   };
   const safety = getSafetyItems(normalizedAnswers.family_risk, normalizedAnswers.budget_tier);
-  
+
+  // N1: 计算水密气密等级
+  const sealGrades = calcSealGrades({ city: answers.city, floor: answers.floor, windowType: answers.window_type });
+
   // 风险触发条件：16层以上 或 高度比>50% 或 有risk_flags 或 免责声明
   const isHighFloor = answers.floor > 16;
   const isHighRatio = band.ratio > 0.5;
@@ -1598,12 +1617,21 @@ function mapToSections(resolved, answers, pdfNo) {
         },
         {
           name: '热工性能',
-          value: `K${getField(resolved, 'K')} W/(m²K)\nSHGC${getField(resolved, 'SHGC')}`,
+          value: `K≤${getField(resolved, 'K')} W/(m²K)\nSHGC≤${getField(resolved, 'SHGC')}`,
           unit: '',
           std: STANDARDS_MAP.thermal.code,
           level: getClimateLabel(climateZone),
           note: `${getClimateName(climateZone)}区 ${getThermalModifier(normalizedAnswers)}`,
           isCore: painTag.coreMetric === 'SHGC'
+        },
+        {
+          name: '水密气密性能',
+          value: `水密≥${sealGrades.waterRec}级\n气密≥${sealGrades.airRec}级`,
+          unit: '',
+          std: 'GB/T 7106',
+          level: '本案等级',
+          note: `${normalizedAnswers.city}第${normalizedAnswers.floor}层，按风压/高度计算`,
+          isCore: false
         }
       ],
       // SPEC-G2 step2: derivation placeholders (null = not implemented yet)
