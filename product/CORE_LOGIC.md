@@ -123,6 +123,85 @@
 
 ---
 
+## 五A、文件依赖地图（改动影响范围速查）
+
+| 改动文件 | 直接影响 | 需同步检查 |
+|---------|---------|---------|
+| `calculator-v2.js` | 所有性能参数计算结果 | `documentMapper.js` 的输入值 |
+| `arbitrator.js` | 配置层仲裁结果 | `documentMapper.js` 的配置字段 |
+| `documentMapper.js` | reportSnapshot 全部字段 | `result.wxml` 所有数据绑定 |
+| `index.js` | 云函数入口、snapshot 写入完整性 | summary 字段是否包含在 return 里 |
+| `result.wxml` / `result.wxss` | 输出层视觉渲染 | L1摘要卡 + L2四章显示逻辑 |
+| `result.js` | 页面数据加载、isPaid 状态 | Storage 读取路径、onUnlock 逻辑 |
+
+**使用规则：** 写 SPEC 验证门时，以此表确认改动的下游影响范围，逐项列入「需同步检查」的验证项。
+
+---
+
+## 五B、功能状态全景表
+
+> 维护规则：功能状态变更时同步更新，与 commit 绑定。
+
+### 用户侧页面
+
+| 功能 | 路由 | 状态 | 备注 |
+|------|------|------|------|
+| 首页 | pages/index/index | ✅ 已实现 | 草稿检测、历史记录、导航入口 |
+| 底部导航栏 | — | 🔲 待开发 | 招标文件 / 招标管理 / 我的 三个入口 |
+| 问卷定制 | pages/survey/survey | ✅ 已实现 | 10步问卷、分组进度、草稿保存 |
+| 重新开始 | pages/question/question | 🔧 待完善 | 当前仅跳转首页，未清除草稿/重置状态 |
+| 生成等待页 | pages/generate-loading/generate-loading | ✅ 已实现 | 调用 generateReport、Storage 持久化 |
+| 结果详情页 | pages/result/result | ✅ 已实现 | WXML渲染，L1摘要卡+L2四章，isPaid控制 |
+| 历史记录 | pages/history/history | ✅ 已实现 | 调用 getReportList |
+| 个人中心 | pages/profile/index | 🔧 待完善 | 菜单结构已有，子页面待开发 |
+| 使用指南 | — | 🔲 待开发 | 个人中心子项 |
+| 常见问题 | — | 🔲 待开发 | 个人中心子项 |
+| 关于我们 | — | 🔲 待开发 | 个人中心子项 |
+| 私信咨询入口 | — | 🔲 待开发 | 面向用户的咨询触点 |
+| 结果摘要页 | pages/result-summary/result-summary | ❌ 已废弃 | 保留仅供 git 历史参考 |
+
+### 商家侧页面
+
+| 功能 | 路由 | 状态 | 备注 |
+|------|------|------|------|
+| 供应商填写 | pages/vendor/fill | ✅ 已实现 | 加载招标信息、表单填写、草稿自动保存 |
+| 供应商确认 | pages/vendor/confirm | ✅ 已实现 | 确认数据、调用 submitVendorResponse |
+| 供应商成功 | pages/vendor/success | ✅ 已实现 | 返回首页 |
+| 招标列表 | pages/tender/list | ✅ 已实现 | 调用 getTenderList |
+| 招标详情 | pages/tender/detail | ✅ 已实现 | 调用 getVendorResponses、展示响应 |
+
+### 云函数
+
+| 云函数 | 状态 | 备注 |
+|--------|------|------|
+| `generateReport` | ✅ 活跃 | 核心函数，生产主路径 |
+| `createTender` | ✅ 活跃 | 创建招标 |
+| `getTenderList` | ✅ 活跃 | 获取招标列表 |
+| `getTenderForVendor` | ✅ 活跃 | 获取供应商招标信息 |
+| `getVendorResponses` | ✅ 活跃 | 获取供应商响应 |
+| `submitVendorResponse` | ✅ 活跃 | 提交供应商响应 |
+| `getReportList` | ✅ 活跃 | 获取报告列表 |
+| `getOpenId` | ✅ 活跃 | 获取 OpenID |
+| `saveDraft` | ✅ 活跃 | 保存草稿 |
+| `trackEvent` | ✅ 活跃 | 事件埋点 |
+| `calculateWindow` | ✅ 活跃 | 调用方：pages/question/question.js |
+| `getExperimentStats` | ❌ 废弃 | 无调用方 |
+| `generatePDF` | ❌ 废弃 | PDF路线已关闭，不得重开 |
+| `benchmark-pdf` | ❌ 废弃 | PDF测试函数 |
+| `cleanupOldPDFs` | ❌ 废弃 | 依附PDF路线 |
+| `pdfSpike` | ❌ 废弃 | PDF测试函数 |
+| `test` | ❌ 废弃 | 临时测试函数 |
+
+### 待清理技术债
+
+| 项目 | 位置 | 优先级 |
+|------|------|--------|
+| DEBUG log | index.js 第331–332行 | 🔴 下次会话执行 |
+| PDF残留代码 | result.js `downloadPDF()` / `previewPDF()` / `fileID` | 🟡 确认无调用后清理 |
+| 废弃云函数 | 见上表❌条目 | 🟡 确认无调用后删除 |
+
+---
+
 ## 六、已确认废弃项
 
 | 废弃项 | 原因 | 替代方案 |
