@@ -851,12 +851,6 @@ function buildRedlineChecklist(answers, resolved) {
   REDLINE_REGISTRY.forEach((r) => {
     if (!r.trigger(answers, resolvedWithLevels)) return;
     const item = { ...r, text: (typeof r.text === 'function' ? r.text(answers, resolvedWithLevels) : r.text) };
-    // R12: 水密气密性能（原 R06）
-    if (r.id === 'R12') {
-      const desc = `水密气密性能：水密≥${sealGrades.waterRec}级，气密≥${sealGrades.airRec}级（GB/T 7106）。安装节点须按设计图纸施工，打胶须全程留影像记录`;
-      item.text = desc;
-      item._sealGrades = sealGrades;
-    }
     item.userMeaning = REDLINE_USER_MEANING[r.id] || null;
     item.group = r.group || null; // S2: 保留分组信息
     // S2: 使用原始ID中的R编号（R01-R16）
@@ -1662,8 +1656,19 @@ function mapToSections(resolved, answers, pdfNo) {
       sourceNote: '以下红线由第一章性能诊断结果动态生成，每条对应一项可量化指标。低于任一项即视为方案不合格。',
       redlineChecklist: {
         ...sharedRedlineChecklist,
-        mandatory: (sharedRedlineChecklist.mandatory || [])
-          .filter(item => item.group !== '适老化'),
+        mandatory: (() => {
+          let lastGroup = null;
+          return (sharedRedlineChecklist.mandatory || [])
+            .filter(item => item.group !== '适老化')
+            .map(item => {
+              const isNewGroup = item.group !== lastGroup;
+              lastGroup = item.group;
+              return {
+                ...item,
+                groupTitle: isNewGroup ? (item.group || null) : null,
+              };
+            });
+        })(),
       },
       forbidden: getForbiddenItems(normalizedAnswers.budget_tier, getField(resolved, 'K'), window_features, getField(resolved, 'Rw')),
       safetyItems: safety.items,

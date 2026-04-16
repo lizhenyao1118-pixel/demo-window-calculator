@@ -297,46 +297,46 @@ describe('B-14 C短期 红线文案动态化', () => {
   test('DM-21: 深圳15F开启窗 - 气密6级水密6级（沿海+台风+高层）', () => {
     const answers = { city: 'shenzhen', floor: 15, window_type: 'casement', family_risk: [] };
     const checklist = buildRedlineChecklist(answers, { safetyForced: false });
-    const r12 = (checklist.mandatory || []).find(r => r.id === 'R12');
+    const r12 = (checklist.mandatory || []).find(r => r.id === 'R11');
     expect(r12.text).toContain('气密≥6级');
     expect(r12.text).toContain('水密≥6级');
-    expect(r12.text).toContain('安装节点须按设计图纸施工');
-    expect(r12.text).toContain('打胶须全程留影像记录');
+    expect(r12.text).toContain('安装节点按设计图纸施工');
+    expect(r12.text).toContain('打胶影像记录');
   });
 
   test('DM-22: 成都3F固定窗 - 气密5级水密5级（固定窗+1）', () => {
     const answers = { city: 'chengdu', floor: 3, window_type: 'fixed', family_risk: [] };
     const checklist = buildRedlineChecklist(answers, { safetyForced: false });
-    const r12 = (checklist.mandatory || []).find(r => r.id === 'R12');
+    const r12 = (checklist.mandatory || []).find(r => r.id === 'R11');
     expect(r12.text).toContain('气密≥5级');
     expect(r12.text).toContain('水密≥5级');
-    expect(r12.text).toContain('安装节点须按设计图纸施工');
+    expect(r12.text).toContain('安装节点按设计图纸施工');
   });
 
   test('DM-23: 北京20F开启窗 - 气密6级水密4级（高层内陆）', () => {
     const answers = { city: 'beijing', floor: 20, window_type: 'casement', family_risk: [] };
     const checklist = buildRedlineChecklist(answers, { safetyForced: false });
-    const r12 = (checklist.mandatory || []).find(r => r.id === 'R12');
+    const r12 = (checklist.mandatory || []).find(r => r.id === 'R11');
     expect(r12.text).toContain('气密≥6级');
     expect(r12.text).toContain('水密≥4级');
-    expect(r12.text).toContain('打胶须全程留影像记录');
+    expect(r12.text).toContain('打胶影像记录');
   });
 
   test('DM-24: 沈阳3F开启窗 - 气密6级（严寒推高）', () => {
     const answers = { city: 'shenyang', floor: 3, window_type: 'casement', family_risk: [] };
     const checklist = buildRedlineChecklist(answers, { safetyForced: false });
-    const r12 = (checklist.mandatory || []).find(r => r.id === 'R12');
+    const r12 = (checklist.mandatory || []).find(r => r.id === 'R11');
     expect(r12.text).toContain('气密≥6级');
-    expect(r12.text).toContain('安装节点须按设计图纸施工');
+    expect(r12.text).toContain('安装节点按设计图纸施工');
   });
 
   test('DM-25: 上海10F开启窗 - 气密6级水密6级（近海+高层）', () => {
     const answers = { city: 'shanghai', floor: 10, window_type: 'casement', family_risk: [] };
     const checklist = buildRedlineChecklist(answers, { safetyForced: false });
-    const r12 = (checklist.mandatory || []).find(r => r.id === 'R12');
+    const r12 = (checklist.mandatory || []).find(r => r.id === 'R11');
     expect(r12.text).toContain('气密≥6级');
     expect(r12.text).toContain('水密≥6级');
-    expect(r12.text).toContain('打胶须全程留影像记录');
+    expect(r12.text).toContain('打胶影像记录');
   });
 });
 
@@ -358,15 +358,6 @@ describe('B-14 A中期 七维参数表与结构化等级', () => {
     const airRow = (r.needsTable || []).find(x => x.dimension === '气密性') || {};
     expect(String(airRow.value || '')).toContain('本案目标值：≥4级');
     expect(String(airRow.value || '')).not.toContain('最低可接受值');
-  });
-
-  test('DM-28: R12新增结构化_sealGrades字段', () => {
-    const answers = { city: 'shenzhen', floor: 15, window_type: 'casement', family_risk: [] };
-    const checklist = buildRedlineChecklist(answers, { safetyForced: false });
-    const r12 = (checklist.mandatory || []).find(r => r.id === 'R12') || {};
-    expect(r12._sealGrades).toBeTruthy();
-    expect(r12._sealGrades.airRec).toBe(6);
-    expect(r12._sealGrades.waterRec).toBe(6);
   });
 
   test('DM-28b: 固定窗 - sealGrades.isFixed=true', () => {
@@ -449,12 +440,12 @@ describe('Sprint 7 C-短期文案优化', () => {
     expect(pdfContent).toContain('玻璃配置');
   });
 
-  test('DM-33: R12水密气密条款应包含安装过程控制', async () => {
+  test('DM-33: R11水密气密条款应包含安装过程控制', async () => {
     const pdfContent = await buildPdfTextForAnswers(fixtures.guangzhouFull, 'S7-DM33');
     expect(pdfContent).toContain('水密≥');
     expect(pdfContent).toContain('气密≥');
-    expect(pdfContent).toContain('安装节点须按设计图纸施工');
-    expect(pdfContent).toContain('打胶须全程留影像记录');
+    expect(pdfContent).toContain('安装节点按设计图纸施工');
+    expect(pdfContent).toContain('打胶影像记录');
   });
 
   test('DM-34: 红线强制区标题与R01/R04/R05强制条款', async () => {
