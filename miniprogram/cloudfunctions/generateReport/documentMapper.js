@@ -970,9 +970,7 @@ function buildChapter4Data(answers, budgetSpec, resolved, riskTrigger, isRisk, s
         intro: '以下为本案技术红线，请逐项书面确认。任何一项不满足须书面说明。',
         items: (() => {
           let lastGroup = null;
-          return (sharedRedlineChecklist.mandatory || [])
-            .filter(item => item.group !== '适老化')
-            .map(item => {
+          return (sharedRedlineChecklist.mandatory || []).map(item => {
             const isNewGroup = item.group !== lastGroup;
             lastGroup = item.group;
             return {
@@ -1662,7 +1660,11 @@ function mapToSections(resolved, answers, pdfNo) {
     chapter3: {
       title: '本案采购红线清单',
       sourceNote: '以下红线由第一章性能诊断结果动态生成，每条对应一项可量化指标。低于任一项即视为方案不合格。',
-      redlineChecklist: sharedRedlineChecklist,
+      redlineChecklist: {
+        ...sharedRedlineChecklist,
+        mandatory: (sharedRedlineChecklist.mandatory || [])
+          .filter(item => item.group !== '适老化'),
+      },
       forbidden: getForbiddenItems(normalizedAnswers.budget_tier, getField(resolved, 'K'), window_features, getField(resolved, 'Rw')),
       safetyItems: safety.items,
       safetyBudgetWarning: safety.budgetWarning,
