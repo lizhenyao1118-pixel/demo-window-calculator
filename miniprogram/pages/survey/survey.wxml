@@ -115,7 +115,7 @@
           <text class="wind-press-icon">⚠</text>
           <text class="wind-press-title">高区位置风压风险</text>
         </view>
-        <text class="wind-press-text">您的楼层位于整栋楼的上部区域，高度比为{{heightRatio}}%，风荷载明显高于中低层。建议提高型材主受力壁厚或升级预算档位。</text>
+        <text class="wind-press-text">高层高区风压载荷较大，型材主受力要求相应提高。</text>
       </view>
 
       <!-- 弱提示（灰色文字） -->
@@ -186,7 +186,7 @@
       <view wx:else class="field-note">安静环境无需选择距离范围</view>
 
       <view class="inline-tip warn-tip" wx:if="{{formData.noise_type === 'main_road' && formData.noise_dist === 'lt20'}}">
-        主干道近距离噪声强，建议隔声量 Rw ≥ 41 dB
+        主干道近距离噪声强，本案隔声量目标值 Rw ≥ 41 dB
       </view>
     </view>
   </view>
@@ -358,7 +358,7 @@
           </view>
         </view>
 
-        <button class="btn-risk" bindtap="forceRisk">强制生成风险版</button>
+        <button class="btn-risk" bindtap="forceRisk">了解风险，继续生成</button>
       </view>
     </view>
   </view>

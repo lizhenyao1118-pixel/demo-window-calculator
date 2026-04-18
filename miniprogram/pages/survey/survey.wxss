@@ -561,7 +561,7 @@
 }
 
 .btn-risk {
-  background: #E53935;
+  background: #616161;
   color: #FFFFFF;
   margin-top: 24rpx;
   border-radius: 8rpx;

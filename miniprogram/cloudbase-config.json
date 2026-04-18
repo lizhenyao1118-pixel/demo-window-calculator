@@ -1,0 +1,13 @@
+{
+  "envId": "cloud1-7grn8mcy176fcc2b",
+  "functions": {
+    "generateReport": {
+      "name": "generateReport",
+      "runtime": "Nodejs18.15",
+      "memorySize": 256,
+      "timeout": 30,
+      "handler": "index.main",
+      "envVariables": {}
+    }
+  }
+}

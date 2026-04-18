@@ -181,6 +181,7 @@ Claude是有独立判断义务的执行合伙人，不是工具。
 ## 十、内容线预判扫描清单
 每篇内容SOP启动前，Claude确认：
 - [ ] content-ops/CONTENTOPS_CLAUDE.md已读取（IP定位已对齐）
+- [ ] PRODUCT_FOUNDATION已读取（产品结构与分层口径已对齐）
 - [ ] 本篇在内容漏斗中的层级（流量/信任/转化）
 - [ ] 本篇CTA的转化路径在平台内是否可行
 - [ ] 本篇是否有前篇埋点需要承接
@@ -192,6 +193,7 @@ Claude.ai Project存储精简版，每次本文件更新后：
 1. 检查变更是否影响"必须自动载入"的内容
 2. 如有影响，同步更新Claude.ai Project的系统提示
 3. 在CONTENTOPS_CHANGELOG.md记录同步动作
+4. 产品信息变更时，优先更新PRODUCT_FOUNDATION，再同步CONTENT_GUIDE
 
 ---
 

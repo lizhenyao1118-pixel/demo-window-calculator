@@ -50,12 +50,42 @@
 
   <!-- 付费按钮：未解锁时可见 -->
   <view wx:if="{{!isPaid}}" class="unlock-btn" bindtap="onUnlock">
-    <text class="unlock-btn-text">¥99 限时免费，直接发给商家比价</text>
-    <text class="unlock-btn-sub">含完整技术参数与验收标准，商家看到就知道你懂行</text>
+    <text class="unlock-btn-text">限时免费获取完整招标文件</text>
+    <text class="unlock-btn-sub">含技术底线 · 红线清单 · 三阶段验收标准</text>
   </view>
 
   <!-- 四章内容：仅付费后渲染 -->
   <view wx:if="{{isPaid}}" class="chapters-wrap">
+
+    <!-- L2 导读区 -->
+    <view class="guide-section">
+
+      <!-- 分隔线 -->
+      <view class="guide-divider"></view>
+      
+      <!-- 三件事标题 -->
+      <text class="guide-title">这份文件帮你做三件事</text>
+      
+      <!-- 三件事列表 -->
+      <view class="guide-item">
+        <text class="guide-item-num">①</text>
+        <text class="guide-item-text">筛商家：用技术底线排除不合格方案</text>
+      </view>
+      <view class="guide-item">
+        <text class="guide-item-num">②</text>
+        <text class="guide-item-text">查进场：知道收货时拍什么、查什么</text>
+      </view>
+      <view class="guide-item">
+        <text class="guide-item-num">③</text>
+        <text class="guide-item-text">做验收：安装完成后逐项自检</text>
+      </view>
+      
+      <!-- 分隔线 -->
+      <view class="guide-divider"></view>
+      
+      <!-- 导读提示 -->
+      <text class="guide-hint">从第一章开始阅读，或直接跳至第四章行动步骤</text>
+    </view>
 
     <!-- ===== 第一章 ===== -->
     <view class="chapter-header">
@@ -179,11 +209,15 @@
     <!-- M3-2 禁止项清单 + 用户侧含义 -->
     <view class="redline-list">
       <view class="redline-item" wx:for="{{chapter3.redlineChecklist.mandatory}}" wx:key="index">
-        <view class="redline-dot"></view>
         <view class="redline-content">
-          <text wx:if="{{item.groupTitle}}" class="group-title">{{item.groupTitle}}</text>
-          <text class="item-id">{{item.displayId}}</text>
-          <text class="redline-title">{{item.text}}</text>
+          <view wx:if="{{item.groupTitle}}" class="redline-row">
+            <view class="redline-dot"></view>
+            <text class="group-title">{{item.groupTitle}}</text>
+          </view>
+          <view class="redline-row redline-item-row">
+            <text class="item-id">{{item.displayId}}</text>
+            <text class="redline-title">{{item.text}}</text>
+          </view>
         </view>
       </view>
       

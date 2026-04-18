@@ -40,7 +40,7 @@
 
 .stamp {
   display: inline-block;
-  border: 4rpx solid #FFFFFF;
+  border: 2rpx solid rgba(255, 255, 255, 0.4);
   padding: 8rpx 24rpx;
   border-radius: 8rpx;
   font-size: 28rpx;
@@ -55,9 +55,25 @@
   opacity: 0.95;
 }
 
+.promise-secondary {
+  font-size: 26rpx;
+  line-height: 1.5;
+  opacity: 0.85;
+  margin-top: 24rpx;
+}
+
+
+
 /* 主CTA */
 .cta-section {
-  padding: var(--spacing-module);
+  padding: 40rpx var(--spacing-module);
+}
+
+.cta-card {
+  background: #FFFFFF;
+  border-radius: 16rpx;
+  padding: 32rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.08);
 }
 
 .btn-primary {
@@ -77,6 +93,15 @@
 
 .btn-primary:active {
   opacity: 0.8;
+}
+
+.trust-anchor {
+  font-size: 24rpx;
+  line-height: 1.4;
+  opacity: 0.6;
+  text-align: center;
+  margin-top: 20rpx;
+  color: #666666;
 }
 
 /* 说明区 */
@@ -110,6 +135,7 @@
   display: flex;
   align-items: flex-start;
   gap: 16rpx;
+  position: relative;
 }
 
 .step-number {
@@ -126,6 +152,20 @@
   flex-shrink: 0;
 }
 
+.step-item::after {
+  content: "";
+  position: absolute;
+  left: 24rpx;
+  top: 72rpx;
+  bottom: 0;
+  width: 1rpx;
+  background: rgba(27, 63, 114, 0.2);
+}
+
+.step-item:last-child::after {
+  display: none;
+}
+
 .step-content {
   flex: 1;
   display: flex;
@@ -140,8 +180,8 @@
 }
 
 .step-desc {
-  font-size: 24rpx;
-  color: var(--color-text-secondary);
+  font-size: 22rpx;
+  color: rgba(51, 51, 51, 0.55);
 }
 
 /* 历史招标文件快捷卡片 */

@@ -1,0 +1,110 @@
+<view class="container">
+  <!-- 风险版水印（仅在强制生成时显示） -->
+  <view class="risk-watermark" wx:if="{{isDisclaimer}}">
+    ⚠️ 配置冲突提示版
+  </view>
+
+  <!-- 顶部风险条 -->
+  <view class="risk-bar risk-bar--{{riskClass}}" wx:if="{{riskLevel}}">
+    <view class="risk-bar__inner">
+      <view class="risk-badge risk-badge--{{riskClass}}">{{riskLevel}}风险</view>
+      <text class="risk-reason">{{riskReason}}</text>
+    </view>
+  </view>
+
+  <!-- 页面头部 -->
+  <view class="page-header">
+    <text class="page-title">您的门窗标准</text>
+    <text class="page-subtitle">根据您的房屋条件定制生成</text>
+  </view>
+
+  <!-- 参数卡片区 -->
+  <view class="section" wx:if="{{paramCards && paramCards.length > 0}}">
+    <text class="section-title">关键参数指标</text>
+    <view class="param-grid">
+      <view wx:for="{{paramCards}}" wx:key="label" class="param-card {{item.colorClass}}">
+        <text class="param-icon">{{item.icon}}</text>
+        <text class="param-label">{{item.label}}</text>
+        <block wx:if="{{item.value}}">
+          <text class="param-prefix">{{item.prefix}}</text>
+          <text class="param-value">{{item.value}}</text>
+          <text class="param-unit">{{item.unit}}</text>
+        </block>
+        <text class="param-sublabel">{{item.sublabel}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 反向映射区 -->
+  <view class="section" wx:if="{{reverseMappings.length}}">
+    <text class="section-title">这些标准是怎么来的</text>
+    <view class="mapping-list">
+      <view wx:for="{{reverseMappings}}" wx:key="index" class="mapping-item mapping-item--{{item.mappingType}}">
+        <text class="mapping-title">{{item.title}}</text>
+        <text class="mapping-desc">{{item.description}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 文件信息卡片 -->
+  <view class="file-card">
+    <view class="file-name">门窗招标技术文件_{{formData.city}}_{{timestamp}}.pdf</view>
+    <view class="file-meta">
+      <text>生成时间：{{timestamp}}</text>
+      <text wx:if="{{isDisclaimer}}" class="risk-tag">风险提示</text>
+    </view>
+    
+    <!-- 配置摘要 -->
+    <view class="config-summary">
+      <view class="config-item">
+        <text class="label">城市：</text>
+        <text>{{formData.city}} {{formData.district}}</text>
+      </view>
+      <view class="config-item">
+        <text class="label">楼层：</text>
+        <text>{{formData.floor}}/{{formData.totalFloors}}层</text>
+      </view>
+      <view class="config-item">
+        <text class="label">预算档位：</text>
+        <text class="{{isDisclaimer ? 'risk-text' : ''}}">{{formData.budgetTier}}档</text>
+      </view>
+      <view class="config-item" wx:if="{{formData.priority}}">
+        <text class="label">优先项：</text>
+        <text>{{formData.priority}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- CTA按钮区 -->
+  <view class="cta-wrap">
+    <button class="btn-primary" bindtap="downloadPDF"><text class="btn-price-origin">¥99</text><text class="btn-text-main">限时免费，直接发给商家比价</text></button>
+    <text class="btn-hint">含完整技术参数与验收标准，商家看到就知道你懂行</text>
+  </view>
+
+  <!-- L2入口：专家审核（风险版 - 强提示） -->
+  <view class="l2-entry" wx:if="{{isDisclaimer}}">
+    <view class="l2-title">⚠️ 配置存在风险，建议人工复核</view>
+    <view class="l2-desc">
+      当前配置可能存在安全隐患，建议添加李Sir微信获取专业审核与优化方案。
+    </view>
+    <!-- 修改：改为普通按钮，bindtap触发二维码 -->
+    <button class="btn-l2" bindtap="showQRCode">
+      查看微信二维码（添加李Sir）
+    </button>
+    <view class="l2-note">长按二维码识别，备注"门窗审核"</view>
+  </view>
+
+  <!-- 正常版的L2入口（弱化显示） -->
+  <view class="l2-entry-normal" wx:if="{{!isDisclaimer}}">
+    <view class="divider">—— 增值服务 ——</view>
+    <!-- 修改：去掉open-type，改为tap事件 -->
+    <button class="btn-l2-light" bindtap="showQRCode">
+      需要专家把关？点击查看微信二维码
+    </button>
+  </view>
+
+  <!-- 重新评估 -->
+  <view class="footer-action">
+    <text class="link-text" bindtap="restart">重新评估需求</text>
+  </view>
+</view>

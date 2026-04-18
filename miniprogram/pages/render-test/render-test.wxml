@@ -1,0 +1,155 @@
+<scroll-view scroll-y class="page">
+
+  <!-- TYPE 1: 封面/章节分隔 -->
+  <view class="section-label">TYPE 1 · 封面 / 章节分隔</view>
+  <view class="cover-card">
+    <text class="cover-sub">门窗需求定制招标文件</text>
+    <text class="cover-title">上海 · 高层住宅</text>
+    <text class="cover-date">生成于 2026-04-12</text>
+    <view class="chapter-tabs">
+      <text class="tab-active">第一章</text>
+      <text class="tab">第二章</text>
+      <text class="tab">第三章</text>
+      <text class="tab">第四章</text>
+    </view>
+  </view>
+
+  <!-- TYPE 2: 参数卡片（大数字）-->
+  <view class="section-label">TYPE 2 · 参数卡片</view>
+  <view class="param-grid">
+    <view class="param-card">
+      <text class="param-label">隔声要求</text>
+      <text class="param-value">35</text>
+      <text class="param-unit">dB（Rw）</text>
+    </view>
+    <view class="param-card">
+      <text class="param-label">传热系数</text>
+      <text class="param-value">1.8</text>
+      <text class="param-unit">W/m²·K</text>
+    </view>
+    <view class="param-card">
+      <text class="param-label">抗风压等级</text>
+      <text class="param-value">4级</text>
+      <text class="param-unit">≥ 2000 Pa</text>
+    </view>
+    <view class="param-card">
+      <text class="param-label">气密等级</text>
+      <text class="param-value">6级</text>
+      <text class="param-unit">≤ 0.5 m³/m·h</text>
+    </view>
+  </view>
+
+  <!-- TYPE 3: 升级提示区块 -->
+  <view class="section-label">TYPE 3 · 升级提示区块</view>
+  <view class="upgrade-block">
+    <text class="upgrade-title">您的选择（B档）存在以下不足</text>
+    <text class="upgrade-item">· 隔声：环境需求 Rw≥35，B档上限 Rw≤33（差距2 dB）</text>
+    <text class="upgrade-item">· 热工：本案要求 K≤1.8，B档能力 K≤2.0（差距0.2）</text>
+    <view class="upgrade-divider"></view>
+    <text class="upgrade-rec">满足本案要求的最低配置：A档</text>
+    <text class="upgrade-rec">成本影响：约 +80元/㎡</text>
+  </view>
+
+  <!-- TYPE 4: 双栏并排 -->
+  <view class="section-label">TYPE 4 · 双栏并排</view>
+  <view class="two-col">
+    <view class="col-card">
+      <text class="col-label">推荐配置</text>
+      <text class="col-item">三玻两腔 Low-E</text>
+      <text class="col-item">氩气填充</text>
+      <text class="col-item">暖边间隔条</text>
+    </view>
+    <view class="col-card">
+      <text class="col-label">对应性能</text>
+      <text class="col-item">Rw ≥ 36 dB</text>
+      <text class="col-item">K ≤ 1.6 W/m²·K</text>
+      <text class="col-item">SHGC ≤ 0.30</text>
+    </view>
+  </view>
+
+  <!-- TYPE 5: 表格 -->
+  <view class="section-label">TYPE 5 · 采购技术底线表格</view>
+  <view class="table-wrap">
+    <view class="table-head">
+      <text class="col-a">配置项</text>
+      <text class="col-b">最低规格</text>
+      <text class="col-c">验证方式</text>
+    </view>
+    <view class="table-row">
+      <text class="col-a th">玻璃</text>
+      <text class="col-b">6+12Ar+6 Low-E</text>
+      <text class="col-c">检测报告</text>
+    </view>
+    <view class="table-row alt">
+      <text class="col-a th">隔热条</text>
+      <text class="col-b">PA66 24mm</text>
+      <text class="col-c">进场验收</text>
+    </view>
+    <view class="table-row">
+      <text class="col-a th">型材壁厚</text>
+      <text class="col-b">≥ 2.0mm</text>
+      <text class="col-c">进场验收</text>
+    </view>
+    <view class="table-row alt">
+      <text class="col-a th">密封胶</text>
+      <text class="col-b">中性硅酮，位移能力≥25%</text>
+      <text class="col-c">进场验收</text>
+    </view>
+  </view>
+
+  <!-- TYPE 6: 红线清单 -->
+  <view class="section-label">TYPE 6 · 红线清单</view>
+  <view class="redline-list">
+    <view class="redline-item">
+      <view class="redline-dot"></view>
+      <view class="redline-content">
+        <text class="redline-title">隔声性能红线：Rw ≥ 35 dB</text>
+        <text class="redline-desc">必须提供第三方声学检测报告</text>
+      </view>
+    </view>
+    <view class="redline-item">
+      <view class="redline-dot"></view>
+      <view class="redline-content">
+        <text class="redline-title">热工性能红线：K ≤ 1.8 W/m²·K</text>
+        <text class="redline-desc">必须提供整窗热工认证文件（整窗，非玻璃单项）</text>
+      </view>
+    </view>
+    <view class="redline-item">
+      <view class="redline-dot"></view>
+      <view class="redline-content">
+        <text class="redline-title">系统匹配性红线</text>
+        <text class="redline-desc">不接受非配套隔热条拼装，须提供系统认证文件</text>
+      </view>
+    </view>
+    <view class="redline-item no-border">
+      <view class="redline-dot"></view>
+      <view class="redline-content">
+        <text class="redline-title">抗风压等级红线：≥ 4级（2000 Pa）</text>
+        <text class="redline-desc">必须提供抗风压性能检测报告，型材壁厚进场验收</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- TYPE 7: 商家答题表（展示态）-->
+  <view class="section-label">TYPE 7 · 商家答题表</view>
+  <view class="qa-form">
+    <view class="qa-item">
+      <text class="qa-label">Q1 · 您提供的玻璃配置</text>
+      <view class="qa-input-mock"><text class="qa-placeholder">请填写（如：6+12Ar+6 Low-E）</text></view>
+    </view>
+    <view class="qa-item">
+      <text class="qa-label">Q2 · 整窗Rw检测值（dB）</text>
+      <view class="qa-input-mock"><text class="qa-placeholder">请填写数值</text></view>
+    </view>
+    <view class="qa-item">
+      <text class="qa-label">Q3 · 是否提供第三方检测报告</text>
+      <view class="qa-options">
+        <view class="qa-opt-active"><text>提供</text></view>
+        <view class="qa-opt"><text>不提供</text></view>
+      </view>
+    </view>
+  </view>
+
+  <view class="footer-note">7种内容类型 · 静态验证页 · 不接云函数</view>
+
+</scroll-view>

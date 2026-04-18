@@ -7,12 +7,16 @@
       <text class="expert-role"> · 独立门窗技术顾问</text>
     </view>
     <view class="stamp">不销售 · 不代理</view>
-    <view class="promise">让三家商家用同一份标准报价，不懂门窗也能看出谁在偷工减料。</view>
+    <view class="promise">依据国家建筑门窗标准，将生活诉求转化为可量化的技术采购标准</view>
+    <view class="promise-secondary">用数据选窗，不凭感觉、不靠话术</view>
   </view>
 
   <!-- 主CTA -->
   <view class="cta-section">
-    <button class="btn-primary" bindtap="startAssessment">开始定制我的门窗标准</button>
+    <view class="cta-card">
+      <button class="btn-primary" bindtap="startAssessment">开始定制我的门窗标准</button>
+    </view>
+    <view class="trust-anchor">基于1000+户实际案例提炼的判断标准</view>
   </view>
 
   <!-- 说明区 -->
@@ -24,22 +28,20 @@
         <view class="step-item">
           <view class="step-number">1</view>
           <view class="step-content">
-            <text class="step-text">回答9个问题</text>
-            <text class="step-desc">关于您家房屋和需求</text>
+            <text class="step-text">回答9个关于你家的问题</text>
           </view>
         </view>
         <view class="step-item">
           <view class="step-number">2</view>
           <view class="step-content">
-            <text class="step-text">获得招标文件</text>
-            <text class="step-desc">专业PDF技术规范</text>
+            <text class="step-text">获得选购标准文件</text>
+            <text class="step-desc">参数计算依据国标，不是经验估算</text>
           </view>
         </view>
         <view class="step-item">
           <view class="step-number">3</view>
           <view class="step-content">
-            <text class="step-text">发给商家报价</text>
-            <text class="step-desc">用同一标准对比价格</text>
+            <text class="step-text">带着标准筛商家、查进场、做验收</text>
           </view>
         </view>
       </view>

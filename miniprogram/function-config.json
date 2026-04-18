@@ -1,0 +1,12 @@
+{
+  "functions": {
+    "generateReport": {
+      "name": "generateReport",
+      "runtime": "Nodejs18.15",
+      "memorySize": 256,
+      "timeout": 30,
+      "handler": "index.main",
+      "envVariables": {}
+    }
+  }
+}

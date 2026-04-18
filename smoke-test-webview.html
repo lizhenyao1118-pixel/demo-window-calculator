@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>门窗技术招标文件</title>
+  <style>
+    /* 移除 Google Fonts，使用系统字体栈 */
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+
+    /* WebView 响应式容器 */
+    body {
+      font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      font-size: 14px;  /* 原 10pt → 14px */
+      color: #2C3E50;
+      line-height: 1.6;  /* 略微增加行高 */
+      background: #f5f5f5;  /* 浅灰背景，白色卡片 */
+      padding: 8px;
+    }
+
+    /* ── 分页 ── */
+    /* 主容器 - 模拟 A4 宽度但响应式 */
+    .page-break {
+      max-width: 800px;
+      width: 100%;
+      margin: 0 auto;
+      background: #fff;
+      padding: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    .page-break:first-child {
+      margin-top: 8px;
+    }
+    .no-break   {
+      /* page-break-inside: avoid; 保留用于 PDF 生成 */  /* 保留用于 PDF 生成 */
+    }
+
+    /* ── 封面 ── */
+    .cover-header {
+      background: #1A2E6B;
+      color: #fff;
+      padding: 36px 28px 28px;
+      margin: 0;
+    }
+    .cover-header h1 {
+      font-size: 22pt;
+      letter-spacing: 6px;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    .cover-meta {
+      font-size: 9pt;
+      text-align: center;
+      opacity: 0.85;
+    }
+    .cover-info-card {
+      background: #fff;
+      border-radius: 6px;
+      padding: 14px 16px;
+      margin: 14px 0 10px;
+      color: #1A2E6B;
+      font-size: 9.5pt;
+    }
+    .cover-info-card p { margin: 3px 0; }
+    .badge {
+      display: inline-block;
+      border-radius: 3px;
+      padding: 2px 8px;
+      font-size: 8.5pt;
+      color: #fff;
+      margin-right: 6px;
+    }
+    .badge-orange { background: #E67E22; }
+    .badge-red    { background: #C0392B; }
+    .cover-body {
+      padding: 16px 0 0;
+      font-size: 9.5pt;
+      color: #2C3E50;
+    }
+    .cover-intro {
+      margin-bottom: 12px;
+      line-height: 1.7;
+    }
+    .guide-box {
+      background: #F0F7FF;
+      border: 1px solid #CCCCCC;
+      border-radius: 6px;
+      padding: 10px 14px;
+      font-size: 9pt;
+      line-height: 1.8;
+      margin-bottom: 14px;
+    }
+    .chapter-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .chapter-card {
+      background: #F5F7FA;
+      border-radius: 5px;
+      padding: 10px 12px;
+    }
+    .chapter-card .ch-num {
+      font-size: 18pt;
+      font-weight: 700;
+      color: #1A2E6B;
+      line-height: 1;
+    }
+    .chapter-card .ch-title {
+      font-size: 9.5pt;
+      font-weight: 500;
+      color: #2C3E50;
+      margin-top: 2px;
+    }
+    .chapter-card .ch-desc {
+      font-size: 8pt;
+      color: #999;
+      margin-top: 2px;
+    }
+    .cover-brand {
+      margin-top: 16px;
+      font-size: 7.5pt;
+      color: #bbb;
+      text-align: center;
+    }
+    .cover-author {
+      font-size: 9.5pt;
+      color: rgba(255,255,255,0.8);
+      text-align: right;
+      padding: 8px 28px 0;
+      background: #1A2E6B;
+      margin: 0;
+    }
+
+    /* ── 章节通用 ── */
+    .chapter-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 14px;
+      /* page-break-inside: avoid; 保留用于 PDF 生成 */
+    }
+    .ch-badge {
+      width: 32px;
+      height: 26px;
+      background: #1A2E6B;
+      color: #fff;
+      font-size: 11pt;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-right: 8px;
+    }
+    .ch-title-text {
+      font-size: 16pt;
+      color: #1A2E6B;
+      font-weight: 700;
+    }
+    .ch-underline {
+      border-bottom: 1.5px solid #1A2E6B;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-size: 12pt;
+      color: #34568B;
+      font-weight: 600;
+      margin: 14px 0 8px;
+      /* page-break-after: avoid; 保留用于 PDF 生成 */
+    }
+
+    /* ── 信息卡 ── */
+    .info-card {
+      background: #EEF3FF;
+      border-radius: 6px;
+      padding: 14px 16px;
+      margin-bottom: 12px;
+    }
+    .info-row {
+      display: flex;
+      gap: 0;
+      margin-bottom: 4px;
+      font-size: 9.5pt;
+    }
+    .info-col { flex: 1; }
+
+    /* ── 表格 ── */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 9pt;
+      margin-bottom: 12px;
+    }
+    .data-table th {
+      background: #1A2E6B;
+      color: #fff;
+      padding: 6px 6px;
+      text-align: center;
+      font-weight: 500;
+    }
+    .data-table td {
+      padding: 6px 6px;
+      border: 1px solid #CCCCCC;
+      vertical-align: top;
+    }
+    .data-table tr:nth-child(even) td { background: #EEF3FF; }
+    .data-table tr:nth-child(odd)  td { background: #fff; }
+    .data-table .dim-col { text-align: center; font-weight: 500; }
+    .data-table .basis-col { color: #7F8C8D; font-size: 8.5pt; }
+
+    /* ── 参数说明块 ── */
+    .param-note {
+      font-size: 9pt;
+      color: #2C3E50;
+      margin-bottom: 8px;
+      line-height: 1.7;
+    }
+    .param-note-lines {
+      font-size: 8.5pt;
+      color: #7F8C8D;
+      line-height: 1.7;
+      margin-bottom: 6px;
+    }
+    .param-note-em {
+      background: #FEF9E7;
+      border: 1px solid #CCCCCC;
+      border-radius: 3px;
+      padding: 6px 8px;
+      font-size: 8.5pt;
+      color: #8A6D3B;
+      margin-bottom: 12px;
+    }
+
+    /* ── 预算适配警告 ── */
+    .budget-warn {
+      background: #FFF8E1;
+      border: 1px solid #E0C36A;
+      border-radius: 4px;
+      padding: 10px 12px;
+      font-size: 9.5pt;
+      margin: 10px 0;
+    }
+    .budget-warn-title {
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: #2C3E50;
+    }
+
+    /* ── 指标块（第二章）── */
+    .metric-block {
+      background: #EEF3FF;
+      border-radius: 6px;
+      padding: 14px 16px;
+      margin-bottom: 14px;
+      /* page-break-inside: avoid; 保留用于 PDF 生成 */
+    }
+    .metric-std  { font-size: 8.5pt; color: #7F8C8D; margin-bottom: 4px; }
+    .metric-val  { font-size: 20pt; font-weight: 700; color: #1A2E6B; }
+    .metric-unit { font-size: 10pt; color: #7F8C8D; margin-left: 4px; }
+    .metric-meta { font-size: 9pt; color: #7F8C8D; margin-top: 4px; display: flex; gap: 20px; }
+    .metric-note { font-size: 8.5pt; color: #95A5A6; }
+    .priority-hint {
+      font-size: 8.5pt;
+      color: #E67E22;
+      margin-bottom: 6px;
+    }
+
+    /* ── 红线清单 ── */
+    .redline-row {
+      display: flex;
+      align-items: flex-start;
+      padding: 6px 8px;
+      font-size: 9.5pt;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .redline-row:nth-child(even) { background: #EEF3FF; }
+    .redline-row:nth-child(odd)  { background: #fff; }
+    .redline-icon { font-size: 10pt; min-width: 22px; font-weight: 700; }
+    .redline-icon.forbidden { color: #C0392B; }
+    .redline-icon.safety    { color: #E67E22; }
+    .redline-text { flex: 1; }
+
+    .safety-budget-warn {
+      background: #FEF9E7;
+      border-left: 3px solid #E67E22;
+      padding: 8px 12px;
+      font-size: 9pt;
+      color: #E67E22;
+      margin: 8px 0;
+    }
+
+    /* ── 冲突/升级提示 ── */
+    .conflict-box {
+      border-left: 5px solid #C0392B;
+      background: #FDECEA;
+      padding: 10px 12px;
+      margin: 10px 0;
+      font-size: 9.5pt;
+      /* page-break-inside: avoid; 保留用于 PDF 生成 */
+    }
+    .conflict-box h4 { color: #C0392B; margin-bottom: 4px; font-size: 10pt; }
+
+    /* ── 第四章：答题表 ── */
+    .questionnaire-header {
+      background: #34568B;
+      color: #fff;
+      font-size: 9.5pt;
+      font-weight: 600;
+      padding: 6px 10px;
+      margin: 10px 0 6px;
+    }
+    .q-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 8pt;
+      margin-bottom: 8px;
+    }
+    .q-table th {
+      background: #1A2E6B;
+      color: #fff;
+      padding: 5px 4px;
+      text-align: center;
+      font-weight: 400;
+    }
+    .q-table td {
+      border: 1px solid #CCCCCC;
+      padding: 7px 4px;
+      height: 26px;
+    }
+    .q-table td.label-col { background: #F2F2F2; }
+
+    /* ── 红线承诺（第四章）── */
+    .redline-commit {
+      margin: 10px 0;
+      font-size: 9pt;
+    }
+    .redline-commit-title {
+      font-size: 9.5pt;
+      font-weight: 600;
+      color: #34568B;
+      margin-bottom: 8px;
+      padding-bottom: 3px;
+      border-bottom: 1px solid #CCCCCC;
+    }
+    .commit-item {
+      border-left: 3px solid #C0392B;
+      padding: 5px 8px;
+      margin-bottom: 8px;
+      /* page-break-inside: avoid; 保留用于 PDF 生成 */
+    }
+    .commit-item-rec {
+      border-left: 3px solid #34568B;
+    }
+    .commit-text { font-size: 9pt; color: #2C3E50; }
+    .commit-confirm { font-size: 8pt; color: #7F8C8D; margin-top: 3px; }
+
+    /* ── 风险提示 ── */
+    .risk-box {
+      border-left: 5px solid #C0392B;
+      background: #FDECEA;
+      padding: 10px 14px;
+      margin: 10px 0;
+      /* page-break-inside: avoid; 保留用于 PDF 生成 */
+    }
+    .risk-title { color: #C0392B; font-size: 10.5pt; font-weight: 700; margin-bottom: 4px; }
+    .risk-desc  { font-size: 9pt; color: #2C3E50; margin-bottom: 6px; }
+    .risk-suggest { font-size: 9pt; color: #34568B; }
+
+    /* ── 验收节点 ── */
+    .acceptance-node { margin-bottom: 10px; }
+    .acceptance-node-title {
+      font-size: 10pt;
+      font-weight: 600;
+      color: #34568B;
+      margin-bottom: 6px;
+    }
+    .acceptance-item {
+      font-size: 9pt;
+      color: #2C3E50;
+      padding: 3px 0 3px 14px;
+      line-height: 1.5;
+    }
+
+    /* ── L2 入口 ── */
+    .l2-entry {
+      padding: 10px 14px;
+      margin: 12px 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      /* page-break-inside: avoid; 保留用于 PDF 生成 */
+    }
+    .l2-entry.risk  { background: #FDECEA; }
+    .l2-entry.safe  { background: #D4EDDA; }
+    .l2-text  { flex: 1; font-size: 9pt; }
+    .l2-btn {
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 9pt;
+      color: #fff;
+      white-space: nowrap;
+    }
+    .l2-btn.risk { background: #C0392B; }
+    .l2-btn.safe { background: #155724; }
+
+    /* ── 免责声明 ── */
+    .disclaimer-section {
+      border-top: 1px solid #CCCCCC;
+      margin-top: 20px;
+      padding-top: 10px;
+      font-size: 7.5pt;
+      color: #888;
+      line-height: 1.6;
+    }
+    .disclaimer-title { font-weight: 600; margin-bottom: 4px; }
+    .disclaimer-p { margin-bottom: 4px; }
+
+
+  </style>
+</head>
+<body>
+
+  <!-- 封面 -->
+  <div>
+    
+    <div class="cover-header">
+      
+      <h1>门 窗 技 术 招 标 文 件</h1>
+      <p class="cover-meta">文件编号：SMOKE-001　　签发日期：2026年04月10日</p>
+      <div class="cover-info-card">
+        <p>上海 浦东新区 · 夏热冬冷（HSCW）</p>
+        <p>第18层/共32层（高度比56%，高区）</p>
+        <div style="margin-top:8px">
+          <span class="badge badge-orange">隔声优先</span>
+          <span class="badge badge-red">含安全专项条款</span>
+        </div>
+      </div>
+      <div class="cover-author">李Sir · 独立门窗技术顾问（不销售、不代理）</div>
+    </div>
+
+    <div class="cover-body">
+      <p class="cover-intro">
+        本文件基于您的实际需求，将生活诉求转化为可量化的技术采购标准——帮您用数据选窗，不凭感觉、不靠话术。
+      </p>
+      <div class="guide-box">📋 业主：第一章了解需求转化逻辑；第三章核查采购红线；第四章直接发给商家。<br>🏭 商家：请重点阅读第二章技术指标，并完整填写第四章答题表后回传业主。</div>
+
+      <div class="chapter-grid">
+        <div class="chapter-card">
+          <div class="ch-num">01</div>
+          <div class="ch-title">性能需求诊断</div>
+          <div class="ch-desc">生活诉求转化为可量化技术参数</div>
+        </div>
+        <div class="chapter-card">
+          <div class="ch-num">02</div>
+          <div class="ch-title">采购技术底线</div>
+          <div class="ch-desc">甲方视角的最低性能验收要求</div>
+        </div>
+        <div class="chapter-card">
+          <div class="ch-num">03</div>
+          <div class="ch-title">红线禁止清单</div>
+          <div class="ch-desc">不合格配置与材料一票否决项</div>
+        </div>
+        <div class="chapter-card">
+          <div class="ch-num">04</div>
+          <div class="ch-title">配置推导 · 答题表</div>
+          <div class="ch-desc">商家报价填写与现场验收节点</div>
+        </div>
+      </div>
+
+      <p class="cover-brand">本文件由李Sir门窗诊断系统生成 · 技术参数基于国家标准及气候数据库</p>
+    </div>
+  
+  </div>
+
+  <!-- 第一章 -->
+  <div class="page-break">
+    
+    <div class="chapter-header no-break">
+      <div class="ch-badge">一</div>
+      <div class="ch-title-text">第一章 项目概况与需求分析</div>
+    </div>
+    <div class="ch-underline"></div>
+
+    <div class="section-title">1.1 项目基本信息</div>
+    <div class="info-card">
+      <div class="info-row">
+        <div class="info-col">城市：上海 浦东新区</div>
+        <div class="info-col">气候区：夏热冬冷（HSCW）</div>
+      </div>
+      <div class="info-row">
+        <div class="info-col">楼层：第18层/共32层（高度比56%，高区）</div>
+      </div>
+      
+      <div class="info-row">
+        <div class="info-col">窗型：平开窗</div>
+        <div class="info-col">朝向：west，西晒无遮阳</div>
+      </div>
+      <div class="info-row">
+        <div class="info-col">供暖方式：空调制冷/供暖</div>
+        <div class="info-col">家庭：含儿童（含安全专项条款）</div>
+      </div>
+      <div class="info-row"><div class="info-col">核心诉求：隔声降噪</div></div>
+      <div class="info-row"><div class="info-col">噪音环境：主干道·近距离（&lt;20m）</div></div>
+    </div>
+
+    <div class="section-title">1.2 需求分析</div>
+    
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width:16%">性能维度</th>
+            <th style="width:30%">参数值</th>
+            <th>依据（标准文号 · 场景说明）</th>
+          </tr>
+        </thead>
+        <tbody>
+      <tr>
+        <td class="dim-col">抗风压</td>
+        <td>≥ 3.5 kPa</td>
+        <td class="basis-col">GB/T 7106 · W2风区0%</td>
+      </tr>
+      <tr>
+        <td class="dim-col">隔声</td>
+        <td>≥ 38 dB</td>
+        <td class="basis-col">GB/T 8485 · 主干道近距</td>
+      </tr>
+      <tr>
+        <td class="dim-col">传热系数</td>
+        <td>K≤2.2 W/(m²·K)</td>
+        <td class="basis-col">GB/T 8484 · 夏热冬冷区 西向隔热加严</td>
+      </tr>
+      <tr>
+        <td class="dim-col">太阳得热</td>
+        <td>≤ 0.35</td>
+        <td class="basis-col">GB/T 2680 · 西向无遮阳控制过热</td>
+      </tr>
+      <tr>
+        <td class="dim-col">安全等级</td>
+        <td>夹胶构造 / 普通构造</td>
+        <td class="basis-col">GB 15763.3 · 家庭风险场景</td>
+      </tr>
+      <tr>
+        <td class="dim-col">气密性</td>
+        <td>推荐目标值：≥6级（最低可接受值：4级，需业主书面确认）</td>
+        <td class="basis-col">GB/T 7106 · 气密性能等级</td>
+      </tr>
+      <tr>
+        <td class="dim-col">水密性</td>
+        <td>推荐目标值：≥6级（最低可接受值：5级，需业主书面确认）</td>
+        <td class="basis-col">GB/T 7106 · 水密性能等级</td>
+      </tr></tbody>
+      </table>
+    
+    
+      <p class="param-note">本表各项参数综合三类信息确定：① 国家/行业标准的基准值；② 您填写的项目信息（城市、楼层、窗型、噪声环境等）；③ 李Sir 基于工程案例的专业修正。</p>
+      <div class="param-note-lines"><div>① 抗风压：上海属 W2 风区，第 18 层高度比 56%，按 GB/T 7106 推荐等级取 ≥3.5 kPa。对应GB/T 7106抗风压等级P4及以上。</div><div>② 隔声：主干道 undefined，基础 Rw≥35 dB，距离修正 +3，隔声降噪诉求加严 +3，最终 ≥38 dB。依据：GB 50118 + HJ 2055 · 轨道交通中距离声学计算推导值。</div><div>③ 传热系数：上海属 夏热冬冷，基准 2.4 W/(m²·K)，西晒修正 -0.1，取 K≤2.2。</div><div>④ 太阳得热：西向无遮阳，按 GB/T 2680 标准取 SHGC≤0.35。</div><div>⑤ 气密性：住宅基础线为 4 级，高层（≥7F）建议上调至 6 级，以减轻风噪和渗风感。</div><div>⑥ 水密性：沿海城市 + 高层，由基础 5 级上调至推荐 6 级，以应对台风季暴雨侵蚀。</div><div>⑦ 安全等级：儿童家庭依据 GB 15763.3 强制要求夹胶安全玻璃构造。</div></div>
+      <div class="param-note-em">其中安全等级依据 GB 15763.3 强制条款，不可降级。即使为控制成本，降低安全配置将导致性能不达标。</div>
+    
+    <p style="font-size:9.5pt;line-height:1.7;margin:8px 0 12px">您的项目位于上海第18层，隔声降噪是本案的主要技术制约。基于以上分析，本表各项为本项目的推荐目标值。商家方案如仅能满足最低可接受值，报价中需包含相应说明，并由业主确认是否接受；低于最低值的方案，建议不予优先考虑。</p>
+    
+      <div class="budget-warn">
+        <div class="budget-warn-title">预算适配性提示</div>
+        <div>根据您的需求分析，本项目存在强制性安全配置要求（如钢化玻璃、夹胶玻璃等），该类配置的市场成本通常高于当前所选预算档位的覆盖范围。建议您在比价时适当上调预算预期，或与商家沟通安全配置的具体加价幅度，以确保核心安全需求不因预算约束而被削减。</div>
+      </div>
+  
+  </div>
+
+  <!-- 第二章 -->
+  <div class="page-break">
+    
+    <div class="chapter-header no-break">
+      <div class="ch-badge">二</div>
+      <div class="ch-title-text">第二章 技术参数与性能指标</div>
+    </div>
+    <div class="ch-underline"></div>
+
+    <p style="font-size:9pt;color:#7F8C8D;margin-bottom:12px">以下参数来自第一章的诊断结果，是本案的采购技术底线。商家方案须逐项回应，不达标项须书面说明。</p>
+
+    <div class="section-title">2.1 抗风压性能</div>
+    
+      <div class="metric-block no-break">
+        <div class="metric-std">GB/T 7106-2019</div>
+        <div><span class="metric-val"> 3.5</span><span class="metric-unit">kPa</span></div>
+        <div class="metric-meta">
+          <span>高等级</span>
+          <span class="metric-note">上海W2风区，第18层</span>
+        </div>
+      </div>
+
+    <div class="section-title">2.2 核心指标</div>
+    <p class="priority-hint">★ 基于您选择的性能优先目标，这是商家方案必须重点回应的指标</p>
+    
+      <div class="metric-block no-break">
+        <div class="metric-std">GB/T 8485-2008</div>
+        <div><span class="metric-val"> 38</span><span class="metric-unit">dB</span></div>
+        <div class="metric-meta">
+          <span>高隔声</span>
+          <span class="metric-note">主干道环境，睡眠场景加严</span>
+        </div>
+      </div>
+
+    <div class="section-title">2.3 热工性能</div>
+    <p style="font-size:8.5pt;color:#7F8C8D;margin-bottom:6px">K值（传热系数）越低越保温；SHGC（太阳得热系数）越低越隔热，夏季尤为重要。</p>
+    
+      <div class="metric-block no-break">
+        <div class="metric-std">GB/T 8484-2020</div>
+        <div><span class="metric-val">K2.2 W/(m²K)</span><span class="metric-unit"></span><div style="font-size:13pt;font-weight:700;color:#1A2E6B;margin-top:4px">SHGC0.35</div></div>
+        <div class="metric-meta">
+          <span>夏热冬冷（HSCW）</span>
+          <span class="metric-note">夏热冬冷区 西向隔热加严</span>
+        </div>
+      </div>
+  
+  </div>
+
+  <!-- 第三章 -->
+  <div class="page-break">
+    
+    <div class="chapter-header no-break">
+      <div class="ch-badge">三</div>
+      <div class="ch-title-text">第三章 本案采购红线清单</div>
+    </div>
+    <div class="ch-underline"></div>
+
+    <p style="font-size:8.5pt;color:#7F8C8D;margin-bottom:12px">以下红线由第一章性能诊断结果动态生成，每条对应一项可量化指标。低于任一项即视为方案不合格。</p>
+    
+      <div class="section-title">3.1 禁止项（方案必须全部满足）</div>
+      <div>
+        
+          <div class="redline-row">
+            <div class="redline-icon forbidden">✕</div>
+            <div class="redline-text">型材系统：须采用原生铝型材，并提供材质检验证明</div>
+          </div>
+          <div class="redline-row">
+            <div class="redline-icon forbidden">✕</div>
+            <div class="redline-text">型材系统：主受力壁厚≥1.5mm，须提供截面检测报告</div>
+          </div>
+          <div class="redline-row">
+            <div class="redline-icon forbidden">✕</div>
+            <div class="redline-text">型材系统：禁止非配套隔热条拼装，不接受与型材品牌不一致的隔热条</div>
+          </div>
+          <div class="redline-row">
+            <div class="redline-icon forbidden">✕</div>
+            <div class="redline-text">热工性能：禁止单玻或无Low-E膜的普通中空玻璃</div>
+          </div>
+          <div class="redline-row">
+            <div class="redline-icon forbidden">✕</div>
+            <div class="redline-text">密封结构：禁止普通密封胶代替结构胶（须采用中性硅酮结构胶）</div>
+          </div>
+      </div>
+      <div style="height:12px"></div>
+    
+      <div class="section-title">3.2 安全底线（有老幼家庭必须满足）</div>
+      <div>
+        
+          <div class="redline-row">
+            <div class="redline-icon safety">⚠</div>
+            <div class="redline-text">窗台高度&lt;900mm时，须安装儿童防坠限位器（开启角度≤100mm）</div>
+          </div>
+          <div class="redline-row">
+            <div class="redline-icon safety">⚠</div>
+            <div class="redline-text">玻璃须使用夹胶安全玻璃（6.38mm+），破碎后不脱落</div>
+          </div>
+          <div class="redline-row">
+            <div class="redline-icon safety">⚠</div>
+            <div class="redline-text">执手安装高度建议≥1500mm，防止儿童误开</div>
+          </div>
+      </div>
+      
+      <div style="height:12px"></div>
+  
+  </div>
+
+  <!-- 第四章 -->
+  <div class="page-break">
+    
+    <div class="chapter-header no-break">
+      <div class="ch-badge">四</div>
+      <div class="ch-title-text">第四章 下一步怎么用：问商家什么 &amp; 怎么验收</div>
+    </div>
+    <div class="ch-underline"></div>
+
+    <p style="font-size:9pt;color:#7F8C8D;margin-bottom:12px">把这份文件变成面试商家、比较报价、验收施工的行动工具</p>
+    
+      <div class="section-title">使用说明</div>
+      <p style="font-size:9.5pt;margin-bottom:4px">① 建议同时将本答题表发送给 3-5 家商家，要求 3-5 个工作日内回复——回复速度本身也是态度的一部分</p><p style="font-size:9.5pt;margin-bottom:4px">② 优先选择填写完整、回答具体的商家；对关键项含糊其辞者建议不予优先考虑</p><p style="font-size:9.5pt;margin-bottom:4px">③ 对比同一格的内容（壁厚/玻璃配置/质保年限），而不是只对比总价，可以大幅降低被偷工减料的风险</p>
+      <div style="height:8px"></div>
+    
+      <div class="section-title">4.1 给商家的说明</div>
+      <p style="font-size:9.5pt;margin-bottom:8px">本文件前两章为本次采购的技术标准，第三章为预算参考档位。请贵司按照第二章的技术指标和第三章的配置基准，在下表中如实填写贵司方案，便于业主横向对比。</p>
+      <p style="font-size:9pt;color:#7F8C8D;margin-bottom:8px">请于14个工作日内将填写完整的表格拍照回传至业主</p>
+    
+      <div class="section-title">4.2 商家答题表（统一问卷）</div>
+      <p style="font-size:9pt;color:#7F8C8D;margin-bottom:8px">请将本表发给 3-5 家商家，对方如实填写后回传，便于横向对比</p>
+      
+      <div class="questionnaire-header">── 第一段：商家基本信息 ─────────────────────────</div>
+      <p style="font-size:9pt;margin-bottom:4px">公司名称（全称）：________________________</p><p style="font-size:9pt;margin-bottom:4px">品牌（品牌及系列）：________________________</p><p style="font-size:9pt;margin-bottom:4px">是否授权：□ 是（请附授权证明） / 否</p><p style="font-size:9pt;margin-bottom:4px">施工年限（年）：________________________</p><p style="font-size:9pt;margin-bottom:4px">近一年完成住宅户数（约__户）：________________________</p>
+      <div style="height:8px"></div>
+      
+      <div class="questionnaire-header">── 第二段：技术答题表 ────────────────────────────</div>
+      <p style="font-size:8.5pt;color:#7F8C8D;margin-bottom:6px">请尽量完整填写；未填写项将影响方案的可比性和业主的优先选择。</p>
+      <table class="q-table">
+        <thead>
+          <tr><th style="width:17%">品牌及系列</th><th style="width:12%">型材壁厚(mm)</th><th style="width:16%">玻璃配置</th><th style="width:16%">检测报告编号</th><th style="width:12%">含税报价(元/㎡)</th><th style="width:8%">工期(天)</th><th style="width:8%">质保(年)</th><th style="width:11%">签名确认</th></tr>
+        </thead>
+        <tbody>
+          
+            <tr>
+              <td class="label-col" style="text-align:center;color:#95A5A6;font-size:8pt">请填写</td>
+              <td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+            </tr>
+            <tr>
+              <td class="label-col" style="text-align:center;color:#95A5A6;font-size:8pt">请填写</td>
+              <td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+            </tr>
+            <tr>
+              <td class="label-col" style="text-align:center;color:#95A5A6;font-size:8pt">请填写</td>
+              <td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+            </tr>
+            <tr>
+              <td class="label-col" style="text-align:center;color:#95A5A6;font-size:8pt">请填写</td>
+              <td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+            </tr>
+        </tbody>
+      </table>
+      <p style="font-size:8pt;color:#95A5A6;margin-bottom:6px">若贵司认为在当前预算档位内难以满足某项关键指标，请在&quot;配置建议与说明&quot;栏中提出具体升级方案及差价估算，而非省略或模糊填写。</p>
+      
+    <div class="redline-commit">
+      <div class="redline-commit-title">── 第三段：红线承诺（必填）──</div>
+      <p style="font-size:9pt;color:#C0392B;margin-bottom:8px">⚠ 强制红线（以下任一项未满足，方案原则上不建议采用）</p>
+      
+      <div class="commit-item no-break">
+        <div class="commit-text">□ R01 型材系统：须采用原生铝型材，并提供材质检验证明；如采用其他材质，应说明理由并提供检测依据</div>
+        <div class="commit-confirm">　商家确认：□ 满足　□ 不满足（请说明原因：__________）</div>
+      </div>
+      <div class="commit-item no-break">
+        <div class="commit-text">□ R02 型材系统：主受力壁厚≥1.5mm（当前风压要求P3≥3.5kPa），须提供截面检测报告</div>
+        <div class="commit-confirm">　商家确认：□ 满足　□ 不满足（请说明原因：__________）</div>
+      </div>
+      <div class="commit-item no-break">
+        <div class="commit-text">□ R03 型材系统：须提供完整系统窗热工认证文件（含型材+隔热条+玻璃组合认证）</div>
+        <div class="commit-confirm">　商家确认：□ 满足　□ 不满足（请说明原因：__________）</div>
+      </div>
+      <div class="commit-item no-break">
+        <div class="commit-text">□ R04 型材系统：禁止非配套隔热条拼装，不接受与型材品牌不一致的隔热条</div>
+        <div class="commit-confirm">　商家确认：□ 满足　□ 不满足（请说明原因：__________）</div>
+      </div>
+      <div class="commit-item no-break">
+        <div class="commit-text">□ R05 型材系统：断桥铝隔热条宽度≥28mm（当前热工要求K≤2.2），禁止仿断桥产品</div>
+        <div class="commit-confirm">　商家确认：□ 满足　□ 不满足（请说明原因：__________）</div>
+      </div>
+      <div class="commit-item no-break">
+        <div class="commit-text">□ R06 热工性能：禁止单玻或无Low-E膜的普通中空玻璃</div>
+        <div class="commit-confirm">　商家确认：□ 满足　□ 不满足（请说明原因：__________）</div>
+      </div>
+      <div class="commit-item no-break">
+        <div class="commit-text">□ R07 热工性能：整窗传热系数K≤2.2，太阳得热系数SHGC≤0.35，须提供能效/热工检测报告</div>
+        <div class="commit-confirm">　商家确认：□ 满足　□ 不满足（请说明原因：__________）</div>
+      </div>
+      <div class="commit-item no-break">
+        <div class="commit-text">□ R08 热工性能：隔热条须与型材系统配套，禁止非原厂隔热条替换</div>
+        <div class="commit-confirm">　商家确认：□ 满足　□ 不满足（请说明原因：__________）</div>
+      </div>
+      <div class="commit-item no-break">
+        <div class="commit-text">□ R09 隔声性能：整窗隔声量Rw≥38dB，须提供第三方声学检测报告（GB/T 8485）</div>
+        <div class="commit-confirm">　商家确认：□ 满足　□ 不满足（请说明原因：__________）</div>
+      </div>
+      <div class="commit-item no-break">
+        <div class="commit-text">□ R10 隔声性能：玻璃与窗框接缝须采用声学密封规程，禁止普通密封胶代替声学密封胶</div>
+        <div class="commit-confirm">　商家确认：□ 满足　□ 不满足（请说明原因：__________）</div>
+      </div>
+      <div class="commit-item no-break">
+        <div class="commit-text">□ R11 密封结构：禁止普通密封胶代替结构胶（须采用中性硅酮结构胶）</div>
+        <div class="commit-confirm">　商家确认：□ 满足　□ 不满足（请说明原因：__________）</div>
+      </div>
+      <div class="commit-item no-break">
+        <div class="commit-text">□ R12 水密气密性能：水密≥6级，气密≥6级（GB/T 7106）。安装节点须按设计图纸施工，打胶须全程留影像记录</div>
+        <div class="commit-confirm">　商家确认：□ 满足　□ 不满足（请说明原因：__________）</div>
+      </div>
+      <div class="commit-item no-break">
+        <div class="commit-text">□ R13 抗风性能：抗风压性能等级≥5级（P3≥3.5kPa），须提供抗风压性能检测报告（GB/T 7106）</div>
+        <div class="commit-confirm">　商家确认：□ 满足　□ 不满足（请说明原因：__________）</div>
+      </div>
+      <div class="commit-item no-break">
+        <div class="commit-text">□ R14 安全玻璃：夹胶构造强制（落地窗/大面积玻璃/有儿童家庭法规要求）</div>
+        <div class="commit-confirm">　商家确认：□ 满足　□ 不满足（请说明原因：__________）</div>
+      </div>
+      
+      <p style="font-size:9.5pt;margin-top:8px">商家综合确认：□ 以上强制红线全部满足　□ 部分不满足（详见上方说明）</p>
+    </div>
+      
+      <div class="questionnaire-header">── 第四段：施工态度问答 ─────────────────────────</div>
+      
+        <p style="font-size:9pt;margin-bottom:8px">① 如现场发现墙体不方正/窗洞偏差，贵司的标准处理方式是什么？</p>
+        <div style="height:16px"></div>
+        <p style="font-size:9pt;margin-bottom:8px">② 如果玻璃或五金在质保期内出现问题，贵司的响应时间与处理流程是怎样的？</p>
+        <div style="height:16px"></div>
+        <p style="font-size:9pt;margin-bottom:8px">③ 请列出 2-3 项贵司坚持但&quot;看不见&quot;的施工细节（例如打胶、排水孔、发泡剂处理方式）。</p>
+        <div style="height:16px"></div>
+      <p style="font-size:9pt;color:#7F8C8D;margin-top:8px">下列签名表示填写人已确认上述内容的真实性；如进入签约，建议将关键指标写入合同。填写人确认：__________</p>
+    
+      <div class="l2-entry risk">
+        <div class="l2-text" style="color:#C0392B">
+          商家能否真正满足以上标准，仅凭回答无法判断——商家很会说，不一定做得到。如需李Sir帮您评审商家的填写内容是否合理、是否有漏洞 →
+        </div>
+        <div class="l2-btn risk">预约深度审计 →</div>
+      </div>
+    
+      <div class="section-title">4.3 风险提示</div>
+      
+        <div class="risk-box no-break">
+          <div class="risk-title">⚠️ 高层建筑风压风险</div>
+          <div class="risk-desc">您的项目位于第18层（超过16层），风压要求显著高于普通住宅。P3≥3.5kPa 需要高强度型材支撑。</div>
+          <div class="risk-suggest">→ 建议选用壁厚≥1.8mm的系统窗，或预约李Sir审核型材截面
+→ 要问商家的问题：请提供：① P3检测报告编号；② 型材截面图/壁厚检测报告；③ 固定方式与螺丝间距方案。</div>
+        </div>
+        <div class="risk-box no-break">
+          <div class="risk-title">⚠️ 高区位置风压风险</div>
+          <div class="risk-desc">您的楼层高度比为56%（超过50%），属于高区，风荷载较大。</div>
+          <div class="risk-suggest">→ 建议增加型材壁厚，或选择抗风压等级更高的产品系列
+→ 要问商家的问题：请明确：① 主受力壁厚承诺值与检测方式；② 角码/注胶工艺；③ 防水排水结构与等压腔方案。</div>
+        </div>
+        <div class="risk-box no-break">
+          <div class="risk-title">⚠️ 儿童安全条款需专项验收</div>
+          <div class="risk-desc">限位器与夹胶玻璃需由第三方核验，不可自验</div>
+          <div class="risk-suggest">→ 务必要求第三方监理到场核验，不可仅凭商家自验
+→ 要问商家的问题：限位器开启角度≤100mm、执手高度≥1500mm如何验收？夹胶玻璃型号与3C标识如何核对？</div>
+        </div>
+        <div class="risk-box no-break">
+          <div class="risk-title">⚠️ 西晒热工负荷高</div>
+          <div class="risk-desc">无遮阳西晒窗夏季空调负荷显著增加，现有配置可能不足</div>
+          <div class="risk-suggest">→ 考虑热工升级+或增加外遮阳措施
+→ 要问商家的问题：请提供：① K值与SHGC检测报告；② Low-E膜层位置与玻璃配置；③ 是否配套外遮阳建议。</div>
+        </div>
+    
+      <div class="section-title">4.4 验收节点</div>
+      
+          <div class="acceptance-node no-break">
+            <div class="acceptance-node-title">【进场验收】（4条）</div>
+            <div class="acceptance-item">· ① 对照合同核查品牌、型号、颜色、开启方式</div><div class="acceptance-item">· ② 玻璃3C标志（本体印刷，非贴纸）；中空玻璃无雾气</div><div class="acceptance-item">· ③ 核对玻璃边部标签与合同约定一致，不能仅凭外观判断膜层</div><div class="acceptance-item">· ④ 索取壁厚检测报告，如有条件要求商家现场演示拆一处压线核查</div>
+          </div>
+          <div class="acceptance-node no-break">
+            <div class="acceptance-node-title">【安装验收】（4条）</div>
+            <div class="acceptance-item">· ⑤ 随机查看固定螺丝：打在实体结构上，间距约40-60cm</div><div class="acceptance-item">· ⑥ 发泡剂全周饱满均匀，外露部分平整</div><div class="acceptance-item">· ⑦ 密封胶一圈连续、平整无裂缝，施工条件符合说明书要求</div><div class="acceptance-item">· ⑧ 排水孔未被胶封死，窗台外侧有向外坡度</div>
+          </div>
+          <div class="acceptance-node no-break">
+            <div class="acceptance-node-title">【竣工验收】（5条）</div>
+            <div class="acceptance-item">· ⑨ 打火机火焰靠近扇框交接处，无明显偏吹（简易气密自检）</div><div class="acceptance-item">· ⑩ 花洒淋水3分钟，室内无渗水（物业允许时）</div><div class="acceptance-item">· ⑪ 每扇窗反复开合5-10次，胶条压实，无异响卡阻</div><div class="acceptance-item">· ⑫ 外开窗确认防坠绳安装牢固，最大开启角度处限位器有效锁定</div><div class="acceptance-item">· ⑬ 限位器开启角度≤100mm 或固定扇确保儿童无法整体开启；大面积玻璃确认夹胶构造；儿童安全配件：限位器开启角度≤100mm、执手高度≥1500mm</div>
+          </div>
+    
+  
+  </div>
+
+  <!-- 免责声明 -->
+  
+    <div class="disclaimer-section">
+      <div class="disclaimer-title">【免责声明】</div>
+      <p class="disclaimer-p">本招标文件由&quot;不卖窗的李sir·门窗诊断系统&quot;依据您填写的信息自动生成，仅供采购沟通与技术参考使用，不构成任何法律合同或承诺。</p><p class="disclaimer-p">文中提及的标准条文引用、性能参数建议及预算区间，均基于生成时的现行规范和一般工程经验，不保证在任何时间、任何项目情形下均完全适用；如有差异，应以实际勘察及具有相应资质的专业机构意见为准。</p><p class="disclaimer-p">本系统不代表任何品牌或商家利益，亦不参与具体采购、报价或施工，对商家报价及施工质量不承担保证或连带责任。</p><p class="disclaimer-p">如需进一步了解本文件所涉技术内容，可通过&quot;不卖窗的李sir&quot;官方渠道咨询。</p>
+    </div>
+
+</body>
+</html>

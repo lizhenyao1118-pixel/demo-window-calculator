@@ -1,0 +1,18 @@
+{
+  "envId": "cloud1-7grn8mcy176fcc2b",
+  "framework": {
+    "name": "cloudbase",
+    "plugins": {
+      "client": {
+        "name": "framework-plugin-client",
+        "envPath": "./env.json",
+        "usePlugin": true
+      },
+      "functions": {
+        "name": "framework-plugin-functions",
+        "usePlugin": true,
+        "outputPath": "cloudbase_functions"
+      }
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "pdfSpike",
+  "version": "1.0.0",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3",
+    "puppeteer-core": "^21.0.0",
+    "@sparticuz/chromium": "^119.0.0"
+  }
+}
