@@ -196,9 +196,9 @@
 
 | 项目 | 位置 | 优先级 |
 |------|------|--------|
-| DEBUG log | index.js 第331–332行 | 🔴 下次会话执行 |
 | PDF残留代码 | result.js `downloadPDF()` / `previewPDF()` / `fileID` | 🟡 确认无调用后清理 |
 | 废弃云函数 | 见上表❌条目 | 🟡 确认无调用后删除 |
+| 生产日志清理 | generateReport/index.js `[Cloud]` 前缀 console.log（128/131/137/141-144/241-242行） | 🟡 推广引流后处理 |
 
 ---
 
@@ -245,11 +245,14 @@
 | v1.1-P1 | documentMapper.js | needsTable三层扩展、responseGuide、userMeaning、threePhaseIntro、inspectionChecklist、fieldGrades、consistencyClause、acceptance.reason | ✅ 已完成 commit db56601 |
 | v1.1-P2 | result.wxml/wxss | threePhaseIntro(M4-1)、inspectionChecklist(M4-4)、userMeaning清除、标题字段驱动 | ✅ 已完成 commit 6cc19e4 |
 | M4-3 | documentMapper.js + result.wxml/wxss | 答题表四段完整渲染、section_redline动态生成、glassDetailSpec升级A级 | ✅ 已完成 commit b0b540a |
-| 水密性 levelBar 溢出修复 | 🔲 待执行 | `_barPosition` 加 `Math.min(95, pos)` 上限，不阻塞发布 |
-| 清除 DEBUG log（index.js 331-332行） | 🔲 待执行 | 只删两行，不改周边逻辑 |
+| 水密性 levelBar 溢出修复 | ✅ 已关闭 | 代码侧 Math.min(95,pos) 早已存在，条目登记过时；下限 5→0 越权改动已回滚（commit 1411bad） |
+| 清除 DEBUG log（index.js 331-332行） | ✅ 已关闭 | 行号漂移，331-332 为 snapshot.summary 生产代码，全文无 DEBUG 字串 |
 | 部署 generateReport | 🔲 待执行 | 前置：NTP时间同步检查 |
 | 首页 Q&A 内容库建立 | 🔲 待执行 | 消费 userMeaning 内容；MVP方式B，独立维护不做关联跳转 |
 | 进场核查拍摄清单渲染实现 | 🔲 待执行 | M4-4，基于 CONTENT_DEFINITION_v1.1.md 第九节 |
+| B02 导航栏术语统一 | ✅ 已完成 | commit 60a56a2；survey.json navigationBarTitleText |
+| B01 K值提示呈现层兜底 | ✅ 已完成 | commit 60a56a2；selfK==kMin 显示单点；规则层见第十节议题1 |
+| 水密性 levelBar 下限回滚 | ✅ 已完成 | commit 1411bad；越权改动 5→0 还原 |
 
 ---
 
@@ -271,6 +274,11 @@
 | 2026-04-14 | ✅ 确认 | 答题表字段A/B/C可获取性分级 + 配置一致性承诺条款 | 基于Perplexity中国大陆门窗市场审查；A级直接要求/B级缺失须说明/一致性条款覆盖全部字段 |
 | 2026-04-14 | ✅ 确认 | 进场核查拍摄清单三层分级 | 必须拍/尽量拍/不靠照片靠文件；基于Perplexity可操作性审查；拍"能证明身份的证据"，不拍"需要专业判断的细节" |
 | 2026-04-14 | ✅ 完成 | 输出层三文档升版v1.1 | OUTPUT_LAYER_DESIGN / SNAPSHOT_SCHEMA / CONTENT_DEFINITION 均已更新；基线 commit 66a17a5 |
+| 2026-04-19 | ✅ 完成 | 推广引流前技术债清扫 | commit 60a56a2；B02 术语统一 + B01 呈现层兜底；水密性/DEBUG 两项过时条目关闭 |
+| 2026-04-19 | ✅ 完成 | 水密性 levelBar 下限回滚 | commit 1411bad；Claude Code 越权改动（5→0）还原，流程规范见 PRODUCT_CLAUDE.md H7 |
+| 2026-04-19 | 📋 登记 | 架构级待办入库标准建立 | 四条特征：跨≥2文件管道/H3字段语义/需前置验证/触碰核心原则；见第十节 |
+| 2026-04-19 | 📋 登记 | 自采暖 K 值规则层重写 | 见第十节架构级待办议题1；推广引流后第一迭代 |
+| 2026-04-19 | 📋 登记 | Claude Code H7 规范升级 | SPEC 前提不成立必须停机；不得自主另选修改点；PRODUCT_CLAUDE.md 已更新 |
 
 ### 历史归档
 
@@ -284,6 +292,62 @@
 | 2026-04-15 | ✅ 完成 | SPEC-OUTPUT-v1.1 Phase2 渲染层重构 | commit 6cc19e4；threePhaseIntro替换actionSteps(M4-1)、inspectionChecklist新增(M4-4)、userMeaning渲染层清除、章节标题字段驱动 |
 | 2026-04-15 | ✅ 完成 | SPEC-M4-3 答题表四段完整渲染 | commit b0b540a；section_redline从sharedRedlineChecklist.mandatory动态生成；glassDetailSpec从gradeC升至gradeA；冗余consistency-clause-wrap已删除(4448ea3) |
 | 2026-04-15 | ✅ 确认 | section_redline 红线承诺段格式 | 逐项displayId+text+逐项打勾；clauseNote作为合同附件声明；数据源=chapter3同一批红线，无冗余 |
+
+---
+
+## 十、架构级待办
+
+> 非技术债清扫可完成的议题。本段登记的议题须走完整 SPEC 设计 + 可行性前置验证流程，不得在一次会话内边讨论边执行。
+> 每次会话触及此段议题时，必须先切换产品审查官视角做方向校准。
+
+### 入库标准
+
+议题满足以下任一特征即入库：
+1. 改动需跨 ≥2 个文件的数据管道
+2. 涉及字段语义变更（H3）
+3. 需要前置可行性验证才能进入 SPEC 设计
+4. 影响核心产品原则中「不得违反」条款
+
+登记内容必需：问题描述 · 当前处置 · 候选方向 · 影响范围 · 决策前必需数据 · 约束条件。
+
+---
+
+### 议题 1：自采暖 K 值加严规则重写
+
+**登记日期：** 2026-04-19
+**触发入库标准：** 2（H3 字段语义）+ 4（触碰原则 5：信息呈现型语言）
+
+**问题描述：**
+当前规则 `selfK = kBase - 0.2` 在 CLIMATE_SPEC 十个城市中有 9 个退化为点值（`selfK === kMin`），仅沈阳（严寒区 kMin=1.5）维持区间。字面"加严"实际数值等于 kMin（集中供暖区间下沿），用户细看会发现"加严"是文字游戏，违反产品核心价值主张「我没有被忽悠」。
+
+**当前处置：**
+2026-04-19 呈现层兜底（B01，commit `60a56a2`）—— `selfK==kMin` 时显示单点值，消除字面矛盾。规则层未重写。
+
+**候选方向：**
+
+- 方向 1（如实表达）：承认规则等效于"目标值 = kMin"，呈现层表述为"自采暖目标 ≤ kMin"，放弃"自采暖更严"的差异化定位。
+- 方向 2（规则重写）：重新定义加严规则使之真正严于集中供暖（如 `selfK = kMin - 0.1`），需验证 K < kMin 的工程意义与成本可行性。
+- 方向 3（取消加严）：自采暖 K 值不单独处理，差异化改走其它维度（如玻璃档位下移、型材档位提升）。
+- 方向 4（延后决策）：推广后收集种子用户实际 K 值反馈（用户是否关注到"加严"这个措辞、是否理解差异、是否影响选择），基于真实数据再决策。
+
+**影响范围（跨文件）：**
+- `survey.js updateHeatingKTips()` 文案
+- `calculator-v2.js` K_target 计算
+- `arbitrator.js` 玻璃/隔热条仲裁
+- `documentMapper.js` 第一、二章 K 值写入
+- `redlineSpec.js` 热工红线阈值
+
+**决策前必需数据：**
+- 自采暖 K 值加严规则的原始依据（工程经验 / 国标 / 临时起笔）
+- 方向 2 若选：K < kMin 在主流气候区的工程依据、成本爬升曲线、用户预算承受度
+- 方向 3 若选：自采暖差异化走哪个维度、配置层仲裁如何改
+- 方向 4 若选：种子用户反馈收集口径（如何问才能得到有效答案）
+
+**约束条件：**
+- 不得在推广引流前改动
+- 重写前须完整 SPEC，含只读验证门（K_target 在全部下游的字段路径）
+- 必须覆盖五个文件的字段语义一致性
+- 若选方向 2/3，必须走完 PRODUCT_CLAUDE.md 第五节「架构级方案选择」流程
 
 ---
 
