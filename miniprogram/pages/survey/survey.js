@@ -417,10 +417,14 @@ Page({
   },
 
   updateHeatingKTips(kBase, kMin) {
-    const selfK = (kBase - 0.2).toFixed(1);
+    const selfK = Number((kBase - 0.2).toFixed(1));
+    const kMinNum = Number(kMin);
+    const selfKTip = selfK === kMinNum
+      ? `自采暖地区，K值加严至 ${kMinNum}`
+      : `自采暖地区，K值加严至 ${kMinNum}~${selfK}`;
     this.setData({
       heatingCentralKTip: `集中供暖地区，K值保持城市基线 ${kMin}~${kBase}`,
-      heatingSelfKTip: `自采暖地区，K值加严至 ${kMin}~${selfK}`,
+      heatingSelfKTip: selfKTip,
       heatingNoneKTip: `无集中供暖，K值保持城市基线 ${kMin}~${kBase}`
     });
   },

@@ -57,7 +57,7 @@ Page({
             } else {
               pos = (mid - low) / (high - low) * 100;
             }
-            pos = Math.min(Math.max(Math.round(pos), 5), 95);
+            pos = Math.min(Math.max(Math.round(pos), 0), 95);
             lb._barPosition = pos + '%';
           }
         });
