@@ -309,7 +309,7 @@ function main() {
       const kRow = rows[2] || {};
       if (!String(kRow.value || '').includes('K≤2.3')) throw new Error('T-K2 K_target mismatch');
       if (!String(kRow.value || '').includes('推荐范围2.2~2.4')) throw new Error('T-K2 kRange mismatch');
-      if (!String(kRow.basis || '').includes('西向隔热加严')) throw new Error('T-K2 basis mismatch');
+      if (!String(kRow.basis || '').includes('西向隔热修正')) throw new Error('T-K2 basis mismatch');
     }
   );
 
@@ -335,7 +335,7 @@ function main() {
       const kRow = rows[2] || {};
       if (!String(kRow.value || '').includes('K≤2.0')) throw new Error('T-K3 K_target mismatch');
       if (!String(kRow.value || '').includes('推荐范围2.0~2.2')) throw new Error('T-K3 kRange mismatch');
-      if (!String(kRow.basis || '').includes('落地窗隔热加严')) throw new Error('T-K3 basis mismatch');
+      if (!String(kRow.basis || '').includes('落地窗隔热修正')) throw new Error('T-K3 basis mismatch');
     }
   );
 

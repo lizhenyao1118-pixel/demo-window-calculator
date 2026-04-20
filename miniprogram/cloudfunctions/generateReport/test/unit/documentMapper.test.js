@@ -246,7 +246,7 @@ describe('helpers', () => {
     const resolved = { P3_required: 3.0, Rw_required: 33, K_target: 2.3, SHGC_target: 0.28, kRange: '2.2~2.4', climateZoneCN: '夏热冬暖', appliedFactor: 'westSun' };
     const r = build1_2(a, resolved);
     const kRow = (r.needsTable || []).find(x => x.dimension === '传热系数') || {};
-    expect(String(kRow.basis || '')).toContain('西向隔热加严');
+    expect(String(kRow.basis || '')).toContain('西向隔热修正');
   });
 
   test('DM-40: build1_2 无效城市触发sealGrades兜底文案', () => {
@@ -499,7 +499,7 @@ describe('Sprint 7 A-中期（逻辑层）端到端', () => {
     expect(pdfContent).toContain('高层（≥7F）建议上调至 6 级');
     expect(pdfContent).toContain('不可降级');
     expect(pdfContent).not.toContain('参数说明：本文件中的技术参数为推荐目标值');
-    expect(pdfContent).toContain('隔声降噪诉求加严');
+    expect(pdfContent).toContain('隔声降噪诉求修正');
     expect(pdfContent).not.toContain('阳台睡眠');
     expect(pdfContent).not.toContain('房间场景');
     expect(pdfContent).toContain('台风季暴雨侵蚀');

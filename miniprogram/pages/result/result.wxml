@@ -93,6 +93,10 @@
       <text class="chapter-title">性能需求诊断</text>
     </view>
 
+    <!-- 数据来源声明 -->
+    <view class="datasource-note" wx:if="{{chapter1.dataSourceStatement}}">
+      <text class="datasource-text">{{chapter1.dataSourceStatement}}</text>
+    </view>
     <!-- M1-1 项目身份信息 -->
     <view class="info-grid">
       <view class="info-row">

@@ -483,8 +483,8 @@ function build1_2(answers, resolved) {
 
 function getThermalModifier(formData) {
   const isWest = formData.orientation === 'west' || formData.orientation === '西';
-  if (isWest && formData.west_shading === false) return '西向隔热加严';
-  if (formData.heating_type === 'none') return '无供暖保温加严';
+  if (isWest && formData.west_shading === false) return '西向隔热修正';
+  if (formData.heating_type === 'none') return '无供暖保温修正';
   if (formData.heating_type === 'self') return '自采暖修正';
   return '标准热工要求';
 }
@@ -526,11 +526,11 @@ function buildNeedsTable(resolved, answers, sealGrades) {
   const kText = Number.isFinite(kNum) ? kNum.toFixed(1) : String(getField(resolved, 'K'));
   let kBasisText = `${czCN}区基准`;
   if (resolved.appliedFactor === 'heating') {
-    if (answers.heating_type === 'self') kBasisText = `${czCN}区 自采暖保温加严`;
+    if (answers.heating_type === 'self') kBasisText = `${czCN}区 自采暖保温修正`;
   } else if (resolved.appliedFactor === 'westSun') {
-    kBasisText = `${czCN}区 西向隔热加严`;
+    kBasisText = `${czCN}区 西向隔热修正`;
   } else if (resolved.appliedFactor === 'bigWindow') {
-    kBasisText = `${czCN}区 落地窗隔热加严`;
+    kBasisText = `${czCN}区 落地窗隔热修正`;
   }
 
   const sg = sealGrades || { airMin: 4, airRec: 4, airGap: 0, waterMin: 3, waterRec: 4, waterGap: 1, isFixed: false };
@@ -546,7 +546,7 @@ function buildNeedsTable(resolved, answers, sealGrades) {
   const _usageAdj = answers.noise_type === 'rail' ? 0 : (answers.pain_point === 'sound' ? 3 : 0);
   const _rwAdjParts = [];
   if (_distAdj !== 0) _rwAdjParts.push(`距离修正${_distAdj > 0 ? '+' : ''}${_distAdj}dB`);
-  if (_usageAdj > 0) _rwAdjParts.push(`隔声优先加严+${_usageAdj}dB`);
+  if (_usageAdj > 0) _rwAdjParts.push(`隔声优先修正+${_usageAdj}dB`);
   const _orientLabel = { east: '东', west: '西', south: '南', north: '北', southeast: '东南', southwest: '西南', northeast: '东北', northwest: '西北' }[answers.orientation] || answers.orientation || '';
   const _isCoastal = !!(CLIMATE_SPEC[answers.city] && CLIMATE_SPEC[answers.city].isCoastal);
 
@@ -567,7 +567,7 @@ function buildNeedsTable(resolved, answers, sealGrades) {
       basis: `${STANDARDS_MAP.sound_insulation.short} · ${getNoiseShortDesc(answers.noise_type, answers.noise_dist)}`,
       levelBar: { lowValue: '30', lowLabel: '基础合规', highValue: '50', highLabel: '行业高端', midValue: getField(resolved, 'Rw'), unit: 'dB', direction: 'ascending' },
       derivation: answers.noise_type === 'quiet'
-        ? `周边环境安静，基础Rw≥${_rwBase}dB${_usageAdj > 0 ? `，隔声优先加严+${_usageAdj}dB` : ''}，本案要求Rw≥${getField(resolved, 'Rw')}dB`
+        ? `周边环境安静，基础Rw≥${_rwBase}dB${_usageAdj > 0 ? `，隔声优先修正+${_usageAdj}dB` : ''}，本案要求Rw≥${getField(resolved, 'Rw')}dB`
         : `${answers.city}${_noiseTypeLabel}${_distLabel ? '，' + _distLabel : ''}，基础Rw≥${_rwBase}dB${_rwAdjParts.length > 0 ? '，' + _rwAdjParts.join('，') : ''}，本案要求Rw≥${getField(resolved, 'Rw')}dB`,
       marketReality: (() => {
         const rw = Number(getField(resolved, 'Rw'));
@@ -652,16 +652,16 @@ function buildParameterNote({ windPressure, soundInsulation, thermal, shgc, safe
   const distAdjText = `${soundInsulation.distAdj > 0 ? '+' : ''}${soundInsulation.distAdj}`;
   const usageAdjText = `${soundInsulation.usageAdj > 0 ? '+' : ''}${soundInsulation.usageAdj}`;
   const usageExplain = (inputs.noiseType === 'rail')
-    ? '隔声降噪诉求加严 0（轨道噪声已按最严基准计）'
-    : `隔声降噪诉求加严 ${usageAdjText}`;
-  if (inputs.noise_type === 'quiet') {
-  const quietUsageNote = soundInsulation.usageAdj > 0
-    ? `；因您将隔声降噪列为核心诉求，加严修正+${soundInsulation.usageAdj}`
-    : '';
-  lines.push(`② **隔声**：噪声环境评估为安静（夜间本底噪声约35–40dB），隔声基准取${soundInsulation.baseRw} dB，无距离修正${quietUsageNote}，最终 ≥${soundInsulation.value} dB。依据：GB 50118 · 安静环境基础隔声标准。`);
-} else {
-  lines.push(`② **隔声**：${noiseText}，基础 Rw≥${soundInsulation.baseRw} dB，距离修正 ${distAdjText}，${usageExplain}，最终 ≥${soundInsulation.value} dB。依据：GB 50118 + HJ 2055 · 轨道交通中距离声学计算推导值。`);
-}
+    ? '隔声降噪诉求修正 0（轨道噪声已按最严基准计）'
+    : `隔声降噪诉求修正 ${usageAdjText}`;
+  if (inputs.noiseType === 'quiet') {
+    const quietUsageNote = soundInsulation.usageAdj > 0
+      ? `，睡眠场景修正+${soundInsulation.usageAdj}dB（工程经验）`
+      : '';
+    lines.push(`② **隔声**：噪声环境安静（夜间本底噪声约35–40dB），隔声基准 Rw≥${soundInsulation.baseRw} dB（GB 50118），无距离修正${quietUsageNote}，最终 ≥${soundInsulation.value} dB。依据：GB 50118 · 安静环境基础隔声标准。`);
+  } else {
+    lines.push(`② **隔声**：${noiseText}，基础 Rw≥${soundInsulation.baseRw} dB（工程经验），距离修正 ${distAdjText}（工程经验），${usageExplain}，最终 ≥${soundInsulation.value} dB。依据：GB 50118 + HJ 2055 · 轨道交通中距离声学计算推导值。`);
+  }
 
   const factorMap = {
     heating: '自采暖保温修正 -0.2',
@@ -1552,6 +1552,7 @@ function mapToSections(resolved, answers, pdfNo) {
     },
     
     chapter1: {
+      dataSourceStatement: '本报告数据来源：每项指标由三类信息共同确定——国家/行业标准基准值、您的项目信息（城市/楼层/朝向/噪声/家庭风险等）、工程经验修正（李Sir 基于工程案例的判断）。工程经验修正不等同于国标，但经得起案例追溯。',
       basicInfo: build1_1(normalizedAnswers),
       needsAnalysis: needsAnalysis,
       city: normalizedAnswers.city,
@@ -1619,7 +1620,7 @@ function mapToSections(resolved, answers, pdfNo) {
           unit: 'dB',
           std: STANDARDS_MAP.sound_insulation.code,
           level: (getField(resolved, 'Rw') >= 35 ? '高隔声' : '标准隔声'),
-          note: `${getNoiseLabel(normalizedAnswers.noise_type, normalizedAnswers.noise_dist).typeLabel}环境${normalizedAnswers.pain_point === 'sound' ? '，睡眠场景加严' : ''}`,
+          note: `${getNoiseLabel(normalizedAnswers.noise_type, normalizedAnswers.noise_dist).typeLabel}环境${normalizedAnswers.pain_point === 'sound' ? '，睡眠场景修正' : ''}`,
           isCore: painTag.coreMetric === 'Rw'
         },
         {

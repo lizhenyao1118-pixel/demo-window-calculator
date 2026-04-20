@@ -430,8 +430,8 @@ function build1_2(answers, resolved) {
 
 function getThermalModifier(formData) {
   const isWest = formData.orientation === 'west' || formData.orientation === '西';
-  if (isWest && formData.west_shading === false) return '西向隔热加严';
-  if (formData.heating_type === 'none') return '无供暖保温加严';
+  if (isWest && formData.west_shading === false) return '西向隔热修正';
+  if (formData.heating_type === 'none') return '无供暖保温修正';
   if (formData.heating_type === 'self') return '自采暖修正';
   return '标准热工要求';
 }
@@ -473,11 +473,11 @@ function buildNeedsTable(resolved, answers, sealGrades) {
   const kText = Number.isFinite(kNum) ? kNum.toFixed(1) : String(getField(resolved, 'K'));
   let kBasisText = `${czCN}区基准`;
   if (resolved.appliedFactor === 'heating') {
-    if (answers.heating_type === 'self') kBasisText = `${czCN}区 自采暖保温加严`;
+    if (answers.heating_type === 'self') kBasisText = `${czCN}区 自采暖保温修正`;
   } else if (resolved.appliedFactor === 'westSun') {
-    kBasisText = `${czCN}区 西向隔热加严`;
+    kBasisText = `${czCN}区 西向隔热修正`;
   } else if (resolved.appliedFactor === 'bigWindow') {
-    kBasisText = `${czCN}区 落地窗隔热加严`;
+    kBasisText = `${czCN}区 落地窗隔热修正`;
   }
 
   const sg = sealGrades || { airMin: 4, airRec: 4, airGap: 0, waterMin: 3, waterRec: 4, waterGap: 1, isFixed: false };
@@ -559,8 +559,8 @@ function buildParameterNote({ windPressure, soundInsulation, thermal, shgc, safe
   const distAdjText = `${soundInsulation.distAdj > 0 ? '+' : ''}${soundInsulation.distAdj}`;
   const usageAdjText = `${soundInsulation.usageAdj > 0 ? '+' : ''}${soundInsulation.usageAdj}`;
   const usageExplain = (inputs.noiseType === 'rail')
-    ? '隔声降噪诉求加严 0（轨道噪声已按最严基准计）'
-    : `隔声降噪诉求加严 ${usageAdjText}`;
+    ? '隔声降噪诉求修正 0（轨道噪声已按最严基准计）'
+    : `隔声降噪诉求修正 ${usageAdjText}`;
   lines.push(`② **隔声**：${noiseText}，基础 Rw≥${soundInsulation.baseRw} dB，距离修正 ${distAdjText}，${usageExplain}，最终 ≥${soundInsulation.value} dB。依据：GB 50118 + HJ 2055 · 轨道交通中距离声学计算推导值。`);
 
   const factorMap = {
@@ -1403,7 +1403,7 @@ function mapToSections(resolved, answers, pdfNo) {
           unit: 'dB',
           std: STANDARDS_MAP.sound_insulation.code,
           level: (getField(resolved, 'Rw') >= 35 ? '高隔声' : '标准隔声'),
-          note: `${getNoiseLabel(normalizedAnswers.noise_type, normalizedAnswers.noise_dist).typeLabel}环境${normalizedAnswers.pain_point === 'sound' ? '，睡眠场景加严' : ''}`,
+          note: `${getNoiseLabel(normalizedAnswers.noise_type, normalizedAnswers.noise_dist).typeLabel}环境${normalizedAnswers.pain_point === 'sound' ? '，睡眠场景修正' : ''}`,
           isCore: painTag.coreMetric === 'Rw'
         },
         {

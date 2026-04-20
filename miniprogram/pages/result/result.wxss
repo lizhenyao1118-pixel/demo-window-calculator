@@ -887,3 +887,18 @@ page { background: #f5f5f0; }
   color: #a06000;
   line-height: 1.7;
 }
+
+/* 数据来源声明 · 议题3方向1 Phase B */
+.datasource-note {
+  margin: 16rpx 0 24rpx 0;
+  padding: 16rpx 20rpx;
+  background: #f7f8fa;
+  border-left: 4rpx solid #b0b8c8;
+  border-radius: 0 8rpx 8rpx 0;
+}
+.datasource-text {
+  font-size: 22rpx;
+  color: #7a8599;
+  line-height: 1.6;
+  letter-spacing: 0.02em;
+}
