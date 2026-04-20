@@ -1,29 +1,53 @@
 <view class="container">
   <!-- Hero区：深蓝底白字 -->
   <view class="hero-section">
+    <view class="badge">
+      <view class="badge-dot"></view>
+      <text class="badge-text">不销售 · 不代理</text>
+    </view>
     <view class="page-title">门窗诊断与标准</view>
     <view class="identity">
       <text class="expert-name">李Sir</text>
       <text class="expert-role"> · 独立门窗技术顾问</text>
     </view>
-    <view class="stamp">不销售 · 不代理</view>
+    <view class="hero-divider"></view>
     <view class="promise">依据国家建筑门窗标准，将生活诉求转化为可量化的技术采购标准</view>
-    <view class="promise-secondary">用数据选窗，不凭感觉、不靠话术</view>
+    <view class="stat-strip">
+      <view class="stat-item">
+        <text class="stat-num">9</text>
+        <text class="stat-label">题问卷</text>
+      </view>
+      <view class="stat-sep"></view>
+      <view class="stat-item">
+        <text class="stat-num">4</text>
+        <text class="stat-label">章文件</text>
+      </view>
+      <view class="stat-sep"></view>
+      <view class="stat-item">
+        <text class="stat-num stat-num-sm">国标</text>
+        <text class="stat-label">依据</text>
+      </view>
+    </view>
   </view>
 
   <!-- 主CTA -->
   <view class="cta-section">
     <view class="cta-card">
       <button class="btn-primary" bindtap="startAssessment">开始定制我的门窗标准</button>
+      <view class="deliverable-tags">
+        <text class="deliverable-tag">性能诊断</text>
+        <text class="deliverable-tag">红线清单</text>
+        <text class="deliverable-tag">验收清单</text>
+      </view>
+      <view class="trust-anchor">基于1000+户实际案例提炼的判断标准</view>
     </view>
-    <view class="trust-anchor">基于1000+户实际案例提炼的判断标准</view>
   </view>
 
   <!-- 说明区 -->
   <view class="info-section">
     <!-- 三步流程 -->
     <view class="process-steps">
-      <view class="step-title">使用流程</view>
+      <view class="step-label">使用流程</view>
       <view class="step-list">
         <view class="step-item">
           <view class="step-number">1</view>
