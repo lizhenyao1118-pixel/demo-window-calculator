@@ -660,7 +660,7 @@ function buildParameterNote({ windPressure, soundInsulation, thermal, shgc, safe
       : '';
     lines.push(`② **隔声**：噪声环境安静（夜间本底噪声约35–40dB），隔声基准 Rw≥${soundInsulation.baseRw} dB（GB 50118），无距离修正${quietUsageNote}，最终 ≥${soundInsulation.value} dB。依据：GB 50118 · 安静环境基础隔声标准。`);
   } else {
-    lines.push(`② **隔声**：${noiseText}，基础 Rw≥${soundInsulation.baseRw} dB（工程经验），距离修正 ${distAdjText}（工程经验），${usageExplain}，最终 ≥${soundInsulation.value} dB。依据：GB 50118 + HJ 2055 · 轨道交通中距离声学计算推导值。`);
+    lines.push(`② **隔声**：${noiseText}，基础 Rw≥${soundInsulation.baseRw} dB（工程经验），距离修正 ${distAdjText}（工程经验），${usageExplain}，最终 ≥${soundInsulation.value} dB。依据：GB 50118 + HJ 2055 · 轨道交通中距离声学计算推导值。检测报告须同时列出 Rw+Ctr 值（交通噪声频谱修正量），Rw+Ctr 通常较 Rw 低 3~5 dB。`);
   }
 
   const factorMap = {

@@ -14,7 +14,7 @@ function buildRedlineRegistry({ TERM, getTierLabel, getField }) {
     { id: 'R07', text: (a, r) => `整窗传热系数K≤${getField(r, 'K')}，SHGC≤${getField(r, 'SHGC')}，须提供能效/热工检测报告`, level: 'mandatory', softened: false, trigger: () => true, group: '热工性能', userMeaning: '这是整窗层面的性能指标，不是玻璃单独的指标。商家常只说玻璃参数而不提整窗认证，两者可能有显著差异。须要求提供整窗热工性能检测报告，而非仅凭玻璃参数推算。' },
 
     // 4. 隔声性能
-    { id: 'R08', text: (a, r) => `整窗隔声量Rw≥${getField(r, 'Rw')}dB，须提供第三方声学检测报告（GB/T 8485-2008）`, level: 'mandatory', softened: false, trigger: (a, r) => !!(r && (r.Rw_required || r.Rw)), group: '隔声性能', userMeaning: '隔声是整窗系统性能，受玻璃、密封、安装综合影响。商家常见说法是"我们玻璃隔声好"，但整窗隔声量与玻璃单独指标有显著差异。第三方声学检测报告是唯一可信依据，须索取报告编号并可查。' },
+    { id: 'R08', text: (a, r) => `整窗隔声量Rw≥${getField(r, 'Rw')}dB，须提供第三方声学检测报告（GB/T 8485-2008），报告须同时标注 Rw+Ctr 值（通常较 Rw 低 3~5 dB）`, level: 'mandatory', softened: false, trigger: (a, r) => !!(r && (r.Rw_required || r.Rw)), group: '隔声性能', userMeaning: '隔声是整窗系统性能，受玻璃、密封、安装综合影响。商家常见说法是"我们玻璃隔声好"，但整窗隔声量与玻璃单独指标有显著差异。第三方声学检测报告是唯一可信依据，须索取报告编号并可查。' },
     { id: 'R09', text: '玻璃与窗框接缝须采用声学密封工艺，禁止普通密封胶替代', level: 'mandatory', softened: false, trigger: (a, r) => !!(r && (r.Rw_required || r.Rw)), group: '隔声性能', userMeaning: '接缝处理是隔声的薄弱环节。即使玻璃达标，接缝气密性不足仍会影响整窗隔声表现。须要求商家在合同中说明密封工艺，并在安装过程中留存影像。' },
 
     // 5. 安装工艺与材料
