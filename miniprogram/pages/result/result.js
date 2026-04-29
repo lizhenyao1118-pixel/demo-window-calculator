@@ -69,6 +69,11 @@ Page({
         chapter2: snapshot.chapter2 || {},
         chapter3: snapshot.chapter3 || {},
         chapter4: snapshot.chapter4 || {},
+        overview: snapshot.overview || {},
+        chapter5: snapshot.chapter5 || {},
+        transition: snapshot.transition || {},
+        chapter6: snapshot.chapter6 || {},
+        chapter7: snapshot.chapter7 || {},
         summary:  summary,
         isPaid:   savedPaid
       });
