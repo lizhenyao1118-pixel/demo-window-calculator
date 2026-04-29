@@ -18,7 +18,7 @@ function buildRedlineRegistry({ TERM, getTierLabel, getField }) {
     { id: 'R09', text: '玻璃与窗框接缝须采用声学密封工艺，禁止普通密封胶替代', level: 'mandatory', softened: false, trigger: (a, r) => !!(r && (r.Rw_required || r.Rw)), group: '隔声性能', userMeaning: '接缝处理是隔声的薄弱环节。即使玻璃达标，接缝气密性不足仍会影响整窗隔声表现。须要求商家在合同中说明密封工艺，并在安装过程中留存影像。' },
 
     // 5. 安装工艺与材料
-    { id: 'R10', text: '禁止普通密封胶代替结构胶（须采用中性硅酮结构胶）', level: 'mandatory', softened: false, trigger: () => true, group: '安装工艺与材料', userMeaning: '结构胶与普通密封胶外观相似，但力学性能和耐久性差异极大。普通密封胶长期使用后开裂，影响气密、水密和结构安全。须要求商家提供所用密封胶的产品说明书。' },
+    { id: 'R10', text: '洞口四周耐候密封胶须连续无断开，胶条系统须为型材原厂配套', level: 'mandatory', softened: false, trigger: () => true, group: '安装工艺与材料', userMeaning: '密封胶（防水/气密用）和结构胶（承重粘结用）是两类不同材料。门窗安装中，洞口四周用耐候密封胶做连续封闭，框扇之间靠原厂胶条系统密封。要求商家书面承诺胶条系统型号 + 耐候胶品牌，避免用低耐久材料替代。' },
     { id: 'R11', text: (a, r) => `水密≥${r.sealGrades ? r.sealGrades.waterRec : 4}级，气密≥${r.sealGrades ? r.sealGrades.airRec : 6}级，安装节点按设计图纸施工，打胶影像记录`, level: 'mandatory', softened: false, trigger: () => true, group: '安装工艺与材料', userMeaning: '气密水密等级直接影响隔声、保温和防水性能。安装节点是决定性因素，仅靠产品本身无法保证。须要求安装全程按设计图纸施工，打胶留影像记录，竣工后按合同约定的检测方式进行验收。' },
 
     // 6. 抗风性能

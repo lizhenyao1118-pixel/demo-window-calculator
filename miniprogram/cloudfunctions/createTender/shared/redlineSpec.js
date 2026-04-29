@@ -17,7 +17,7 @@ function buildRedlineRegistry({ TERM, getTierLabel, getField }) {
     { id: 'R10', text: '隔声性能：玻璃与窗框接缝须采用声学密封规程，禁止普通密封胶代替声学密封胶', level: 'mandatory', softened: false, trigger: (a, r) => !!(r && (r.Rw_required || r.Rw)), userMeaning: '接缝处理是隔声的薄弱环节。即使玻璃达标，接缝气密性不足仍会影响整窗隔声表现。须要求商家在合同中说明密封工艺，并在安装过程中留存影像。' },
 
     // 密封/结构主线
-    { id: 'R11', text: '密封结构：禁止普通密封胶代替结构胶（须采用中性硅酮结构胶）', level: 'mandatory', softened: false, trigger: () => true, userMeaning: '结构胶与普通密封胶外观相似，但力学性能和耐久性差异极大。普通密封胶长期使用后开裂，影响气密、水密和结构安全。须要求商家提供所用密封胶的产品说明书。' },
+    { id: 'R11', text: '密封结构：洞口四周耐候密封胶须连续无断开，胶条系统须为型材原厂配套', level: 'mandatory', softened: false, trigger: () => true, userMeaning: '密封胶（防水/气密用）和结构胶（承重粘结用）是两类不同材料。门窗安装中，洞口四周用耐候密封胶做连续封闭，框扇之间靠原厂胶条系统密封。要求商家书面承诺胶条系统型号 + 耐候胶品牌，避免用低耐久材料替代。' },
     { id: 'R12', text: '', level: 'mandatory', softened: false, trigger: () => true, userMeaning: '' },
 
     // 抗风主线
