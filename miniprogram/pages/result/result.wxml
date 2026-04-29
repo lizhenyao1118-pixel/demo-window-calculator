@@ -395,7 +395,7 @@
         <!-- 验收节点 -->
         <view class="phase-acceptance" wx:if="{{item.acceptanceItems}}">
           <text class="acceptance-label">验收标准：</text>
-          <text class="acceptance-item" wx:for="{{item.acceptanceItems}}" wx:key="*this">· {{item}}</text>
+          <text class="acceptance-item" wx:for="{{item.acceptanceItems}}" wx:key="id">· {{item.text}}</text>
         </view>
       </view>
     </view>
