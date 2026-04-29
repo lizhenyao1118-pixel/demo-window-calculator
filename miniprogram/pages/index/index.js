@@ -91,5 +91,12 @@ Page({
         icon: 'none'
       });
     }
+  },
+
+  onShareAppMessage() {
+    return {
+      title: '门窗标准定制——帮你定标准、发需求',
+      path: '/pages/index/index'
+    };
   }
 });

@@ -1,4 +1,3 @@
-console.log('VERSION: 8A-FINAL');
 // Phase 1 测试：新 PDF 渲染引擎（新增）
 const { mapToSections } = require('./documentMapper');
 const { buildPDF } = require('./pdfBuilder-v2');
@@ -125,27 +124,16 @@ exports.main = async (event, context) => {
     
     // 2. 数据适配与计算（保留原有逻辑）
     const adaptedData = adaptAssessmentData(assessmentData);
-    console.log('[Cloud] 适配后数据：', adaptedData);
-    
+
     const computed = calculateAll(adaptedData);
-    console.log('[Cloud] 计算结果：', computed);
 
     // 调用 calcSealGrades 获取密封性能等级
     const sealGrades = (typeof calcSealGrades === 'function')
       ? calcSealGrades({ city: adaptedData.city, floor: adaptedData.floor, windowType: adaptedData.window_type })
       : { airRec: 4, waterRec: 3 };
-    console.log('[Cloud] 密封性能等级：', sealGrades);
     
     // Phase 1 新流程：使用 documentMapper 构建 sections（替换原有 sections 构建逻辑）
     const sections = mapToSections(computed, adaptedData, pdfNo);
-    console.log('Resolved Rw_required:', computed.Rw_required);
-    console.log('Noise type:', adaptedData.noise_type);
-    console.log('Noise dist:', adaptedData.noise_dist);
-    console.log('[Cloud] Sections 映射完成:', {
-      city: sections.cover.city,
-      tier: sections.chapter3.currentTier,
-      isRisk: sections.cover.isRisk
-    });
     
     /* 
     // 旧代码已注释：直接构建 sections（Phase 0 逻辑）
@@ -238,8 +226,6 @@ exports.main = async (event, context) => {
         5000
       );
       tenderId = createTenderRes && createTenderRes.result ? createTenderRes.result.tenderId : null;
-      console.log('[Cloud] createTender 返回：', createTenderRes && createTenderRes.result ? createTenderRes.result : null);
-      console.log('[Cloud] tenderId：', tenderId);
 
       if (tenderId) {
         try {
@@ -252,26 +238,20 @@ exports.main = async (event, context) => {
             3000
           );
           qrCodeBuffer = qrRes && qrRes.buffer ? qrRes.buffer : null;
-          console.log('[Cloud] 小程序码生成成功，buffer长度：', qrCodeBuffer ? qrCodeBuffer.length : 0);
         } catch (qrErr) {
-          console.error('[Cloud] 小程序码生成失败（非阻断）：', qrErr.message);
           qrCodeBuffer = null;
         }
       }
     } catch (e) {
-      console.error('[Cloud] createTender 超时或失败（非阻断）：', e.message);
       tenderId = null;
       qrCodeBuffer = null;
     }
 
     // 4. 生成PDF（Phase 1：使用新的 buildPDF）
-    console.log('[Cloud] 开始生成 PDF（Phase 1 新引擎）...');
-    console.log('[Cloud] PDF小程序码透传参数：', { tenderId, hasQrCodeBuffer: !!qrCodeBuffer });
     await buildPDF(sections, tempPath, { tenderId, qrCodeBuffer });
     
     // 5. 验证文件（保留原有逻辑）
     const stats = fs.statSync(tempPath);
-    console.log('[Cloud] 文件大小:', stats.size, 'bytes');
     
     if (stats.size < 1000) {
       throw new Error(`PDF文件生成异常，大小仅${stats.size}字节`);
@@ -283,8 +263,6 @@ exports.main = async (event, context) => {
       cloudPath: `reports/${fileName}`,
       fileContent: fileContent,
     });
-    
-    console.log('[Cloud] 上传成功：', uploadRes.fileID);
     
     // 7. 写入数据库（保留原有逻辑）
     try {
@@ -303,9 +281,8 @@ exports.main = async (event, context) => {
         }
       });
       reportId = addRes && addRes._id ? addRes._id : null;
-      console.log('[Cloud] 数据库写入成功');
     } catch (dbErr) {
-      console.error('[Cloud] 数据库写入失败（非阻断）：', dbErr);
+      // 数据库写入失败（非阻断）
     }
     if (tenderId && reportId) {
       try {
@@ -353,7 +330,6 @@ exports.main = async (event, context) => {
     };
     
   } catch (err) {
-    console.error('[Cloud] 生成失败：', err);
     return {
       success: false,
       error: err.message,

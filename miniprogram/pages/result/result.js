@@ -261,5 +261,12 @@ Page({
     const hour   = date.getHours().toString().padStart(2, '0');
     const minute = date.getMinutes().toString().padStart(2, '0');
     return `${year}-${month}-${day} ${hour}:${minute}`;
+  },
+
+  onShareAppMessage() {
+    return {
+      title: '门窗标准定制——帮你定标准、发需求',
+      path: '/pages/index/index'
+    };
   }
 });
