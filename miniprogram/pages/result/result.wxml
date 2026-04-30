@@ -291,7 +291,8 @@
         <view class="trigger-list">
           <text wx:if="{{chapter5.triggers.has_large_fixed}}" class="trigger-item">· 存在大面积固定窗/落地窗</text>
           <text wx:if="{{chapter5.triggers.has_children}}" class="trigger-item">· 家中有儿童</text>
-          <text wx:if="{{chapter5.triggers.window_type === 'sliding'}}" class="trigger-item">· 推拉窗安全要求</text>
+          <text wx:if="{{chapter5.triggers.has_elder}}" class="trigger-item">· 家中有行动不便的老人</text>
+          <text wx:if="{{chapter5.triggers.has_sliding}}" class="trigger-item">· 推拉窗安全要求</text>
         </view>
       </view>
       <!-- 5.2 安全要求 -->

@@ -21,10 +21,10 @@ function buildRedlineRegistry({ TERM, getTierLabel, getField }) {
     { id: 'R12', text: '', level: 'mandatory', softened: false, trigger: () => true, userMeaning: '' },
 
     // 抗风主线
-    { id: 'R13', text: '须采用安全玻璃（钢化或夹胶）；落地窗、大面积玻璃场景，夹胶构造可防止破碎后碎片伤人', level: 'mandatory', softened: false, trigger: (a, r) => !!(r && r.safetyForced), group: '安全玻璃', userMeaning: '本案存在高碰撞风险部位（落地窗/儿童活动区），此类场景应采用夹层安全玻璃，碎片不脱落。商家若以"钢化玻璃同样安全"替代，须提供该部位适用的安全玻璃类型依据，否则不予接受。' },
+    { id: 'R13', text: '须采用安全玻璃（钢化或夹胶）；落地窗、大面积玻璃场景，夹胶构造可防止破碎后碎片伤人', level: 'mandatory', softened: false, trigger: (a, r) => !!(r && r.needsSafetyGlass), group: '安全玻璃', userMeaning: '本案存在高碰撞风险部位（落地窗/儿童活动区），此类场景应采用夹层安全玻璃，碎片不脱落。商家若以"钢化玻璃同样安全"替代，须提供该部位适用的安全玻璃类型依据，否则不予接受。' },
 
     // 安全主线
-    { id: 'R14', text: '安全玻璃：夹胶构造强制（落地窗/大面积玻璃/有儿童家庭法规要求）', level: 'mandatory', softened: false, trigger: (a, r) => !!(r && r.safetyForced), userMeaning: '本案存在高碰撞风险部位（落地窗/儿童活动区），此类场景应采用夹层安全玻璃，碎片不脱落。商家若以"钢化玻璃同样安全"替代，须提供该部位适用的安全玻璃类型依据，否则不予接受。' },
+    { id: 'R14', text: '安全玻璃：夹胶构造强制（落地窗/大面积玻璃/有儿童家庭法规要求）', level: 'mandatory', softened: false, trigger: (a, r) => !!(r && r.needsSafetyGlass), userMeaning: '本案存在高碰撞风险部位（落地窗/儿童活动区），此类场景应采用夹层安全玻璃，碎片不脱落。商家若以"钢化玻璃同样安全"替代，须提供该部位适用的安全玻璃类型依据，否则不予接受。' },
     { id: 'R15', text: '适老化：执手操作力≤25N，门槛高度≤15mm', level: 'mandatory', softened: false, trigger: (a) => {
       const fr = Array.isArray(a.family_risk) ? a.family_risk : [];
       return fr.includes('elderly') || fr.includes('elder');

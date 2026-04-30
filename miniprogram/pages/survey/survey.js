@@ -20,7 +20,8 @@ const FAMILY_RISK_OPTIONS = [
   { value: 'child', label: '有10岁以下儿童' },
   { value: 'elder', label: '有行动不便的老人' },
   { value: 'large_fixed', label: '有落地窗或整面玻璃墙（高≥2.1m或宽≥3m）' },
-  { value: 'wide_slider', label: '有宽推拉阳台门（单扇宽≥1.2m）' }
+  { value: 'wide_slider', label: '有宽推拉阳台门（单扇宽≥1.2m）' },
+  { value: 'none', label: '以上均无' }
 ];
 
 Page({
@@ -540,7 +541,15 @@ Page({
   onFamilyRiskTap(e) {
     const value = e.currentTarget.dataset.value;
     const current = Array.isArray(this.data.formData.family_risk) ? this.data.formData.family_risk : [];
-    const next = current.includes(value) ? current.filter(v => v !== value) : [...current, value];
+    let next;
+    if (value === 'none') {
+      // 选中「以上均无」→ 清空其他，仅保留 ['none']
+      next = current.includes('none') ? [] : ['none'];
+    } else {
+      // 选中其他项 → 若当前含 none，先移除 none，再正常 toggle
+      const withoutNone = current.filter(v => v !== 'none');
+      next = withoutNone.includes(value) ? withoutNone.filter(v => v !== value) : [...withoutNone, value];
+    }
     const map = {};
     next.forEach(v => { map[v] = true; });
     this.setData({
@@ -651,10 +660,14 @@ Page({
 
   // Q8: 多选家庭风险
   onFamilyRiskChange(e) {
-    const values = (e && e.detail && Array.isArray(e.detail.value)) ? e.detail.value : [];
+    let values = (e && e.detail && Array.isArray(e.detail.value)) ? e.detail.value : [];
+    // 互斥逻辑：若包含「以上均无」且还有其他项，只保留「以上均无」
+    if (values.includes('none') && values.length > 1) {
+      values = ['none'];
+    }
     const map = {};
     values.forEach((v) => { map[v] = true; });
-    this.setData({ 
+    this.setData({
       family_risk: values,
       'formData.family_risk': values,
       familyRiskSelectedMap: map

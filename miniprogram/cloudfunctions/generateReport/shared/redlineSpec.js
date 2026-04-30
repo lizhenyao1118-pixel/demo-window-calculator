@@ -25,8 +25,8 @@ function buildRedlineRegistry({ TERM, getTierLabel, getField }) {
     { id: 'R12', text: (a, r) => `整窗抗风压性能须满足本案要求，并提供整窗检测报告；其检测结果应不低于本案对应风压目标值P3≥${getField(r, 'P3')}kPa`, level: 'mandatory', softened: false, trigger: (a, r) => !!(r && (r.P3_required || r.P3 || r.wind_pressure_level)), group: '抗风性能', userMeaning: '高楼层风压显著高于普通住宅。型材壁厚不足或安装固定点不足，在台风或强风天气下可能导致窗框变形甚至脱落。须索取与本案风压等级对应的检测报告，并在进场时核查壁厚。' },
 
     // 7. 安全玻璃
-    { id: 'R13', text: '须采用安全玻璃（钢化或夹胶）；落地窗、大面积玻璃场景，夹胶构造可防止破碎后碎片伤人', level: 'mandatory', softened: false, trigger: (a, r) => !!(r && r.safetyForced), group: '安全玻璃', userMeaning: '本案存在高碰撞风险部位（落地窗/儿童活动区），此类场景应采用夹层安全玻璃，碎片不脱落。商家若以"钢化玻璃同样安全"替代，须提供该部位适用的安全玻璃类型依据，否则不予接受。' },
-    { id: 'R14', text: '安全玻璃须能提供型号、3C标识或其他可核验文件', level: 'mandatory', softened: false, trigger: (a, r) => !!(r && r.safetyForced), group: '安全玻璃', userMeaning: '安全玻璃必须有明确的身份标识，3C认证是最基本的核查方式。安装前须核对玻璃边部标识与合同约定一致。' },
+    { id: 'R13', text: '须采用安全玻璃（钢化或夹胶）；落地窗、大面积玻璃场景，夹胶构造可防止破碎后碎片伤人', level: 'mandatory', softened: false, trigger: (a, r) => !!(r && r.needsSafetyGlass), group: '安全玻璃', userMeaning: '本案存在高碰撞风险部位（落地窗/儿童活动区），此类场景应采用夹层安全玻璃，碎片不脱落。商家若以"钢化玻璃同样安全"替代，须提供该部位适用的安全玻璃类型依据，否则不予接受。' },
+    { id: 'R14', text: '安全玻璃须能提供型号、3C标识或其他可核验文件', level: 'mandatory', softened: false, trigger: (a, r) => !!(r && r.needsSafetyGlass), group: '安全玻璃', userMeaning: '安全玻璃必须有明确的身份标识，3C认证是最基本的核查方式。安装前须核对玻璃边部标识与合同约定一致。' },
 
     // 8. 适老化
     { id: 'R15', text: '执手操作力≤25N', level: 'mandatory', softened: false, trigger: (a) => {
