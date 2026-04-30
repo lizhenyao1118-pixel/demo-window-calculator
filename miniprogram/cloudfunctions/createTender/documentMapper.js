@@ -646,7 +646,7 @@ function buildParameterNote({ windPressure, soundInsulation, thermal, shgc, safe
     }
     lines.push(waterText);
   } else {
-    lines.push('⑤ **气密性**：气密性等级按 GB/T 7106 推荐等级确定。');
+    lines.push(`气密性：按 GB/T 7106 推荐等级确定`);
     lines.push(`水密性：按 GB/T 7106 推荐等级确定`);
   }
   if (inputs.needsSafetyGlass) {

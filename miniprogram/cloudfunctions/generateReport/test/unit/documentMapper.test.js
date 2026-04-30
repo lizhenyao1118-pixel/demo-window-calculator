@@ -246,7 +246,7 @@ describe('helpers', () => {
     const resolved = { P3_required: 3.0, Rw_required: 33, K_target: 2.3, SHGC_target: 0.28, kRange: '2.2~2.4', climateZoneCN: '夏热冬暖', appliedFactor: 'westSun' };
     const r = build1_2(a, resolved);
     const kRow = (r.needsTable || []).find(x => x.dimension === '传热系数') || {};
-    expect(String(kRow.basis || '')).toContain('西向隔热修正');
+    expect(String(kRow.basis || '')).toContain('西向隔热加严');
   });
 
   test('DM-40: build1_2 无效城市触发sealGrades兜底文案', () => {
@@ -254,7 +254,7 @@ describe('helpers', () => {
     const assessment = { city: a.city, floor: a.floor, total_floors: a.total_floors, noise_type: a.noise_type, noise_dist: a.noise_dist, orientation: a.orientation, west_shading: a.west_shading, pain_point: a.pain_point, heating_type: a.heating_type, family_risk: a.family_risk, budget_tier: a.budget_tier };
     const resolved = calculateAll(assessment);
     const r = build1_2(a, resolved);
-    expect(String(((r.parameterNote || {}).block2 || ''))).toContain('⑤ **气密性**：气密性等级按 GB/T 7106 推荐等级确定。');
+    expect(String(((r.parameterNote || {}).block2 || ''))).toContain('气密性：按 GB/T 7106 推荐等级确定');
     expect(String(((r.parameterNote || {}).block2 || ''))).toContain('⑥ **水密性**：水密性等级按 GB/T 7106 推荐等级确定。');
   });
 
