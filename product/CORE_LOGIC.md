@@ -129,7 +129,7 @@
 |---------|---------|---------|
 | `calculator-v2.js` | 所有性能参数计算结果 | `documentMapper.js` 的输入值 |
 | `arbitrator.js` | 配置层仲裁结果 | `documentMapper.js` 的配置字段 |
-| `documentMapper.js` | reportSnapshot 全部字段 | `result.wxml` 所有数据绑定 |
+| `documentMapper.js` | reportSnapshot 全部字段 | `result.wxml` 所有数据绑定；buildParameterNote 新增字段须确认在 chapter 根级别（D-type 防范） |
 | `index.js` | 云函数入口、snapshot 写入完整性 | summary 字段是否包含在 return 里 |
 | `result.wxml` / `result.wxss` | 输出层视觉渲染 | L1摘要卡 + L2四章显示逻辑 |
 | `result.js` | 页面数据加载、isPaid 状态 | Storage 读取路径、onUnlock 逻辑 |
@@ -248,7 +248,7 @@
 | 水密性 levelBar 溢出修复 | ✅ 已关闭 | 代码侧 Math.min(95,pos) 早已存在，条目登记过时；下限 5→0 越权改动已回滚（commit 1411bad） |
 | 清除 DEBUG log（index.js 331-332行） | ✅ 已关闭 | 行号漂移，331-332 为 snapshot.summary 生产代码，全文无 DEBUG 字串 |
 | 议题 6 Phase C | ✅ 已完成 | commit bc2cc02；目标导向章节重组 + 配置汇总答题表 + R10修正 |
-| 部署 generateReport | 🔲 待执行 | 前置：NTP时间同步检查 |
+| 部署 generateReport | ✅ 已完成 commit be505ee | 前置：NTP时间同步检查 |
 | 首页 Q&A 内容库建立 | 🔲 待执行 | 消费 userMeaning 内容；MVP方式B，独立维护不做关联跳转 |
 | 进场核查拍摄清单渲染实现 | 🔲 待执行 | M4-4，基于 CONTENT_DEFINITION_v1.1.md 第九节 |
 | B02 导航栏术语统一 | ✅ 已完成 | commit 60a56a2；survey.json navigationBarTitleText |
@@ -292,6 +292,12 @@
 | 2026-04-21 | ✅ 完成 | documentMapper.js 隔声条款格式 3 改动 | commit c83b336；R08 红线已覆盖 Rw+Ctr 说明；chapter2.narrative 未渲染为既有状态，登记架构待办 |
 | 2026-04-21 | ✅ 完成 | 议题 4 正式立案 | 白皮书+反馈数据库+同步协议设计完成；飞轮随推广启动激活 |
 | 2026-04-30 | ✅ 完成 | 议题 6 Phase C · 目标导向章节重组 + 配置汇总答题表 + R10修正 | commit bc2cc02；用例1真机通过；buildPDF残留已摘除 |
+| 2026-04-30 | ✅ 完成 | 议题 6 安全章修复（用例 4a-4e 真机通过） | commit d8991c7；四问题：问卷「以上均无」+ 防坠收窄casement + R13/R14收窄needsSafetyGlass + triggers渲染补全 |
+| 2026-04-30 | ✅ 完成 | R13/R14 文本优化 + chapter5.requirements 对齐 | commit 20d2ccc / 40f2d64 |
+| 2026-04-30 | ✅ 完成 | 红线定向审查 + R05隔热条宽度动态化 | commit e53e096；R15/R16确认无需动态；bar.spec死代码清理 |
+| 2026-04-30 | ⚠️ 未完成 | narrative推导说明分章渲染 | commit 9d389dd/5fffc78/64dab63；数据管道已搭建（buildParameterNote分组返回+各章节消费），但部署后真机仍显示旧格式（序号+星号未去除、chapter3标题未更新），根因待查 |
+| 2026-04-30 | ✅ 完成 | SPEC-NAR-FIX · narrative 文本格式清理 | 圆数字序号 ①~⑦ 和 markdown ** 全部清除；双副本同步 |
+| 2026-04-30 | ✅ 完成 | SPEC-NAR-V2 · narrative 渲染修复 + 文本补全（6项） | commit be505ee；Fix1 chapter3标题抗风→抗风压 / Fix2 ch1 narrative位置统一 / Fix3 ch5 narrative删除 / Fix4 气密性升级依据补全 / Fix5 水密性升级依据补全 / Fix6 chapter3.narrative字段层级修复（D-type） |
 
 ### 历史归档
 
@@ -681,6 +687,6 @@ Phase C ✅ 已完成（2026-04-30，commit bc2cc02）
 
 ### 待办 · chapter2.narrative 渲染决策
 
-block2（推导段落）写入 snapshot 但 result.wxml 无消费节点，长期未渲染。
-激活条件：收到"用户不理解数字来源"类反馈 ≥3 条，或产品主动决策提升第二章透明度。
-改动范围：result.wxml 插入渲染节点 + wxss 补样式（单文件，低风险）。
+block2（推导段落）已拆分为 chapter1_note~chapter5_note 按章节独立渲染（commit be505ee）。
+原 block2 字段保留在 return 中但不再被消费。
+当前状态：各章节推导说明已独立渲染，本待办实质已解决。如后续需要第二章内独立的推导段落（区别于当前的热工+SHGC两行），可在此基础上扩展。
