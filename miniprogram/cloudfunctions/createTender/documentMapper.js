@@ -1636,7 +1636,7 @@ function mapToSections(resolved, answers, pdfNo) {
         window_type: normalizedAnswers.window_type
       },
       requirements: [
-        needsSafetyGlass ? { item: '玻璃安全性', spec: '钢化+夹胶，PVB>=0.76mm' } : null,
+        needsSafetyGlass ? { item: '玻璃安全性', spec: '安全玻璃（钢化或夹胶）；超大尺寸/面积场景需夹胶或加厚' } : null,
         normalizedAnswers.window_type === 'sliding' ? { item: '推拉窗限位', spec: '儿童安全锁+限位器' } : null,
         ...(normalizedAnswers.window_type === 'casement' ? [{ item: '防坠装置', spec: '外开窗须配置防止窗扇脱落的安全装置，承载能力符合产品检测报告' }] : [])
       ].filter(Boolean),
