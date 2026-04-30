@@ -955,6 +955,7 @@ function buildBudgetSpecView(resolved, answers) {
   };
   const tierStandardGlass = tierStandardGlassMap[tier] || tierStandardGlassMap.B;
   const bar = getInsulationBarRequirement(Number(getField(resolved, 'K')));
+  resolved.insulationBar_mm = bar.min_mm;
 
   const familyRisk = Array.isArray(answers.family_risk) ? answers.family_risk : [];
   const window_features = {
@@ -1499,7 +1500,7 @@ function mapToSections(resolved, answers, pdfNo) {
       },
       factors: [
         { name: '玻璃配置', description: 'Low-E 镀膜位置、惰性气体填充' },
-        { name: '隔热条规格', description: getInsulationBarRequirement(K).spec || '按 K 值要求匹配' },
+        { name: '隔热条规格', description: `≥${getInsulationBarRequirement(K).min_mm}mm，${getInsulationBarRequirement(K).process}` },
         { name: '系统认证', description: '型材+玻璃+五金整体系统热工认证' }
       ],
       redlines: (sharedRedlineChecklist.mandatory || []).filter(r =>
@@ -1699,7 +1700,7 @@ function mapToSections(resolved, answers, pdfNo) {
         F12: '无指定（商家自报）',
         F13: '6063-T5 或同等',
         F14: `>=${budgetSpec.profileWallThickness || 1.5}mm`,
-        F15: getInsulationBarRequirement(K).spec || '按 K 值匹配',
+        F15: `≥${getInsulationBarRequirement(K).min_mm}mm，${getInsulationBarRequirement(K).process}`,
         F16: '无指定（商家自报）',
         F17: '无指定（商家自报）',
         F18: '>=5 年',

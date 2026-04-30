@@ -7,7 +7,7 @@ function buildRedlineRegistry({ TERM, getTierLabel, getField }) {
     // 2. 系统配套与构造
     { id: 'R03', text: '须提供完整系统窗认证/热工报告', level: 'mandatory', softened: false, trigger: () => true, group: '系统配套与构造', userMeaning: '系统窗的热工性能取决于型材+隔热条+玻璃的整体配合。商家常见做法是非配套拼装，整窗实际K值与标称值存在偏差。完整系统认证文件是唯一可核查的依据。' },
     { id: 'R04', text: '隔热条须与型材系统配套，不接受非原厂或非同系统拼装', level: 'mandatory', softened: false, trigger: () => true, group: '系统配套与构造', userMeaning: '非配套隔热条会导致型材热工性能失真，整窗K值可能远高于标称值。外观上无法识别，须在合同中明确约定并要求认证文件。' },
-    { id: 'R05', text: (a, r) => `隔热条宽度≥28mm，禁止仿断桥产品`, level: 'mandatory', softened: false, trigger: () => true, group: '系统配套与构造', userMeaning: '隔热条宽度直接影响型材整体K值。宽度不足时，即使玻璃达标，整窗K值仍可能超出本案要求。须在报价中明确列出隔热条型号、宽度及与型材系统的配套关系。' },
+    { id: 'R05', text: (a, r) => `隔热条宽度≥${r.insulationBar_mm || 28}mm，禁止仿断桥产品`, level: 'mandatory', softened: false, trigger: () => true, group: '系统配套与构造', userMeaning: '隔热条宽度直接影响型材整体K值。宽度不足时，即使玻璃达标，整窗K值仍可能超出本案要求。须在报价中明确列出隔热条型号、宽度及与型材系统的配套关系。' },
 
     // 3. 热工性能
     { id: 'R06', text: '禁止单玻或无Low-E膜的普通中空玻璃', level: 'mandatory', softened: false, trigger: () => true, group: '热工性能', userMeaning: '是否满足本案传热系数要求，应以整窗K值检测报告为准，不能仅凭"双层玻璃"判断。须要求商家明确说明玻璃配置、是否含Low-E膜及膜层位置。' },
