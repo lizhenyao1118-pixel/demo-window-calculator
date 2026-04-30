@@ -450,7 +450,8 @@ function build1_2(answers, resolved) {
       painPoint: answers.pain_point,
       isHighFloor: Number(answers.floor) >= 7,
       hasBigWindow: Array.isArray(answers.family_risk) && answers.family_risk.includes('large_fixed'),
-      hasChild: Array.isArray(answers.family_risk) && (answers.family_risk.includes('child') || answers.family_risk.includes('children'))
+      hasChild: Array.isArray(answers.family_risk) && (answers.family_risk.includes('child') || answers.family_risk.includes('children')),
+      needsSafetyGlass: Array.isArray(answers.family_risk) && (answers.family_risk.includes('large_fixed') || answers.family_risk.includes('floor_window'))
     }
   });
 
@@ -599,7 +600,7 @@ function buildParameterNote({ windPressure, soundInsulation, thermal, shgc, safe
     : '';
   lines.push(`② **隔声**：噪声环境评估为安静（夜间本底噪声约35–40dB），隔声基准取${soundInsulation.baseRw} dB，无距离修正${quietUsageNote}，最终 ≥${soundInsulation.value} dB。依据：GB 50118 · 安静环境基础隔声标准。`);
 } else {
-  lines.push(`② **隔声**：${noiseText}，基础 Rw≥${soundInsulation.baseRw} dB，距离修正 ${distAdjText}，${usageExplain}，最终 ≥${soundInsulation.value} dB。依据：GB 50118 + HJ 2055 · 轨道交通中距离声学计算推导值。`);
+  lines.push(`② **隔声**：${noiseText}，基础 Rw≥${soundInsulation.baseRw} dB，距离修正 ${distAdjText}，${usageExplain}，最终 ≥${soundInsulation.value} dB。依据：GB 50118 + 工程经验修正。`);
 }
 
   const factorMap = {
@@ -648,10 +649,12 @@ function buildParameterNote({ windPressure, soundInsulation, thermal, shgc, safe
     lines.push('⑤ **气密性**：气密性等级按 GB/T 7106 推荐等级确定。');
     lines.push('⑥ **水密性**：水密性等级按 GB/T 7106 推荐等级确定。');
   }
-  lines.push(`⑦ **安全等级**：${inputs.hasBigWindow ? '落地窗 + ' : ''}${inputs.hasChild ? '儿童家庭' : ''}依据 GB 15763.3 强制要求夹胶安全玻璃构造。`);
+  if (inputs.needsSafetyGlass) {
+    lines.push(`⑦ **安全等级**：${inputs.hasBigWindow ? '落地窗 + ' : ''}${inputs.hasChild ? '儿童家庭' : ''}依据 GB 15763.3 强制要求夹胶安全玻璃构造。`);
+  }
   const block2 = lines.join('\n');
   const block3 = '其中安全等级依据 GB 15763.3 强制条款，属于强制性要求，不可降级。';
-  return { block1, block2, block3 };
+  return { block1, block2, block3, lines };
 }
 
 function buildCoreTension(answers, resolved) {
@@ -1503,6 +1506,9 @@ function mapToSections(resolved, answers, pdfNo) {
         { name: '隔热条规格', description: `≥${getInsulationBarRequirement(K).min_mm}mm，${getInsulationBarRequirement(K).process}` },
         { name: '系统认证', description: '型材+玻璃+五金整体系统热工认证' }
       ],
+      narrative: {
+        lines: needsAnalysis.parameterNote?.lines || []
+      },
       redlines: (sharedRedlineChecklist.mandatory || []).filter(r =>
         ['R03', 'R04', 'R05', 'R07'].includes(r.id)
       ),

@@ -196,6 +196,13 @@
           </view>
         </view>
       </view>
+      <!-- 2.2.1 推导说明 -->
+      <view class="narrative-section" wx:if="{{chapter2.narrative.lines.length > 0}}">
+        <text class="section-sub-title">推导说明</text>
+        <view class="narrative-lines">
+          <text wx:for="{{chapter2.narrative.lines}}" wx:key="index" class="narrative-line">{{item}}</text>
+        </view>
+      </view>
       <!-- 2.3 热工红线 -->
       <view class="redlines-section" wx:if="{{chapter2.redlines.length > 0}}">
         <text class="section-sub-title">热工红线</text>
