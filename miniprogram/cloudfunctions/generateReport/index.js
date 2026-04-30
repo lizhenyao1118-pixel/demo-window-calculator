@@ -247,34 +247,20 @@ exports.main = async (event, context) => {
       qrCodeBuffer = null;
     }
 
-    // 4. 生成PDF（Phase 1：使用新的 buildPDF）
-    await buildPDF(sections, tempPath, { tenderId, qrCodeBuffer });
-    
-    // 5. 验证文件（保留原有逻辑）
-    const stats = fs.statSync(tempPath);
-    
-    if (stats.size < 1000) {
-      throw new Error(`PDF文件生成异常，大小仅${stats.size}字节`);
-    }
-    
-    // 6. 上传到云存储（保留原有逻辑）
-    const fileContent = fs.readFileSync(tempPath);
-    const uploadRes = await cloud.uploadFile({
-      cloudPath: `reports/${fileName}`,
-      fileContent: fileContent,
-    });
-    
-    // 7. 写入数据库（保留原有逻辑）
+    // 4. PDF 生成已摘除（紧急修复）
+    // await buildPDF(sections, tempPath, { tenderId, qrCodeBuffer });
+
+    // 5-6. 文件验证与上传已跳过（紧急修复）
+
+    // 7. 写入数据库（保留原有逻辑，PDF 字段已摘除）
     try {
       const addRes = await db.collection('assessments').add({
         data: {
-          openid: OPENID, 
+          openid: OPENID,
           formData: assessmentData,
           computedData: computed,
-          fileID: uploadRes.fileID,
-          fileName: fileName,
-          fileSize: stats.size,
-          isDisclaimer: sections.cover.isRisk, // 使用新结构中的 isRisk
+          // fileID / fileName / fileSize 已摘除（紧急修复）
+          isDisclaimer: sections.cover.isRisk,
           status: sections.cover.isRisk ? 'risk_pending_review' : 'normal',
           createdAt: db.serverDate(),
           updatedAt: db.serverDate()
@@ -291,12 +277,10 @@ exports.main = async (event, context) => {
       }
     }
 
-    // 8. 返回成功（保留原有逻辑）
+    // 8. 返回成功（保留原有逻辑，PDF 字段已摘除）
     return {
       success: true,
-      fileID: uploadRes.fileID,
-      fileName: fileName,
-      fileSize: stats.size,
+      // fileID / fileName / fileSize 已摘除（紧急修复）
       isDisclaimer: sections.cover.isRisk,
       reportId,
       tenderId,

@@ -18,8 +18,24 @@
   "compileType": "miniprogram",
   "simulatorPluginLibVersion": {},
   "packOptions": {
-    "ignore": [],
-    "include": []
+    "ignore": [
+      {
+        "type": "folder",
+        "value": "cloudfunctions"
+      },
+      {
+        "type": "glob",
+        "value": "**/*.js.map"
+      },
+      {
+        "type": "glob",
+        "value": "**/package-lock.json"
+      },
+      {
+        "type": "file",
+        "value": "cloudfunctions/documentMapper.js.bak"
+      }
+    ]
   },
   "appid": "wx07d4ee1bce2c489d",
   "editorSetting": {}

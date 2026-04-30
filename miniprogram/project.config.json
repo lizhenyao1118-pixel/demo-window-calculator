@@ -16,7 +16,7 @@
     "useCompilerPlugins": false,
     "minifyWXML": true,
     "compileWorklet": false,
-    "uploadWithSourceMap": true,
+    "uploadWithSourceMap": false,
     "packNpmManually": false,
     "minifyWXSS": true,
     "localPlugins": false,
@@ -29,7 +29,20 @@
   "compileType": "miniprogram",
   "simulatorPluginLibVersion": {},
   "packOptions": {
-    "ignore": [],
+    "ignore": [
+      {
+        "type": "folder",
+        "value": "cloudfunctions"
+      },
+      {
+        "type": "glob",
+        "value": "**/package-lock.json"
+      },
+      {
+        "type": "file",
+        "value": "cloudfunctions/documentMapper.js.bak"
+      }
+    ],
     "include": []
   },
   "appid": "wx7843c028957c1000",

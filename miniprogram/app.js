@@ -16,6 +16,23 @@ App({
     // ===== 新增：A/B测试与埋点初始化 =====
     this.initABTestAndTrack()
     // ===== 新增结束 =====
+
+    // 隐私授权处理
+    wx.onNeedPrivacyAuthorization(resolve => {
+      wx.showModal({
+        title: '隐私保护提示',
+        content: '在使用本服务前，请阅读并同意《隐私政策》',
+        confirmText: '同意',
+        cancelText: '拒绝',
+        success: (res) => {
+          if (res.confirm) {
+            resolve({ buttonId: 'agree-btn', event: 'agree' })
+          } else {
+            resolve({ buttonId: 'disagree-btn', event: 'disagree' })
+          }
+        }
+      })
+    })
   },
 
   // ===== 新增方法：A/B测试初始化（必须在获取openid后执行）=====

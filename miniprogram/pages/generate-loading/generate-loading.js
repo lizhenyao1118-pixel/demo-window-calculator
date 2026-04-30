@@ -48,12 +48,12 @@ Page({
         wx.setStorageSync('report_summary',  res.result.snapshot.summary || {});
         wx.setStorageSync('report_paid',     false);
 
-        // 存储 fileID
-        wx.setStorageSync('last_pdf_fileid', res.result.fileID);
+        // fileID 已摘除（紧急修复）
+        // wx.setStorageSync('last_pdf_fileid', res.result.fileID);
 
-        // 导航到结果页
+        // 导航到结果页（fileID 参数已移除）
         wx.redirectTo({
-          url: '/pages/result/result?fileID=' + res.result.fileID
+          url: '/pages/result/result'
         });
       },
 

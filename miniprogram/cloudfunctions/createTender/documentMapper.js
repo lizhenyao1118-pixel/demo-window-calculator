@@ -632,7 +632,7 @@ function buildParameterNote({ windPressure, soundInsulation, thermal, shgc, safe
     const waterParts = [];
     if (isCoastal) waterParts.push('沿海城市');
     if (isHighFloor) waterParts.push('高层');
-    let waterText = '⑥ **水密性**：';
+    let waterText = `水密性：`;
     if (waterParts.length > 0) {
       let reason = '';
       if (isCoastal || isTyphoon) {
@@ -647,7 +647,7 @@ function buildParameterNote({ windPressure, soundInsulation, thermal, shgc, safe
     lines.push(waterText);
   } else {
     lines.push('⑤ **气密性**：气密性等级按 GB/T 7106 推荐等级确定。');
-    lines.push('⑥ **水密性**：水密性等级按 GB/T 7106 推荐等级确定。');
+    lines.push(`水密性：按 GB/T 7106 推荐等级确定`);
   }
   if (inputs.needsSafetyGlass) {
     lines.push(`⑦ **安全等级**：${inputs.hasBigWindow ? '落地窗 + ' : ''}${inputs.hasChild ? '儿童家庭' : ''}依据 GB 15763.3 强制要求夹胶安全玻璃构造。`);
@@ -1564,7 +1564,7 @@ function mapToSections(resolved, answers, pdfNo) {
 
     // 第三章 · 抗风
     chapter3: {
-      title: '抗风',
+      title: '抗风压',
       targetValue: {
         P3: P3,
         unit: 'kPa'

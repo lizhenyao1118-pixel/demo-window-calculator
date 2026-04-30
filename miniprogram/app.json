@@ -51,5 +51,6 @@
         "selectedIconPath": "images/tab/profile-active.png"
       }
     ]
-  }
+  },
+  "__usePrivacyCheck__": true
 }

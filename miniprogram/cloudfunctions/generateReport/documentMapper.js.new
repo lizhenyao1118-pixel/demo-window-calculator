@@ -16,7 +16,7 @@ const STANDARDS_MAP = {
   },
   sound_insulation: {
     code: 'GB/T 8485-2008',
-    short: 'GB/T 8485',
+    short: 'GB/T 8485-2008',
     name: '建筑门窗空气声隔声性能分级及检测方法'
   },
   thermal: {
@@ -211,6 +211,24 @@ const ACCEPTANCE_NODES = {
       { text: '⑬ 执手操作力正常，关键安全配件按合同核查', reason: '安全配件是本案强制要求，竣工时须逐项确认实际安装状态与合同约定一致' },
     ]
   }
+};
+
+const REDLINE_USER_MEANING = {
+  'R-profile-material': '部分商家用回收铝或杂料替代原生铝，外观无法区分。杂料型材强度不足，抗风压性能无法保证。材质证明、出厂合格证和必要的进场复验资料是核验材质真伪的主要依据，外观不能作为判断依据。',
+  'R-profile-thickness': '壁厚是型材抗风压的主要参数之一。商家常见说法是"我们产品质量很好"，但不提供壁厚数据。壁厚不足在极端天气下可能导致型材变形或破坏，须要求提供截面检测报告。',
+  'R-profile-cert': '系统窗的热工性能取决于型材+隔热条+玻璃的整体配合。商家常见做法是非配套拼装，整窗实际K值与标称值存在偏差。完整系统认证文件是唯一可核查的依据。',
+  'R-profile-thermal-bar': '非配套隔热条会导致型材热工性能失真，整窗K值可能远高于标称值。外观上无法识别，须在合同中明确约定并要求认证文件。',
+  'R-thermal-bar-width': '隔热条宽度直接影响型材整体K值。宽度不足时，即使玻璃达标，整窗K值仍可能超出本案要求。须在报价中明确列出隔热条型号、宽度及与型材系统的配套关系。',
+  'R-glass-type': '是否满足本案传热系数要求，应以整窗K值检测报告为准，不能仅凭"双层玻璃"判断。须要求商家明确说明玻璃配置、是否含Low-E膜及膜层位置。',
+  'R-glass-thermal-cert': '这是整窗层面的性能指标，不是玻璃单独的指标。商家常只说玻璃参数而不提整窗认证，两者可能有显著差异。须要求提供整窗热工性能检测报告，而非仅凭玻璃参数推算。',
+  'R-glass-system-match': '配套是系统窗热工性能的基础保障。非原厂配套隔热条可能导致热工性能偏离标称值，须在认证文件中核查型材与隔热条的配套关系。',
+  'R-acoustic': '隔声是整窗系统性能，受玻璃、密封、安装综合影响。商家常见说法是"我们玻璃隔声好"，但整窗隔声量与玻璃单独指标有显著差异。第三方声学检测报告是唯一可信依据，须索取报告编号并可查。',
+  'R-acoustic-seal': '接缝处理是隔声的薄弱环节。即使玻璃达标，接缝气密性不足仍会影响整窗隔声表现。须要求商家在合同中说明密封工艺，并在安装过程中留存影像。',
+  'R-sealant': '结构胶与普通密封胶外观相似，但力学性能和耐久性差异极大。普通密封胶长期使用后开裂，影响气密、水密和结构安全。须要求商家提供所用密封胶的产品说明书。',
+  'R-seal-grades': '气密水密等级直接影响隔声、保温和防水性能。安装节点是决定性因素，仅靠产品本身无法保证。须要求安装全程按设计图纸施工，打胶留影像记录，竣工后按合同约定的检测方式进行验收。',
+  'R-wind': '高楼层风压显著高于普通住宅。型材壁厚不足或安装固定点不足，在台风或强风天气下可能导致窗框变形甚至脱落。须索取与本案风压等级对应的检测报告，并在进场时核查壁厚。',
+  'R-safety-glass': '本案存在高碰撞风险部位（落地窗/儿童活动区），此类场景应采用夹层安全玻璃，碎片不脱落。商家若以"钢化玻璃同样安全"替代，须提供该部位适用的安全玻璃类型依据，否则不予接受。',
+  'R15': '适老化门窗没有全国统一强制标准，商家说"适老化设计"时通常无对应检测文件可核查。可用的核验方式：①要求说明把手形式（横执杆式或下压式，不接受球形把手）；②要求把手安装高度在850-1000mm范围内；③确认是否设置门槛及过渡方式。',
 };
 
 const REDLINE_REGISTRY = buildRedlineRegistry({ TERM, getTierLabel, getField });
@@ -450,8 +468,7 @@ function build1_2(answers, resolved) {
       painPoint: answers.pain_point,
       isHighFloor: Number(answers.floor) >= 7,
       hasBigWindow: Array.isArray(answers.family_risk) && answers.family_risk.includes('large_fixed'),
-      hasChild: Array.isArray(answers.family_risk) && (answers.family_risk.includes('child') || answers.family_risk.includes('children')),
-      needsSafetyGlass: Array.isArray(answers.family_risk) && (answers.family_risk.includes('large_fixed') || answers.family_risk.includes('floor_window'))
+      hasChild: Array.isArray(answers.family_risk) && (answers.family_risk.includes('child') || answers.family_risk.includes('children'))
     }
   });
 
@@ -466,8 +483,8 @@ function build1_2(answers, resolved) {
 
 function getThermalModifier(formData) {
   const isWest = formData.orientation === 'west' || formData.orientation === '西';
-  if (isWest && formData.west_shading === false) return '西向隔热加严';
-  if (formData.heating_type === 'none') return '无供暖保温加严';
+  if (isWest && formData.west_shading === false) return '西向隔热修正';
+  if (formData.heating_type === 'none') return '无供暖保温修正';
   if (formData.heating_type === 'self') return '自采暖修正';
   return '标准热工要求';
 }
@@ -509,11 +526,11 @@ function buildNeedsTable(resolved, answers, sealGrades) {
   const kText = Number.isFinite(kNum) ? kNum.toFixed(1) : String(getField(resolved, 'K'));
   let kBasisText = `${czCN}区基准`;
   if (resolved.appliedFactor === 'heating') {
-    if (answers.heating_type === 'self') kBasisText = `${czCN}区 自采暖保温加严`;
+    if (answers.heating_type === 'self') kBasisText = `${czCN}区 自采暖保温修正`;
   } else if (resolved.appliedFactor === 'westSun') {
-    kBasisText = `${czCN}区 西向隔热加严`;
+    kBasisText = `${czCN}区 西向隔热修正`;
   } else if (resolved.appliedFactor === 'bigWindow') {
-    kBasisText = `${czCN}区 落地窗隔热加严`;
+    kBasisText = `${czCN}区 落地窗隔热修正`;
   }
 
   const sg = sealGrades || { airMin: 4, airRec: 4, airGap: 0, waterMin: 3, waterRec: 4, waterGap: 1, isFixed: false };
@@ -521,30 +538,65 @@ function buildNeedsTable(resolved, answers, sealGrades) {
   const airValue = `本案目标值：≥${sg.airRec}级`;
   const waterValue = `本案目标值：≥${sg.waterRec}级`;
 
+  // derivation computation helpers
+  const _noiseTypeLabel = NOISE_TYPE_MAP[answers.noise_type] || '噪声';
+  const _distLabel = NOISE_DIST_MAP[answers.noise_dist] || '';
+  const _rwBase = { main_road: 35, elevated: 38, rail: 40, quiet: 30 }[answers.noise_type] || 30;
+  const _distAdj = { lt20: 3, '20to50': 0, gt50: -3, gt50_shielded: -3 }[answers.noise_dist] || 0;
+  const _usageAdj = answers.noise_type === 'rail' ? 0 : (answers.pain_point === 'sound' ? 3 : 0);
+  const _rwAdjParts = [];
+  if (_distAdj !== 0) _rwAdjParts.push(`距离修正${_distAdj > 0 ? '+' : ''}${_distAdj}dB`);
+  if (_usageAdj > 0) _rwAdjParts.push(`隔声优先修正+${_usageAdj}dB`);
+  const _orientLabel = { east: '东', west: '西', south: '南', north: '北', southeast: '东南', southwest: '西南', northeast: '东北', northwest: '西北' }[answers.orientation] || answers.orientation || '';
+  const _isCoastal = !!(CLIMATE_SPEC[answers.city] && CLIMATE_SPEC[answers.city].isCoastal);
+
   return [
     {
       dimension: '抗风压',
       value: `≥ ${getField(resolved, 'P3')} kPa`,
       basis: `${STANDARDS_MAP.wind_pressure.short} · ${resolved.wind_zone || 'W?'}风区${(heightRatio * 100).toFixed(0)}%`,
-      levelBar: { lowValue: '1.0', lowLabel: '基础合规', highValue: '6.0', highLabel: '行业高端', midValue: getField(resolved, 'P3'), unit: 'kPa', direction: 'ascending' }
+      levelBar: { lowValue: '1.0', lowLabel: '基础合规', highValue: '6.0', highLabel: '行业高端', midValue: getField(resolved, 'P3'), unit: 'kPa', direction: 'ascending' },
+      derivation: `${answers.city}属${resolved.wind_zone || 'W?'}风区，第${answers.floor}层高度比${(heightRatio * 100).toFixed(0)}%，按GB/T 7106计算，本案要求≥${getField(resolved, 'P3')}kPa`,
+      marketReality: Number(getField(resolved, 'P3')) < 3.5
+        ? { tag: '普遍可达', description: '市场主流系统窗均可覆盖，需索取抗风压性能检测报告（GB/T 7106）' }
+        : { tag: '需主动筛选', description: '需1.5mm以上壁厚型材，须明确要求并索取截面检测报告，进场时现场核查壁厚' },
     },
     {
       dimension: '隔声',
       value: `≥ ${getField(resolved, 'Rw')} dB`,
       basis: `${STANDARDS_MAP.sound_insulation.short} · ${getNoiseShortDesc(answers.noise_type, answers.noise_dist)}`,
-      levelBar: { lowValue: '30', lowLabel: '基础合规', highValue: '50', highLabel: '行业高端', midValue: getField(resolved, 'Rw'), unit: 'dB', direction: 'ascending' }
+      levelBar: { lowValue: '30', lowLabel: '基础合规', highValue: '50', highLabel: '行业高端', midValue: getField(resolved, 'Rw'), unit: 'dB', direction: 'ascending' },
+      derivation: answers.noise_type === 'quiet'
+        ? `周边环境安静，基础Rw≥${_rwBase}dB${_usageAdj > 0 ? `，隔声优先修正+${_usageAdj}dB` : ''}，本案要求Rw≥${getField(resolved, 'Rw')}dB`
+        : `${answers.city}${_noiseTypeLabel}${_distLabel ? '，' + _distLabel : ''}，基础Rw≥${_rwBase}dB${_rwAdjParts.length > 0 ? '，' + _rwAdjParts.join('，') : ''}，本案要求Rw≥${getField(resolved, 'Rw')}dB`,
+      marketReality: (() => {
+        const rw = Number(getField(resolved, 'Rw'));
+        if (rw < 35) return { tag: '普遍可达', description: '市场主流系统窗可达，重点核验：索取整窗第三方声学检测报告' };
+        if (rw <= 42) return { tag: '普遍可达', description: '中高端系统窗普遍可达，需明确要求夹胶中空玻璃并索取第三方声学检测报告' };
+        return { tag: '需主动筛选', description: '需高规格夹胶中空玻璃配合声学密封工艺，须与商家逐项确认具体配置' };
+      })(),
     },
     {
       dimension: '传热系数',
       value: `K≤${kText} W/(m²·K)${thermalRange ? `（参考范围${thermalRange}）` : ''}`,
       basis: `${STANDARDS_MAP.thermal.short} · ${kBasisText}`,
-      levelBar: { lowValue: '3.0', lowLabel: '基础合规', highValue: '1.0', highLabel: '行业高端', midValue: kNum, unit: 'W/(m²·K)', direction: 'descending' }
+      levelBar: { lowValue: '3.0', lowLabel: '基础合规', highValue: '1.0', highLabel: '行业高端', midValue: kNum, unit: 'W/(m²·K)', direction: 'descending' },
+      derivation: `${czCN}气候区，基准K≤${resolved.kBase || '2.4'}W/(m²·K)${resolved.appliedFactor && kBasisText !== czCN + '区基准' ? `，${kBasisText.replace(czCN + '区 ', '')}` : ''}，本案取K≤${kText}W/(m²·K)`,
+      marketReality: (() => {
+        if (kNum > 2.0) return { tag: '普遍可达', description: '断桥铝+普通Low-E中空玻璃可达，需索取整窗热工检测报告' };
+        if (kNum >= 1.5) return { tag: '需主动筛选', description: '需断桥铝+高性能Low-E中空玻璃，须明确隔热条规格并索取系统窗整窗热工认证文件' };
+        return { tag: '需主动筛选', description: '需被动式系统窗或三玻两腔，市场供给有限，须专项确认产品系列和认证文件' };
+      })(),
     },
     {
       dimension: '太阳得热',
       value: `≤ ${getField(resolved, 'SHGC')}`,
       basis: `${STANDARDS_MAP.shgc.short} · ${getShgcNote(answers)}`,
-      levelBar: { lowValue: '0.60', lowLabel: '基础合规', highValue: '0.15', highLabel: '行业高端', midValue: getField(resolved, 'SHGC'), unit: '', direction: 'descending' }
+      levelBar: { lowValue: '0.60', lowLabel: '基础合规', highValue: '0.15', highLabel: '行业高端', midValue: getField(resolved, 'SHGC'), unit: '', direction: 'descending' },
+      derivation: `${_orientLabel ? _orientLabel + '向朝向，' : ''}${czCN}气候区，${getShgcNote(answers)}，本案取SHGC≤${getField(resolved, 'SHGC')}`,
+      marketReality: Number(getField(resolved, 'SHGC')) > 0.35
+        ? { tag: '普遍可达', description: '普通Low-E镀膜玻璃可达，需确认膜层位置并索取SHGC检测报告' }
+        : { tag: '需主动筛选', description: '需高遮阳型Low-E或双Low-E镀膜，需明确要求商家提供膜层位置说明及SHGC检测数据' },
     },
     {
       dimension: '安全等级',
@@ -555,13 +607,21 @@ function buildNeedsTable(resolved, answers, sealGrades) {
       dimension: '气密性',
       value: airValue,
       basis: `${STANDARDS_MAP.wind_pressure.short} · 气密性能等级${fixedNote}`,
-      levelBar: { lowValue: '4', lowLabel: '基础合规', highValue: '8', highLabel: '行业高端', midValue: sg.airRec, unit: '级', direction: 'ascending' }
+      levelBar: { lowValue: '4', lowLabel: '基础合规', highValue: '8', highLabel: '行业高端', midValue: sg.airRec, unit: '级', direction: 'ascending' },
+      derivation: `住宅基础气密性4级${Number(answers.floor) >= 7 ? '，高层建议上调' : ''}，本案目标值≥${sg.airRec}级`,
+      marketReality: { tag: '普遍可达', description: '市场主流产品均可达到，决定性因素是安装质量，须要求打胶全程留影像记录' },
     },
     {
       dimension: '水密性',
       value: waterValue,
       basis: `${STANDARDS_MAP.wind_pressure.short} · 水密性能等级${fixedNote}`,
-      levelBar: { lowValue: '2', lowLabel: '基础合规', highValue: '6', highLabel: '行业高端', midValue: sg.waterRec, unit: '级', direction: 'ascending' }
+      levelBar: { lowValue: '2', lowLabel: '基础合规', highValue: '6', highLabel: '行业高端', midValue: sg.waterRec, unit: '级', direction: 'ascending' },
+      derivation: _isCoastal
+        ? `${answers.city}沿海城市，水密性上调以应对台风季暴雨，本案目标值≥${sg.waterRec}级`
+        : (Number(answers.floor) >= 7
+          ? `第${answers.floor}层高层，水密性上调提升抗渗能力，本案目标值≥${sg.waterRec}级`
+          : `基础水密性${sg.waterMin}级，本案目标值≥${sg.waterRec}级`),
+      marketReality: { tag: '普遍可达', description: '市场主流产品均可达到，决定性因素是安装节点和打胶质量，须要求安装全程留影像记录' },
     }
   ];
 }
@@ -592,16 +652,16 @@ function buildParameterNote({ windPressure, soundInsulation, thermal, shgc, safe
   const distAdjText = `${soundInsulation.distAdj > 0 ? '+' : ''}${soundInsulation.distAdj}`;
   const usageAdjText = `${soundInsulation.usageAdj > 0 ? '+' : ''}${soundInsulation.usageAdj}`;
   const usageExplain = (inputs.noiseType === 'rail')
-    ? '隔声降噪诉求加严 0（轨道噪声已按最严基准计）'
-    : `隔声降噪诉求加严 ${usageAdjText}`;
-  if (inputs.noise_type === 'quiet') {
-  const quietUsageNote = soundInsulation.usageAdj > 0
-    ? `；因您将隔声降噪列为核心诉求，加严修正+${soundInsulation.usageAdj}`
-    : '';
-  lines.push(`② **隔声**：噪声环境评估为安静（夜间本底噪声约35–40dB），隔声基准取${soundInsulation.baseRw} dB，无距离修正${quietUsageNote}，最终 ≥${soundInsulation.value} dB。依据：GB 50118 · 安静环境基础隔声标准。`);
-} else {
-  lines.push(`② **隔声**：${noiseText}，基础 Rw≥${soundInsulation.baseRw} dB，距离修正 ${distAdjText}，${usageExplain}，最终 ≥${soundInsulation.value} dB。依据：GB 50118 + 工程经验修正。`);
-}
+    ? '隔声降噪诉求修正 0（轨道噪声已按最严基准计）'
+    : `隔声降噪诉求修正 ${usageAdjText}`;
+  if (inputs.noiseType === 'quiet') {
+    const quietUsageNote = soundInsulation.usageAdj > 0
+      ? `，睡眠场景修正+${soundInsulation.usageAdj}dB（工程经验）`
+      : '';
+    lines.push(`② **隔声**：噪声环境安静（夜间本底噪声约35–40dB），隔声基准 Rw≥${soundInsulation.baseRw} dB（GB 50118），无距离修正${quietUsageNote}，最终 ≥${soundInsulation.value} dB。依据：GB 50118 · 安静环境基础隔声标准。`);
+  } else {
+    lines.push(`② **隔声**：${noiseText}，基础 Rw≥${soundInsulation.baseRw} dB（工程经验），距离修正 ${distAdjText}（工程经验），${usageExplain}，最终 ≥${soundInsulation.value} dB。依据：GB 50118 + HJ 2055 · 轨道交通中距离声学计算推导值。检测报告须同时列出 Rw+Ctr 值（交通噪声频谱修正量），Rw+Ctr 通常较 Rw 低 3~5 dB。`);
+  }
 
   const factorMap = {
     heating: '自采暖保温修正 -0.2',
@@ -632,7 +692,7 @@ function buildParameterNote({ windPressure, soundInsulation, thermal, shgc, safe
     const waterParts = [];
     if (isCoastal) waterParts.push('沿海城市');
     if (isHighFloor) waterParts.push('高层');
-    let waterText = `水密性：`;
+    let waterText = '⑥ **水密性**：';
     if (waterParts.length > 0) {
       let reason = '';
       if (isCoastal || isTyphoon) {
@@ -647,22 +707,12 @@ function buildParameterNote({ windPressure, soundInsulation, thermal, shgc, safe
     lines.push(waterText);
   } else {
     lines.push('⑤ **气密性**：气密性等级按 GB/T 7106 推荐等级确定。');
-    lines.push(`水密性：按 GB/T 7106 推荐等级确定`);
+    lines.push('⑥ **水密性**：水密性等级按 GB/T 7106 推荐等级确定。');
   }
-  if (inputs.needsSafetyGlass) {
-    lines.push(`⑦ **安全等级**：${inputs.hasBigWindow ? '落地窗 + ' : ''}${inputs.hasChild ? '儿童家庭' : ''}依据 GB 15763.3 强制要求夹胶安全玻璃构造。`);
-  }
+  lines.push(`⑦ **安全等级**：${inputs.hasBigWindow ? '落地窗 + ' : ''}${inputs.hasChild ? '儿童家庭' : ''}依据 GB 15763.3 强制要求夹胶安全玻璃构造。`);
   const block2 = lines.join('\n');
   const block3 = '其中安全等级依据 GB 15763.3 强制条款，属于强制性要求，不可降级。';
-
-  // 按章节分组（供各章节独立渲染推导说明）
-  const chapter3_note = lines[0] || null;   // ① 抗风压
-  const chapter1_note = lines[1] || null;   // ② 隔声
-  const chapter2_note = lines.slice(2, 4);  // ③④ 热工+太阳得热
-  const chapter4_note = lines.slice(4, 6);  // ⑤⑥ 气密+水密
-  const chapter5_note = inputs.needsSafetyGlass ? (lines[6] || null) : null; // ⑦ 安全
-
-  return { block1, block2, block3, lines, chapter1_note, chapter2_note, chapter3_note, chapter4_note, chapter5_note };
+  return { block1, block2, block3 };
 }
 
 function buildCoreTension(answers, resolved) {
@@ -801,22 +851,15 @@ function buildRedlineChecklist(answers, resolved) {
   REDLINE_REGISTRY.forEach((r) => {
     if (!r.trigger(answers, resolvedWithLevels)) return;
     const item = { ...r, text: (typeof r.text === 'function' ? r.text(answers, resolvedWithLevels) : r.text) };
-    // R12: 水密气密性能（原 R06）
-    if (r.id === 'R12') {
-      const desc = `水密气密性能：水密≥${sealGrades.waterRec}级，气密≥${sealGrades.airRec}级（GB/T 7106）。安装节点须按设计图纸施工，打胶须全程留影像记录`;
-      item.text = desc;
-      item._sealGrades = sealGrades;
-    }
+    item.userMeaning = REDLINE_USER_MEANING[r.id] || null;
+    item.group = r.group || null; // S2: 保留分组信息
+    // S2: 使用原始ID中的R编号（R01-R16）
+    item.displayId = r.id;
     if (r.level === 'mandatory') mandatory.push(item);
     else recommended.push(item);
   });
 
-  // 连续化编号：displayId
-  let displayCounter = 1;
-  mandatory.forEach(it => { it.displayId = `R${String(displayCounter).padStart(2, '0')}`; displayCounter++; });
-  recommended.forEach(it => { it.displayId = `R${String(displayCounter).padStart(2, '0')}`; displayCounter++; });
-
-  return { mandatory, recommended };
+  return { mandatory };  // SPEC-REVIEW-v1.0: 移除 recommended，只保留 mandatory
 }
 
 function buildPerformanceChecks(answers, resolved) {
@@ -882,7 +925,7 @@ function buildChapter4Data(answers, budgetSpec, resolved, riskTrigger, isRisk, s
   const performanceChecks = buildPerformanceChecks(answers, resolved);
 
   return {
-    title: '下一步怎么用：问商家什么 & 怎么验收',
+    title: '三阶段过程把控',
     subtitle: '把这份文件变成面试商家、比较报价、验收施工的行动工具',
     intro: {
       title: '使用说明',
@@ -916,6 +959,24 @@ function buildChapter4Data(answers, budgetSpec, resolved, riskTrigger, isRisk, s
         columns: ['品牌及系列', '型材壁厚(mm)', '玻璃配置', '检测报告编号', '含税报价(元/㎡)', '工期(天)', '质保(年)', '签名确认'],
         note: '若贵司认为在当前预算档位内难以满足某项关键指标，请在"配置建议与说明"栏中提出具体升级方案及差价估算，而非省略或模糊填写。'
       },
+      section_redline: {
+        title: '── 第三段：红线承诺 ──────────────────────────────',
+        intro: '以下为本案技术红线，请逐项书面确认。任何一项不满足须书面说明。',
+        items: (() => {
+          let lastGroup = null;
+          return (sharedRedlineChecklist.mandatory || []).map(item => {
+            const isNewGroup = item.group !== lastGroup;
+            lastGroup = item.group;
+            return {
+              displayId: item.displayId || '',
+              text: item.text || '',
+              groupTitle: isNewGroup ? (item.group || null) : null,
+            };
+          });
+        })(),
+        clauseNote: '本表逐项响应内容作为报价文件及合同附件；如实际配置与本表响应不一致，视为偏离，须书面说明差异内容及原因。',
+      },
+
       section3: {
         title: '── 第四段：施工态度问答 ─────────────────────────',
         questions: [
@@ -927,7 +988,13 @@ function buildChapter4Data(answers, budgetSpec, resolved, riskTrigger, isRisk, s
       signature: {
         text: '下列签名表示填写人已确认上述内容的真实性；如进入签约，本文件所列关键指标为合同技术条款的组成部分。填写人确认：__________',
         fields: []
-      }
+      },
+      fieldGrades: {
+        gradeA: ['windResistanceReport', 'airWaterTightnessReport', 'laminatedGlass3C', 'acousticReport', 'glassDetailSpec'],
+        gradeB: ['thermalKReport', 'shgcData', 'profileThickness', 'thermalBarSpec', 'limiterModel', 'systemCertification'],
+        gradeC: [],
+      },
+      consistencyClause: '所提供报告及数据的检测配置须与本项目报价配置一致。如存在差异，须书面说明差异内容及原因。',
     },
     l2_entry: {
       variant: 'strong',
@@ -938,7 +1005,39 @@ function buildChapter4Data(answers, budgetSpec, resolved, riskTrigger, isRisk, s
     risks: { title: '4.3 风险提示', items: isRisk ? getRiskWarnings(answers, resolved, riskTrigger) : [] },
     acceptance: { title: '4.4 验收节点', nodes: buildAcceptanceNodes(family_risk, answers.window_type) },
     performanceChecks,
-    redlineChecklist: sharedRedlineChecklist
+    redlineChecklist: sharedRedlineChecklist,
+    actionSteps: [
+      { step: 1, title: '发出文件', description: '将本文件发给 3-5 家商家', hint: '可附说明：请按第二章逐项书面回应，第三章逐项确认，并填写第四章答题表' },
+      { step: 2, title: '排除不合格', description: '收到回应后，用第三章红线清单逐项核对', hint: '任何一项红线不满足，直接排除，无需解释，无需谈判' },
+      { step: 3, title: '比较剩余方案', description: '用第二章技术指标表横向对比剩余商家', hint: '重点看检测报告是否完整，而不是总价高低' },
+    ],
+    threePhaseIntro: {
+      phases: [
+        { phase: 1, title: '下单前', timing: '收到商家报价、准备签合同前', action: '将本文件发给 3-5 家商家，收到回应后用第三章排除不合格方案，剩余方案用第二章横向对比', hint: '任何一项红线不满足，直接排除，无需解释，无需谈判', nextTrigger: '已选定商家，准备安排进场安装' },
+        { phase: 2, title: '安装前', timing: '材料到场、工人开始安装前', action: '按进场核查清单拍摄留存，提交招标管理', hint: '安装完成后部分标签将被覆盖，此时是唯一核查窗口', nextTrigger: '安装完成，准备竣工验收' },
+        { phase: 3, title: '安装后', timing: '全部窗户安装完成，施工队准备撤场前', action: '按验收清单逐项自检并记录结果，提交招标管理', hint: '发现问题须在施工队撤场前要求整改，撤场后处理成本极高', nextTrigger: '验收完成，如需专业核查可进入审计服务' },
+      ],
+    },
+    inspectionChecklist: {
+      intro: '以下照片在材料进场、安装开始前拍摄。安装完成后部分标签将被覆盖，无法补拍。照片提交至招标管理，核查实际材料与配置单是否一致。',
+      mustShoot: [
+        { id: 'P1', subject: '玻璃边部标签 + 包装外箱 + 出厂单', purpose: '核查品牌、型号、Low-E标注、厚度、3C编号', warning: '安装后标签被压条遮挡，无法补拍，进场即拍' },
+        { id: 'P2', subject: '密封胶/结构胶未开封包装（正面全景）', purpose: '核查胶种类（结构胶 vs 普通密封胶）、品牌、批号', warning: '用完即丢，开工前必须拍，错过无法补' },
+        { id: 'P3', subject: '五金包装或铭牌（执手/限位器/铰链拆包时拍）', purpose: '核查品牌型号与报价单一致', warning: '装好后型号难核查，拆包时拍' },
+        { id: 'P4', subject: '材料全景 + 送货单同框', purpose: '核查到货品类、数量、品牌总体一致性', warning: '' },
+      ],
+      shouldShoot: [
+        { id: 'P5', subject: '型材端头 + 送货单同框', purpose: '辅助核查品牌系列', caveat: '壁厚数值照片难精确读取，不以照片为准，以文件为准' },
+        { id: 'P6', subject: '限位器安装完成状态（安装调试阶段拍）', purpose: '确认已安装、型号可见', caveat: '只能确认有无安装，不能核查开启角度；错过安装调试阶段后被遮挡' },
+        { id: 'P7', subject: '安装节点关键部位——优先拍短视频', purpose: '打胶过程/发泡剂填充/排水孔预留留存证据', caveat: '静态照片无法判断打胶连续性，优先录短视频，尤其是转角和收头位置' },
+      ],
+      useDocument: [
+        { id: 'F1', checkItem: '型材壁厚数值', alternative: '索要型材检测报告或截面参数书，不靠手机拍截面读数' },
+        { id: 'F2', checkItem: '隔热条材质（PA66/PVC区分）', alternative: '索要材质证明或配套说明，颜色不能作为材质判断依据' },
+        { id: 'F3', checkItem: '间隔条类型（暖边/铝条区分）', alternative: '索要供应商材料说明，安装后基本不可见' },
+        { id: 'F4', checkItem: '执手真伪', alternative: '包装+型号+采购单三合一核对，单拍Logo价值有限' },
+      ],
+    },
   };
 }
 
@@ -966,7 +1065,6 @@ function buildBudgetSpecView(resolved, answers) {
   };
   const tierStandardGlass = tierStandardGlassMap[tier] || tierStandardGlassMap.B;
   const bar = getInsulationBarRequirement(Number(getField(resolved, 'K')));
-  resolved.insulationBar_mm = bar.min_mm;
 
   const familyRisk = Array.isArray(answers.family_risk) ? answers.family_risk : [];
   const window_features = {
@@ -1075,19 +1173,18 @@ function getSafetyItems(familyRisk, budgetTier) {
 
   if (hasChild) {
     items.push('窗台高度<900mm时，须安装儿童防坠限位器（开启角度≤100mm）');
-    items.push('玻璃须使用夹胶安全玻璃（6.38mm+），破碎后不脱落');
     items.push('执手安装高度建议≥1500mm，防止儿童误开');
-  }
-  
-  if (hasElder) {
-    items.push('执手操作力≤25N（适老标准），需厂家测试数据支持');
-    items.push('门槛高度≤15mm，防绊倒；无法避免须配套防绊坡道');
   }
   
   if ((hasChild || hasElder) && budgetTier === 'A') {
     budgetWarning = `⚠️ 上述安全配件成本通常超出${getTierLabel('A')}预算覆盖范围；舒适均衡 B档（900–1400 元/㎡）价格区间可覆盖该类配置。`;
   }
-  
+  // SPEC-REVIEW-v1.0: 追加适老化可选项（R15/R16）
+  if (hasElder) {
+    items.push('执手操作力≤25N');
+    items.push('门槛高度≤15mm');
+  }
+
   return { items, budgetWarning };
 }
 
@@ -1096,7 +1193,6 @@ function buildSafetyUpgradeDesc(family_risk) {
   const parts = [];
   if (arr.includes('large_fixed')) parts.push('夹胶安全玻璃（落地窗法规强制要求）');
   if (arr.includes('child')) parts.push('儿童防坠限位器、执手高度≥1500mm');
-  if (arr.includes('elder')) parts.push('适老配件：低操作力执手（≤25N）、门槛≤15mm防绊倒');
   if (arr.includes('wide_slider')) parts.push('推拉门毛条+胶条复合密封升级');
   return parts.join(' + ') || '安全配件全套升级';
 }
@@ -1105,7 +1201,6 @@ function buildNode13(family_risk) {
   const arr = Array.isArray(family_risk) ? family_risk : [];
   const items = [];
   if (arr.includes('child')) items.push('儿童安全配件：限位器开启角度≤100mm、执手高度≥1500mm');
-  if (arr.includes('elder')) items.push('适老配件：执手操作力≤25N、门槛高度≤15mm');
   if (arr.includes('large_fixed')) items.push('大面积安全玻璃：确认夹胶玻璃安装，碰撞后无脱落');
   if (arr.includes('wide_slider')) items.push('推拉门密封：毛条+胶条完整，配合烟雾笔测试无明显气流');
   return items.length > 0 ? items.join('；') : null;
@@ -1132,22 +1227,48 @@ function buildAcceptanceNodes(family_risk, window_type) {
       if (idx13 >= 0) items[idx13] = { text: `⑬ ${t13}`, reason: '安全配件是本案强制要求，竣工时须逐项确认实际安装状态与合同约定一致' }; else items.push({ text: `⑬ ${t13}`, reason: '安全配件是本案强制要求，竣工时须逐项确认实际安装状态与合同约定一致' });
     }
   }
+  // M4: 竣工验收⑬拆分 - 强制项与可选增强项分离
   const node13 = buildNode13(family_risk);
   if (node13) {
     const i13 = items.findIndex(x => (typeof x === 'string' ? x : (x && x.text) || '').startsWith('⑬'));
     if (i13 >= 0) {
-      const baseText = (typeof items[i13] === 'string' ? items[i13] : (items[i13] && items[i13].text) || '').replace(/^⑬\s*/, '');
-      const extras = String(node13)
-        .split('；')
-        .map(s => s.trim())
-        .filter(Boolean)
-        .filter(s => !baseText.includes(s))
-        .filter(s => !(baseText.includes('儿童安全配件') && s.startsWith('儿童安全配件')))
-        .filter(s => !(baseText.includes('大面积安全玻璃') && s.startsWith('大面积安全玻璃')));
-      if (extras.length > 0) {
-        items[i13] = { text: `⑬ ${baseText}；${extras.join('；')}`, reason: '安全配件是本案强制要求，竣工时须逐项确认实际安装状态与合同约定一致' };
-      } else {
-        items[i13] = { text: `⑬ ${baseText}`, reason: '安全配件是本案强制要求，竣工时须逐项确认实际安装状态与合同约定一致' };
+      const baseItem = typeof items[i13] === 'string' ? { text: items[i13], reason: '' } : items[i13];
+      const baseText = (baseItem.text || '').replace(/^⑬\s*/, '');
+
+      // 分离强制项和可选增强项
+      const mandatoryParts = [];
+      const optionalParts = [];
+
+      // 分析node13返回的内容
+      const node13Parts = String(node13).split('；').map(s => s.trim()).filter(Boolean);
+      node13Parts.forEach(part => {
+        if (part.includes('执手高度≥1500mm')) {
+          optionalParts.push(part);
+        } else {
+          mandatoryParts.push(part);
+        }
+      });
+
+      // 构建强制项（保留原⑬）
+      let mandatoryText = `⑬ ${baseText}`;
+      if (mandatoryParts.length > 0) {
+        const filteredExtras = mandatoryParts
+          .filter(s => !baseText.includes(s))
+          .filter(s => !(baseText.includes('儿童安全配件') && s.startsWith('儿童安全配件')))
+          .filter(s => !(baseText.includes('大面积安全玻璃') && s.startsWith('大面积安全玻璃')));
+        if (filteredExtras.length > 0) {
+          mandatoryText += `；${filteredExtras.join('；')}`;
+        }
+      }
+      items[i13] = { text: mandatoryText, reason: '安全配件是本案强制要求，竣工时须逐项确认实际安装状态与合同约定一致' };
+
+      // 添加可选增强项（如果有）
+      if (optionalParts.length > 0) {
+        items.splice(i13 + 1, 0, {
+          text: `⑬ ${optionalParts.join('；')}`,
+          reason: '',
+          optional: true
+        });
       }
     }
   }
@@ -1359,9 +1480,10 @@ function buildAnalysisParagraph(answers, resolved) {
 function mapToSections(resolved, answers, pdfNo) {
   assertResolved(resolved);
 
+  
   const now = new Date();
   const issueDate = `${now.getFullYear()}年${String(now.getMonth() + 1).padStart(2, '0')}月${String(now.getDate()).padStart(2, '0')}日`;
-
+  
   const band = getHeightBand(answers.floor, answers.total_floors);
   const climateZone = answers.climateZone || resolved.climateZone || getClimateZone(answers.city);
   const normalizedAnswers = { ...answers, climateZone };
@@ -1376,21 +1498,21 @@ function mapToSections(resolved, answers, pdfNo) {
   };
   const safety = getSafetyItems(normalizedAnswers.family_risk, normalizedAnswers.budget_tier);
 
-  // 计算水密气密等级
+  // N1: 计算水密气密等级
   const sealGrades = calcSealGrades({ city: answers.city, floor: answers.floor, windowType: answers.window_type });
 
-  // 风险触发条件
+  // 风险触发条件：16层以上 或 高度比>50% 或 有risk_flags 或 免责声明
   const isHighFloor = answers.floor > 16;
   const isHighRatio = band.ratio > 0.5;
   const hasRiskFlags = resolved.risk_flags && Object.keys(resolved.risk_flags).length > 0;
   const isRisk = hasRiskFlags || isHighFloor || isHighRatio || normalizedAnswers.isDisclaimer === true;
-
+  
+  // 传递给风险生成函数
   const riskTrigger = {
     highFloor: isHighFloor,
     highRatio: isHighRatio,
     budgetConflict: answers.budget_tier === 'A' && (isHighFloor || isHighRatio)
   };
-
   const safetyForced = ['sliding', 'door_window'].includes(normalizedAnswers.window_type) ||
     familyRisk.includes('child') ||
     familyRisk.includes('elder') ||
@@ -1398,46 +1520,28 @@ function mapToSections(resolved, answers, pdfNo) {
     familyRisk.includes('large_fixed') ||
     familyRisk.includes('floor_window') ||
     !!resolved.hasSafetyClause;
-
   const sharedRedlineChecklist = buildRedlineChecklist(normalizedAnswers, { ...resolved, safetyForced });
+
   const needsAnalysis = build1_2(normalizedAnswers, resolved);
   const resolvedSealGrades = needsAnalysis.sealGrades || { airRec: 4, waterRec: 3 };
 
-  // 性能数字字段 - 直接引用 resolved，不二次计算（V9 约束）
-  const Rw = getField(resolved, 'Rw');
-  const K = getField(resolved, 'K');
-  const SHGC = getField(resolved, 'SHGC');
-  const P3 = getField(resolved, 'P3');
-
-  // 玻璃理论 Rw 反查
-  const glassKey = resolved.glass_key || 'GC5_12A5';
-  const glassRwTheory = GLASS_LEVELS[glassKey]?.rw_max ?? null;
-
-  // 派生字段触发逻辑
-  const needsSafetyGlass = window_features.has_large_fixed || familyRisk.includes('floor_window');
-  const climateLabel = getClimateLabel(climateZone);
-  const needsWarmEdge = climateLabel.includes('严寒') || climateLabel.includes('寒冷') || K <= 1.6;
-
-  // ===== SECTIONS 返回对象 =====
-  const sections = {
-    // L1 摘要卡
+  return {
     summary: {
-      k_target:    K,
-      rw_required: Rw,
-      shgc_target: SHGC,
-      p3_required: P3,
+      k_target:    getField(resolved, 'K'),
+      rw_required: getField(resolved, 'Rw'),
+      shgc_target: getField(resolved, 'SHGC'),
+      p3_required: getField(resolved, 'P3'),
       wind_zone:   resolved.wind_zone || '',
       air_rec:     resolvedSealGrades.airRec,
       water_rec:   resolvedSealGrades.waterRec
     },
 
-    // 封面
     cover: {
       pdfNo: pdfNo,
       issueDate: issueDate,
       city: normalizedAnswers.city || '未知城市',
       district: normalizedAnswers.district || '',
-      climateLabel: climateLabel,
+      climateLabel: getClimateLabel(climateZone),
       floorDesc: `第${normalizedAnswers.floor}层/共${normalizedAnswers.total_floors}层（高度比${(band.ratio * 100).toFixed(0)}%，${band.label}）`,
       painTag: painTag.text,
       isRisk: isRisk,
@@ -1446,148 +1550,128 @@ function mapToSections(resolved, answers, pdfNo) {
       degradedMsg: resolved.degraded ? `${normalizedAnswers.city}暂未精确覆盖，以下参数基于保守标准推算` : null,
       disclaimer: '本文件由李Sir门窗技术顾问系统基于用户填写信息自动生成，仅供参考，不构成正式法律合同。'
     },
-
-    // 开篇 · 你的需求画像
-    overview: {
-      dataSourceStatement: '本报告数据来源：每项指标由三类信息共同确定——国家/行业标准基准值、您的项目信息（城市/楼层/朝向/噪声/家庭风险等）、工程经验修正（李Sir 基于工程案例的判断）。工程经验修正不等同于国标，但经得起案例追溯。',
-      basicInfo: build1_1(normalizedAnswers),
-      coreTension: buildAnalysisParagraph(normalizedAnswers, resolved),
-      painPoint: normalizedAnswers.pain_point,
-      painTag: painTag
-    },
-
-    // 第一章 · 隔声
+    
     chapter1: {
-      title: '隔声',
-      targetValue: {
-        Rw: Rw,
-        unit: 'dB'
-      },
-      derivationLogic: {
-        acoustic: needsAnalysis.acoustic || null
-      },
-      factors: [
-        { name: '玻璃构造', description: '夹胶/三玻两腔配置决定理论 Rw 上限' },
-        { name: '气密性能', description: `气密>=${resolvedSealGrades.airRec}级，防止缝隙漏声` },
-        { name: '窗型选择', description: '平开窗密封优于推拉窗，高 Rw 场景优先平开' },
-        { name: '密封工艺', description: '胶条系统完整性、组角注胶工艺' }
-      ],
-      redlines: (sharedRedlineChecklist.mandatory || []).filter(r =>
-        ['R06', 'R08', 'R09'].includes(r.id)
-      ),
-      narrative: needsAnalysis.parameterNote?.chapter1_note || null,
-      noise: normalizedAnswers.noise_type !== 'quiet' ? {
-        show: true,
-        typeLabel: getNoiseLabel(normalizedAnswers.noise_type, normalizedAnswers.noise_dist).typeLabel,
-        distLabel: getNoiseLabel(normalizedAnswers.noise_type, normalizedAnswers.noise_dist).distLabel,
-      } : { show: false },
-      // 保留原有字段（向后兼容）
       dataSourceStatement: '本报告数据来源：每项指标由三类信息共同确定——国家/行业标准基准值、您的项目信息（城市/楼层/朝向/噪声/家庭风险等）、工程经验修正（李Sir 基于工程案例的判断）。工程经验修正不等同于国标，但经得起案例追溯。',
       basicInfo: build1_1(normalizedAnswers),
       needsAnalysis: needsAnalysis,
       city: normalizedAnswers.city,
       district: normalizedAnswers.district || '',
-      climateLabel: climateLabel,
+      climateLabel: getClimateLabel(climateZone),
       windZone: resolved.wind_zone || 'W?',
       floorDesc: `第${normalizedAnswers.floor}层/共${normalizedAnswers.total_floors}层（高度比${(band.ratio * 100).toFixed(0)}%，${band.label}）`,
       heatingDesc: getHeatingDesc(normalizedAnswers.heating_type),
       familyDesc: getFamilyDesc(normalizedAnswers.family_risk),
       analysisPara: buildAnalysisParagraph(normalizedAnswers, resolved),
+      noise: normalizedAnswers.noise_type !== 'quiet' ? {
+        show: true,
+        typeLabel: getNoiseLabel(normalizedAnswers.noise_type, normalizedAnswers.noise_dist).typeLabel,
+        distKey: normalizedAnswers.noise_dist === 'gt50_shielded' ? 'gt50' : normalizedAnswers.noise_dist,
+        distLabel: getNoiseLabel(normalizedAnswers.noise_type, normalizedAnswers.noise_dist).distLabel,
+        levelLabel: getNoiseLabel(normalizedAnswers.noise_type, normalizedAnswers.noise_dist).levelLabel,
+        blocks: (() => {
+          const climateLabel = getClimateLabel(climateZone);
+          const westShavingNote = (normalizedAnswers.orientation === 'west' && normalizedAnswers.west_shading === false)
+            ? (getShgcNote(normalizedAnswers) || '西晒无遮阳，SHGC已下调')
+            : '非西晒主风险位';
+
+          const Rw_required = Number(getField(resolved, 'Rw'));
+          const costLevel = Rw_required <= 33 ? '轻' : Rw_required <= 38 ? '中' : '重';
+          const targetDesc = normalizedAnswers.pain_point === 'heat' ? '隔热舒适' : normalizedAnswers.pain_point === 'wind' ? '抗风防水' : '隔声目标';
+          const isTrafficNoise = TRAFFIC_NOISE_TYPES.includes(normalizedAnswers.noise_type);
+          const glassDirection = Rw_required <= 33
+            ? '可在档内用常规中空配置实现'
+            : Rw_required <= 38
+              ? '需要夹胶/更高隔声玻璃构造'
+              : isTrafficNoise
+                ? '需夹胶中空升规格配置（厚PVB层+宽腔），交通噪声场景Ctr要求优先于三玻两腔'
+                : '往往需要三玻两腔或夹胶中空升规格等高阶隔声构造';
+
+          return [
+            { type: 'climate_note', text: `${normalizedAnswers.city}属于${climateLabel}，${westShavingNote}` },
+            {
+              type: 'safety_alert',
+              condition: window_features.has_large_fixed,
+              text: `您的房间存在落地窗/整面玻璃墙，属于高安全等级场景，玻璃配置需符合 ${STANDARDS_MAP.safety_glass.code} 对大面积玻璃的强制要求。`
+            },
+            { type: 'cost_reveal', text: `在当前环境和预算组合下，要改善${targetDesc}，通常${glassDirection}，对配置会有${costLevel}程度的额外成本。` }
+          ];
+        })()
+      } : { show: false },
       useNewStructure: true
     },
-
-    // 第二章 · 热工
+    
     chapter2: {
-      title: '热工',
-      targetValue: {
-        K: K,
-        SHGC: SHGC,
-        unit_K: 'W/(m2.K)',
-        unit_SHGC: ''
-      },
-      derivationLogic: {
-        thermal: needsAnalysis.thermal || null,
-        climateZone: climateLabel,
-        heatingType: getHeatingDesc(normalizedAnswers.heating_type)
-      },
-      factors: [
-        { name: '玻璃配置', description: 'Low-E 镀膜位置、惰性气体填充' },
-        { name: '隔热条规格', description: `≥${getInsulationBarRequirement(K).min_mm}mm，${getInsulationBarRequirement(K).process}` },
-        { name: '系统认证', description: '型材+玻璃+五金整体系统热工认证' }
-      ],
-      narrative: {
-        lines: needsAnalysis.parameterNote?.chapter2_note || []
-      },
-      redlines: (sharedRedlineChecklist.mandatory || []).filter(r =>
-        ['R03', 'R04', 'R05', 'R07'].includes(r.id)
-      ),
-      // 保留原有字段（向后兼容）
       positionStatement: '以下参数来自第一章的诊断结果，是本案的采购技术底线。商家方案须逐项回应，不达标项须书面说明。',
       painPoint: normalizedAnswers.pain_point,
       metrics: [
         {
           name: '抗风压性能',
-          value: ` ${P3}`,
+          value: ` ${getField(resolved, 'P3')}`,
           unit: 'kPa',
           std: STANDARDS_MAP.wind_pressure.code,
-          level: (P3 >= 3.0 ? '高等级' : '标准等级'),
+          level: (getField(resolved, 'P3') >= 3.0 ? '高等级' : '标准等级'),
           note: `${normalizedAnswers.city}${resolved.wind_zone || 'W?'}风区，第${normalizedAnswers.floor}层`,
           isCore: painTag.coreMetric === 'P3'
         },
         {
           name: '计权隔声量',
-          value: ` ${Rw}`,
+          value: ` ${getField(resolved, 'Rw')}`,
           unit: 'dB',
           std: STANDARDS_MAP.sound_insulation.code,
-          level: (Rw >= 35 ? '高隔声' : '标准隔声'),
-          note: `${getNoiseLabel(normalizedAnswers.noise_type, normalizedAnswers.noise_dist).typeLabel}环境${normalizedAnswers.pain_point === 'sound' ? '，睡眠场景加严' : ''}`,
+          level: (getField(resolved, 'Rw') >= 35 ? '高隔声' : '标准隔声'),
+          note: `${getNoiseLabel(normalizedAnswers.noise_type, normalizedAnswers.noise_dist).typeLabel}环境${normalizedAnswers.pain_point === 'sound' ? '，睡眠场景修正' : ''}`,
           isCore: painTag.coreMetric === 'Rw'
         },
         {
           name: '热工性能',
-          value: `K<=${K} W/(m2K)\nSHGC<=${SHGC}`,
+          value: `K≤${getField(resolved, 'K')} W/(m²K)\nSHGC≤${getField(resolved, 'SHGC')}`,
           unit: '',
           std: STANDARDS_MAP.thermal.code,
-          level: climateLabel,
+          level: getClimateLabel(climateZone),
           note: `${getClimateName(climateZone)}区 ${getThermalModifier(normalizedAnswers)}`,
           isCore: painTag.coreMetric === 'SHGC'
+        },
+        {
+          name: '水密气密性能',
+          value: `水密≥${sealGrades.waterRec}级\n气密≥${sealGrades.airRec}级`,
+          unit: '',
+          std: 'GB/T 7106',
+          level: '本案等级',
+          note: `${normalizedAnswers.city}第${normalizedAnswers.floor}层，按风压/高度计算`,
+          isCore: false
         }
       ],
+      // SPEC-G2 step2: derivation placeholders (null = not implemented yet)
       acousticDerivation: null,
       thermalDerivation: null,
       responseGuide: {
         complete: '完整回应的标志：每项均有具体数值，并附检测报告编号或出具机构名称',
         evasion:  '回避信号：某项仅有口头承诺，无检测报告编号；或以"符合国家标准"等模糊表述代替具体数值',
         reject:   '排除信号：某项明确表示无法达到本案指标，或对该项沉默不回应',
-      }
+      },
     },
-
-    // 第三章 · 抗风
+    
     chapter3: {
-      title: '抗风压',
-      targetValue: {
-        P3: P3,
-        unit: 'kPa'
-      },
-      derivationLogic: {
-        wind: {
-          zone: resolved.wind_zone || 'W?',
-          floor: normalizedAnswers.floor,
-          heightRatio: band.ratio
-        }
-      },
-      factors: [
-        { name: '型材壁厚', description: `主受力部位>=${budgetSpec.profileWallThickness || 1.5}mm` },
-        { name: '五金系统', description: '铰链/滑撑承重等级、防坠绳配置' },
-        { name: '安装节点', description: '固定件规格、间距、锚固深度' }
-      ],
-      redlines: (sharedRedlineChecklist.mandatory || []).filter(r =>
-        ['R01', 'R02', 'R12'].includes(r.id)
-      ),
-      // 保留原有字段（向后兼容）
+      title: '本案采购红线清单',
       sourceNote: '以下红线由第一章性能诊断结果动态生成，每条对应一项可量化指标。低于任一项即视为方案不合格。',
-      redlineChecklist: sharedRedlineChecklist,
-      forbidden: getForbiddenItems(normalizedAnswers.budget_tier, K, window_features, Rw),
+      redlineChecklist: {
+        ...sharedRedlineChecklist,
+        mandatory: (() => {
+          let lastGroup = null;
+          return (sharedRedlineChecklist.mandatory || [])
+            .filter(item => item.group !== '适老化')
+            .map(item => {
+              const isNewGroup = item.group !== lastGroup;
+              lastGroup = item.group;
+              return {
+                ...item,
+                groupTitle: isNewGroup ? (item.group || null) : null,
+              };
+            });
+        })(),
+      },
+      forbidden: getForbiddenItems(normalizedAnswers.budget_tier, getField(resolved, 'K'), window_features, getField(resolved, 'Rw')),
       safetyItems: safety.items,
       safetyBudgetWarning: safety.budgetWarning,
       conflictAlert: buildChapter3ConflictAlert(budgetSpec, resolved),
@@ -1596,41 +1680,16 @@ function mapToSections(resolved, answers, pdfNo) {
         ? budgetSpec.recommendedConfig.map(c => ({
             label: c.label || '',
             profile: c.spec && c.spec.profile
-              ? ('壁厚>=' + c.spec.profile.min_wall_thickness + 'mm') : '',
+              ? ('壁厚≥' + c.spec.profile.min_wall_thickness + 'mm') : '',
             hardware: c.spec && c.spec.hardware
-              ? ('铰链>=' + c.spec.hardware.min_load_kg + 'kg') : '',
+              ? ('铰链≥' + c.spec.hardware.min_load_kg + 'kg') : '',
             priceRange: c.spec && c.spec.price_range ? c.spec.price_range : '',
-            upgradeReasons: Array.isArray(c.upgradeReasons) ? c.upgradeReasons : [],
-      narrative: needsAnalysis.parameterNote?.chapter3_note || null
+            upgradeReasons: Array.isArray(c.upgradeReasons) ? c.upgradeReasons : []
           }))
         : []
     },
-
-    // 第四章 · 水密气密
+    
     chapter4: {
-      title: '水密气密',
-      targetValue: {
-        water: resolvedSealGrades.waterRec,
-        air: resolvedSealGrades.airRec,
-        unit: '级'
-      },
-      derivationLogic: {
-        seal: {
-          city: normalizedAnswers.city,
-          floor: normalizedAnswers.floor,
-          windZone: resolved.wind_zone
-        }
-      },
-      factors: [
-        { name: '胶条系统', description: 'EPDM 或 TPE 材质，原厂配套' },
-        { name: '排水设计', description: '排水孔数量、位置、防风盖' },
-        { name: '窗型影响', description: '推拉窗水密性天然弱于平开窗' },
-        { name: '安装质量', description: '框墙缝隙密封、发泡剂填充质量' }
-      ],
-      redlines: (sharedRedlineChecklist.mandatory || []).filter(r =>
-        ['R10', 'R11'].includes(r.id)
-      ),
-      // 保留原有字段（向后兼容）
       configSummary: {
         spec: { ...budgetSpec, label: getTierLabel(String(answers.budget_tier || 'B').toUpperCase()) },
         conflictAlert: buildChapter3ConflictAlert(budgetSpec, resolved),
@@ -1638,135 +1697,13 @@ function mapToSections(resolved, answers, pdfNo) {
       },
       ...buildChapter4Data(answers, budgetSpec, resolved, riskTrigger, isRisk, sharedRedlineChecklist),
       isRisk: isRisk,
-      riskTrigger: riskTrigger,
-      narrative: needsAnalysis.parameterNote?.chapter4_note?.length > 0 ? needsAnalysis.parameterNote.chapter4_note : null
+      riskTrigger: riskTrigger
     },
-
-    // 第五章 · 安全配置（条件显示）
-    chapter5: safetyForced ? {
-      title: '安全配置',
-      show: true,
-      triggers: {
-        has_large_fixed: window_features.has_large_fixed,
-        has_children: familyRisk.includes('child'),
-        has_elder: familyRisk.includes('elder') || familyRisk.includes('elderly'),
-        has_sliding: normalizedAnswers.window_type === 'sliding',
-        window_type: normalizedAnswers.window_type
-      },
-      requirements: [
-        needsSafetyGlass ? { item: '玻璃安全性', spec: '安全玻璃（钢化或夹胶）；超大尺寸/面积场景需夹胶或加厚' } : null,
-        normalizedAnswers.window_type === 'sliding' ? { item: '推拉窗限位', spec: '儿童安全锁+限位器' } : null,
-        ...(normalizedAnswers.window_type === 'casement' ? [...(normalizedAnswers.window_type === 'casement' ? [{ item: '防坠装置', spec: '外开窗须配置防止窗扇脱落的安全装置，承载能力符合产品检测报告' }] : [])] : [])
-      ].filter(Boolean),
-      redlines: (sharedRedlineChecklist.mandatory || []).filter(r =>
-        ['R13', 'R14'].includes(r.id)
-      ),
-      optionalUpgrades: safety.items || [],
-      narrative: needsAnalysis.parameterNote?.chapter5_note || null
-    } : { show: false },
-
-    // 过渡小节
-    transition: {
-      title: '如何使用这张配置汇总答题表',
-      guideText: '把本表发给三个商家填好回传，就能横向对比谁在偷项、谁真正达标。'
-    },
-
-    // 第六章 · 配置汇总答题表
-    chapter6: {
-      title: '配置汇总答题表',
-      intro: '以下 26 项为商家必须回应的技术参数。逐项对比，差距一目了然。',
-      configSummaryTable: [
-        { id: 'F01', category: 'performance', label: '整窗 Rw', vendor_fillable: true, proof_required: '第三方声学检测报告编号 + 出具机构 + 检测日期 + 样窗规格' },
-        { id: 'F02', category: 'performance', label: '整窗 K 值', vendor_fillable: true, proof_required: '整窗热工检测报告编号 + 出具机构' },
-        { id: 'F03', category: 'performance', label: '整窗 SHGC', vendor_fillable: true, proof_required: '整窗热工检测报告编号' },
-        { id: 'F04', category: 'performance', label: '抗风压 P3', vendor_fillable: true, proof_required: '抗风压检测报告编号 + 适用洞口尺寸范围' },
-        { id: 'F05', category: 'performance', label: '气密等级', vendor_fillable: true, proof_required: 'GB/T 7106 检测报告编号' },
-        { id: 'F06', category: 'performance', label: '水密等级', vendor_fillable: true, proof_required: 'GB/T 7106 检测报告编号' },
-        { id: 'F07', category: 'glass', label: '玻璃配置型号', vendor_fillable: true, proof_required: '玻璃厂家 + 品牌' },
-        { id: 'F08', category: 'glass', label: '玻璃理论 Rw', vendor_fillable: true, proof_required: '玻璃 Rw 检测报告' },
-        { id: 'F09', category: 'glass', label: 'Low-E 镀膜位置', vendor_fillable: true, proof_required: '玻璃产品说明书' },
-        { id: 'F10', category: 'glass', label: '玻璃安全性', vendor_fillable: true, proof_required: '3C 标识 + 检测报告' },
-        { id: 'F11', category: 'glass', label: '间隔条材质', vendor_fillable: true, proof_required: '材料说明书' },
-        { id: 'F12', category: 'profile', label: '型材品牌及系列', vendor_fillable: true, proof_required: '系统授权书' },
-        { id: 'F13', category: 'profile', label: '型材合金牌号', vendor_fillable: true, proof_required: '材质证明书' },
-        { id: 'F14', category: 'profile', label: '主受力壁厚', vendor_fillable: true, proof_required: '型材截面检测报告' },
-        { id: 'F15', category: 'profile', label: '隔热条规格', vendor_fillable: true, proof_required: '隔热条材质证明' },
-        { id: 'F16', category: 'hardware', label: '五金品牌', vendor_fillable: true, proof_required: '五金合格证' },
-        { id: 'F17', category: 'hardware', label: '五金系列/型号', vendor_fillable: true, proof_required: '五金合格证' },
-        { id: 'F18', category: 'hardware', label: '五金保修年限', vendor_fillable: true, proof_required: '厂家保修承诺' },
-        { id: 'F19', category: 'sealing', label: '胶条材质', vendor_fillable: true, proof_required: '胶条说明书' },
-        { id: 'F20', category: 'sealing', label: '耐候密封胶品牌', vendor_fillable: true, proof_required: '产品说明书' },
-        { id: 'F21', category: 'sealing', label: '发泡剂品牌', vendor_fillable: true, proof_required: '产品说明书' },
-        { id: 'F22', category: 'sealing', label: '固定件间距承诺', vendor_fillable: true, proof_required: '安装方案文件' },
-        { id: 'F23', category: 'commercial', label: '含税单价', vendor_fillable: true, proof_required: '' },
-        { id: 'F24', category: 'commercial', label: '工期', vendor_fillable: true, proof_required: '' },
-        { id: 'F25', category: 'commercial', label: '质保年限', vendor_fillable: true, proof_required: '质保协议' },
-        { id: 'F26', category: 'commercial', label: '公司名称 + 签名', vendor_fillable: true, proof_required: '' }
-      ],
-      specValues: {
-        F01: Rw ? `Rw >= ${Rw} dB` : '待反查',
-        F02: K ? `K <= ${K} W/(m2.K)` : '待反查',
-        F03: SHGC ? `SHGC <= ${SHGC}` : '待反查',
-        F04: P3 ? `P3 >= ${P3} kPa` : '待反查',
-        F05: `>=${resolvedSealGrades.airRec}级`,
-        F06: `>=${resolvedSealGrades.waterRec}级`,
-        F07: resolved.glass_name || '待反查',
-        F08: glassRwTheory ? `${glassRwTheory} dB` : '待反查',
-        F09: resolved.thermal_overlay || '待反查',
-        F10: needsSafetyGlass ? '钢化+夹胶' : '按规范',
-        F11: needsWarmEdge ? '暖边条（推荐）' : '无特殊要求',
-        F12: '无指定（商家自报）',
-        F13: '6063-T5 或同等',
-        F14: `>=${budgetSpec.profileWallThickness || 1.5}mm`,
-        F15: `≥${getInsulationBarRequirement(K).min_mm}mm，${getInsulationBarRequirement(K).process}`,
-        F16: '无指定（商家自报）',
-        F17: '无指定（商家自报）',
-        F18: '>=5 年',
-        F19: 'EPDM 或 TPE',
-        F20: '无指定（商家自报）',
-        F21: '无指定（商家自报）',
-        F22: budgetSpec.installation || '按规范',
-        F23: '（商家填写）',
-        F24: '（商家填写）',
-        F25: '>=5 年',
-        F26: '（商家签字）'
-      },
-      redlineConfirm: {
-        title: '红线承诺确认',
-        text: '以上配置满足本案全部红线要求',
-        checklist: sharedRedlineChecklist.mandatory || []
-      }
-    },
-
-    // 第七章 · 三阶段过程把控
-    chapter7: {
-      title: '三阶段过程把控',
-      phases: [
-        {
-          name: '下单前',
-          checklist: '核对商家答题表 -> 确认关键参数与本案要求一致',
-          keyItems: ['玻璃配置型号(F07)', '型材壁厚(F14)', '隔热条规格(F15)', '五金品牌(F16)']
-        },
-        {
-          name: '安装前（进场）',
-          checklist: '对照本章清单检查到货实物——玻璃钢印 / 五金品牌 / 型材系列',
-          inspectionItems: (buildChapter4Data(answers, budgetSpec, resolved, riskTrigger, isRisk, sharedRedlineChecklist).inspectionChecklist) || []
-        },
-        {
-          name: '安装后（竣工）',
-          checklist: '按本报告给出的验收标准进行试水、试开关与目测检查',
-          acceptanceItems: buildAcceptanceItems(ACCEPTANCE_ITEMS_WINDOW, normalizedAnswers.window_type)
-        }
-      ]
-    },
-
-    // 附件
+    
     attachments: {
       photos: answers.photos || []
     }
   };
-
-  return sections;
 }
 
 module.exports = {

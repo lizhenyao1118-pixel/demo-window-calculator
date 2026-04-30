@@ -1,0 +1,8 @@
+cloudfunctions/generatePDF/node_modules
+cloudfunctions/generateReport/node_modules
+cloudfunctions/generateReport/fonts
+cloudfunctions/generateReport.tar.gz
+cloudfunctions/generateReport.zip
+cloudfunctions/benchmark-pdf
+cloudfunctions/pdfSpike
+cloudfunctions/cleanupOldPDFs

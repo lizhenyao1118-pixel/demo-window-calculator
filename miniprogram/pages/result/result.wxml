@@ -190,6 +190,12 @@
           <text class="target-value" wx:if="{{chapter2.targetValue.SHGC}}">SHGC ≤ {{chapter2.targetValue.SHGC}}</text>
         </view>
       </view>
+      <!-- 2.2.1 推导说明 -->
+      <view class="narrative-section" wx:if="{{chapter2.narrative.lines.length > 0}}">
+        <view wx:for="{{chapter2.narrative.lines}}" wx:key="index">
+          <text class="narrative-line">{{item}}</text>
+        </view>
+      </view>
       <!-- 2.2 影响因素 -->
       <view class="factors-section" wx:if="{{chapter2.factors}}">
         <text class="section-sub-title">影响因素</text>
@@ -198,12 +204,6 @@
             <text class="factor-name">{{item.name}}</text>
             <text class="factor-desc">{{item.description}}</text>
           </view>
-        </view>
-      </view>
-      <!-- 2.2.1 推导说明 -->
-      <view class="narrative-section" wx:if="{{chapter2.narrative.lines.length > 0}}">
-        <view wx:for="{{chapter2.narrative.lines}}" wx:key="index">
-          <text class="narrative-line">{{item}}</text>
         </view>
       </view>
       <!-- 2.3 热工红线 -->
@@ -231,6 +231,10 @@
           <text class="target-value">P3 ≥ {{chapter3.targetValue.P3}} {{chapter3.targetValue.unit}}</text>
         </view>
       </view>
+      <!-- 3.2.1 推导说明 -->
+      <view wx:if="{{chapter3.narrative}}" class="narrative-line-wrap">
+        <text class="narrative-line">{{chapter3.narrative}}</text>
+      </view>
       <!-- 3.2 影响因素 -->
       <view class="factors-section" wx:if="{{chapter3.factors}}">
         <text class="section-sub-title">影响因素</text>
@@ -240,10 +244,6 @@
             <text class="factor-desc">{{item.description}}</text>
           </view>
         </view>
-      </view>
-      <!-- 3.2.1 推导说明 -->
-      <view wx:if="{{chapter3.narrative}}" class="narrative-line-wrap">
-        <text class="narrative-line">{{chapter3.narrative}}</text>
       </view>
       <!-- 3.3 抗风红线 -->
       <view class="redlines-section" wx:if="{{chapter3.redlines.length > 0}}">
@@ -271,6 +271,12 @@
           <text class="target-value">气密 ≥ {{chapter4.targetValue.air}} {{chapter4.targetValue.unit}}</text>
         </view>
       </view>
+      <!-- 4.2.1 推导说明 -->
+      <view wx:if="{{chapter4.narrative}}" class="narrative-line-wrap">
+        <view wx:for="{{chapter4.narrative}}" wx:key="index">
+          <text class="narrative-line">{{item}}</text>
+        </view>
+      </view>
       <!-- 4.2 影响因素 -->
       <view class="factors-section" wx:if="{{chapter4.factors}}">
         <text class="section-sub-title">影响因素</text>
@@ -279,12 +285,6 @@
             <text class="factor-name">{{item.name}}</text>
             <text class="factor-desc">{{item.description}}</text>
           </view>
-        </view>
-      </view>
-      <!-- 4.2.1 推导说明 -->
-      <view wx:if="{{chapter4.narrative}}" class="narrative-line-wrap">
-        <view wx:for="{{chapter4.narrative}}" wx:key="index">
-          <text class="narrative-line">{{item}}</text>
         </view>
       </view>
       <!-- 4.3 水密气密红线 -->

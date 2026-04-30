@@ -1,0 +1,8 @@
+miniprogram/cloudfunctions/generatePDF/node_modules
+miniprogram/cloudfunctions/generateReport/node_modules
+miniprogram/cloudfunctions/generateReport/fonts
+miniprogram/cloudfunctions/generateReport.tar.gz
+miniprogram/cloudfunctions/generateReport.zip
+miniprogram/cloudfunctions/benchmark-pdf
+miniprogram/cloudfunctions/pdfSpike
+miniprogram/cloudfunctions/cleanupOldPDFs
