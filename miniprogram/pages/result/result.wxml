@@ -155,6 +155,10 @@
           </view>
         </view>
       </view>
+      <!-- 1.2.1 推导说明 -->
+      <view wx:if="{{chapter1.narrative}}" class="narrative-line-wrap">
+        <text class="narrative-line">{{chapter1.narrative}}</text>
+      </view>
       <!-- 1.3 隔声红线 -->
       <view class="redlines-section" wx:if="{{chapter1.redlines.length > 0}}">
         <text class="section-sub-title">隔声红线</text>
@@ -198,9 +202,8 @@
       </view>
       <!-- 2.2.1 推导说明 -->
       <view class="narrative-section" wx:if="{{chapter2.narrative.lines.length > 0}}">
-        <text class="section-sub-title">推导说明</text>
-        <view class="narrative-lines">
-          <text wx:for="{{chapter2.narrative.lines}}" wx:key="index" class="narrative-line">{{item}}</text>
+        <view wx:for="{{chapter2.narrative.lines}}" wx:key="index">
+          <text class="narrative-line">{{item}}</text>
         </view>
       </view>
       <!-- 2.3 热工红线 -->
@@ -238,6 +241,10 @@
           </view>
         </view>
       </view>
+      <!-- 3.2.1 推导说明 -->
+      <view wx:if="{{chapter3.narrative}}" class="narrative-line-wrap">
+        <text class="narrative-line">{{chapter3.narrative}}</text>
+      </view>
       <!-- 3.3 抗风红线 -->
       <view class="redlines-section" wx:if="{{chapter3.redlines.length > 0}}">
         <text class="section-sub-title">抗风红线</text>
@@ -274,6 +281,12 @@
           </view>
         </view>
       </view>
+      <!-- 4.2.1 推导说明 -->
+      <view wx:if="{{chapter4.narrative}}" class="narrative-line-wrap">
+        <view wx:for="{{chapter4.narrative}}" wx:key="index">
+          <text class="narrative-line">{{item}}</text>
+        </view>
+      </view>
       <!-- 4.3 水密气密红线 -->
       <view class="redlines-section" wx:if="{{chapter4.redlines.length > 0}}">
         <text class="section-sub-title">水密气密红线</text>
@@ -292,6 +305,10 @@
       <text class="chapter-title">安全配置</text>
     </view>
     <view wx:if="{{chapter5.show}}" class="chapter5-block">
+      <!-- 5.0.1 推导说明 -->
+      <view wx:if="{{chapter5.narrative}}" class="narrative-line-wrap">
+        <text class="narrative-line">{{chapter5.narrative}}</text>
+      </view>
       <!-- 5.1 安全场景说明 -->
       <view class="safety-context" wx:if="{{chapter5.triggers}}">
         <text class="section-sub-title">为什么需要安全配置</text>

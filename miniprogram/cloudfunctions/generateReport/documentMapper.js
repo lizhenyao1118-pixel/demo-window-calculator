@@ -654,7 +654,15 @@ function buildParameterNote({ windPressure, soundInsulation, thermal, shgc, safe
   }
   const block2 = lines.join('\n');
   const block3 = '其中安全等级依据 GB 15763.3 强制条款，属于强制性要求，不可降级。';
-  return { block1, block2, block3, lines };
+
+  // 按章节分组（供各章节独立渲染推导说明）
+  const chapter3_note = lines[0] || null;   // ① 抗风压
+  const chapter1_note = lines[1] || null;   // ② 隔声
+  const chapter2_note = lines.slice(2, 4);  // ③④ 热工+太阳得热
+  const chapter4_note = lines.slice(4, 6);  // ⑤⑥ 气密+水密
+  const chapter5_note = inputs.needsSafetyGlass ? (lines[6] || null) : null; // ⑦ 安全
+
+  return { block1, block2, block3, lines, chapter1_note, chapter2_note, chapter3_note, chapter4_note, chapter5_note };
 }
 
 function buildCoreTension(answers, resolved) {
@@ -1467,6 +1475,7 @@ function mapToSections(resolved, answers, pdfNo) {
       redlines: (sharedRedlineChecklist.mandatory || []).filter(r =>
         ['R06', 'R08', 'R09'].includes(r.id)
       ),
+      narrative: needsAnalysis.parameterNote?.chapter1_note || null,
       noise: normalizedAnswers.noise_type !== 'quiet' ? {
         show: true,
         typeLabel: getNoiseLabel(normalizedAnswers.noise_type, normalizedAnswers.noise_dist).typeLabel,
@@ -1507,7 +1516,7 @@ function mapToSections(resolved, answers, pdfNo) {
         { name: '系统认证', description: '型材+玻璃+五金整体系统热工认证' }
       ],
       narrative: {
-        lines: needsAnalysis.parameterNote?.lines || []
+        lines: needsAnalysis.parameterNote?.chapter2_note || []
       },
       redlines: (sharedRedlineChecklist.mandatory || []).filter(r =>
         ['R03', 'R04', 'R05', 'R07'].includes(r.id)
@@ -1591,7 +1600,8 @@ function mapToSections(resolved, answers, pdfNo) {
             hardware: c.spec && c.spec.hardware
               ? ('铰链>=' + c.spec.hardware.min_load_kg + 'kg') : '',
             priceRange: c.spec && c.spec.price_range ? c.spec.price_range : '',
-            upgradeReasons: Array.isArray(c.upgradeReasons) ? c.upgradeReasons : []
+            upgradeReasons: Array.isArray(c.upgradeReasons) ? c.upgradeReasons : [],
+      narrative: needsAnalysis.parameterNote?.chapter3_note || null
           }))
         : []
     },
@@ -1628,7 +1638,8 @@ function mapToSections(resolved, answers, pdfNo) {
       },
       ...buildChapter4Data(answers, budgetSpec, resolved, riskTrigger, isRisk, sharedRedlineChecklist),
       isRisk: isRisk,
-      riskTrigger: riskTrigger
+      riskTrigger: riskTrigger,
+      narrative: needsAnalysis.parameterNote?.chapter4_note?.length > 0 ? needsAnalysis.parameterNote.chapter4_note : null
     },
 
     // 第五章 · 安全配置（条件显示）
@@ -1650,7 +1661,8 @@ function mapToSections(resolved, answers, pdfNo) {
       redlines: (sharedRedlineChecklist.mandatory || []).filter(r =>
         ['R13', 'R14'].includes(r.id)
       ),
-      optionalUpgrades: safety.items || []
+      optionalUpgrades: safety.items || [],
+      narrative: needsAnalysis.parameterNote?.chapter5_note || null
     } : { show: false },
 
     // 过渡小节
