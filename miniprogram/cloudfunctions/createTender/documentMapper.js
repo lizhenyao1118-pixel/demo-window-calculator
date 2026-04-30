@@ -1402,7 +1402,7 @@ function mapToSections(resolved, answers, pdfNo) {
   const glassRwTheory = GLASS_LEVELS[glassKey]?.rw_max ?? null;
 
   // 派生字段触发逻辑
-  const needsSafetyGlass = window_features.has_large_fixed || familyRisk.includes('child');
+  const needsSafetyGlass = window_features.has_large_fixed;
   const climateLabel = getClimateLabel(climateZone);
   const needsWarmEdge = climateLabel.includes('严寒') || climateLabel.includes('寒冷') || K <= 1.6;
 
@@ -1636,7 +1636,7 @@ function mapToSections(resolved, answers, pdfNo) {
       requirements: [
         needsSafetyGlass ? { item: '玻璃安全性', spec: '钢化+夹胶，PVB>=0.76mm' } : null,
         normalizedAnswers.window_type === 'sliding' ? { item: '推拉窗限位', spec: '儿童安全锁+限位器' } : null,
-        { item: '防坠装置', spec: '外开窗配防坠绳，承重>=75kg' }
+        { item: '防坠装置', spec: '外开窗须配置防止窗扇脱落的安全装置，承载能力符合产品检测报告' }
       ].filter(Boolean),
       redlines: (sharedRedlineChecklist.mandatory || []).filter(r =>
         ['R13', 'R14'].includes(r.id)

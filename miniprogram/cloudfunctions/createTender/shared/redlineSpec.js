@@ -21,7 +21,7 @@ function buildRedlineRegistry({ TERM, getTierLabel, getField }) {
     { id: 'R12', text: '', level: 'mandatory', softened: false, trigger: () => true, userMeaning: '' },
 
     // 抗风主线
-    { id: 'R13', text: (a, r) => `抗风性能：抗风压性能等级≥${r.wind_pressure_level || '待定'}级（P3≥${getField(r, 'P3')}kPa），须提供抗风压性能检测报告（GB/T 7106）`, level: 'mandatory', softened: false, trigger: (a, r) => !!(r && (r.P3_required || r.P3 || r.wind_pressure_level)), userMeaning: '高楼层风压显著高于普通住宅。型材壁厚不足或安装固定点不足，在台风或强风天气下可能导致窗框变形甚至脱落。须索取与本案风压等级对应的检测报告，并在进场时核查壁厚。' },
+    { id: 'R13', text: '须采用安全玻璃（钢化或夹胶）；落地窗、大面积玻璃场景推荐夹胶构造，防止破碎后碎片伤人', level: 'mandatory', softened: false, trigger: (a, r) => !!(r && r.safetyForced), group: '安全玻璃', userMeaning: '本案存在高碰撞风险部位（落地窗/儿童活动区），此类场景应采用夹层安全玻璃，碎片不脱落。商家若以"钢化玻璃同样安全"替代，须提供该部位适用的安全玻璃类型依据，否则不予接受。' },
 
     // 安全主线
     { id: 'R14', text: '安全玻璃：夹胶构造强制（落地窗/大面积玻璃/有儿童家庭法规要求）', level: 'mandatory', softened: false, trigger: (a, r) => !!(r && r.safetyForced), userMeaning: '本案存在高碰撞风险部位（落地窗/儿童活动区），此类场景应采用夹层安全玻璃，碎片不脱落。商家若以"钢化玻璃同样安全"替代，须提供该部位适用的安全玻璃类型依据，否则不予接受。' },
