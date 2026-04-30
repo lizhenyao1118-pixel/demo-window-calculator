@@ -145,6 +145,10 @@
           <text class="target-value">Rw ≥ {{chapter1.targetValue.Rw}} {{chapter1.targetValue.unit}}</text>
         </view>
       </view>
+      <!-- 1.2.1 推导说明 -->
+      <view wx:if="{{chapter1.narrative}}" class="narrative-line-wrap">
+        <text class="narrative-line">{{chapter1.narrative}}</text>
+      </view>
       <!-- 1.2 影响因素 -->
       <view class="factors-section" wx:if="{{chapter1.factors}}">
         <text class="section-sub-title">影响因素</text>
@@ -154,10 +158,6 @@
             <text class="factor-desc">{{item.description}}</text>
           </view>
         </view>
-      </view>
-      <!-- 1.2.1 推导说明 -->
-      <view wx:if="{{chapter1.narrative}}" class="narrative-line-wrap">
-        <text class="narrative-line">{{chapter1.narrative}}</text>
       </view>
       <!-- 1.3 隔声红线 -->
       <view class="redlines-section" wx:if="{{chapter1.redlines.length > 0}}">
@@ -213,15 +213,15 @@
       </view>
     </view>
 
-    <!-- ===== 第三章 · 抗风 ===== -->
+    <!-- ===== 第三章 · 抗风压 ===== -->
     <view class="chapter-header">
       <text class="chapter-num">第三章</text>
-      <text class="chapter-title">抗风</text>
+      <text class="chapter-title">抗风压</text>
     </view>
     <view class="chapter3-block">
-      <!-- 3.1 抗风目标 -->
+      <!-- 3.1 抗风压目标 -->
       <view class="target-section" wx:if="{{chapter3.targetValue}}">
-        <text class="section-sub-title">你的抗风目标</text>
+        <text class="section-sub-title">你的抗风压目标</text>
         <view class="target-card">
           <text class="target-value">P3 ≥ {{chapter3.targetValue.P3}} {{chapter3.targetValue.unit}}</text>
         </view>
@@ -240,9 +240,9 @@
           </view>
         </view>
       </view>
-      <!-- 3.3 抗风红线 -->
+      <!-- 3.3 抗风压红线 -->
       <view class="redlines-section" wx:if="{{chapter3.redlines.length > 0}}">
-        <text class="section-sub-title">抗风红线</text>
+        <text class="section-sub-title">抗风压红线</text>
         <view class="redline-list">
           <view class="redline-item" wx:for="{{chapter3.redlines}}" wx:key="id">
             <text class="item-id">{{item.displayId || item.id}}</text>
@@ -300,10 +300,6 @@
       <text class="chapter-title">安全配置</text>
     </view>
     <view wx:if="{{chapter5.show}}" class="chapter5-block">
-      <!-- 5.0.1 推导说明 -->
-      <view wx:if="{{chapter5.narrative}}" class="narrative-line-wrap">
-        <text class="narrative-line">{{chapter5.narrative}}</text>
-      </view>
       <!-- 5.1 安全场景说明 -->
       <view class="safety-context" wx:if="{{chapter5.triggers}}">
         <text class="section-sub-title">为什么需要安全配置</text>

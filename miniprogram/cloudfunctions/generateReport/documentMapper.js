@@ -433,6 +433,7 @@ function build1_2(answers, resolved) {
       kValue: getField(resolved, 'K'),
       kBase: resolved.kBase || null,
       climateZone: resolved.climateZoneCN || '',
+      climateZoneCode: resolved.climateZone || '',
       appliedFactor: resolved.appliedFactor || null,
       corrections: Array.isArray(resolved.corrections) ? resolved.corrections : []
     },
@@ -449,6 +450,7 @@ function build1_2(answers, resolved) {
       facing: answers.orientation,
       painPoint: answers.pain_point,
       isHighFloor: Number(answers.floor) >= 7,
+      windowType: answers.window_type,
       hasBigWindow: Array.isArray(answers.family_risk) && answers.family_risk.includes('large_fixed'),
       hasChild: Array.isArray(answers.family_risk) && (answers.family_risk.includes('child') || answers.family_risk.includes('children')),
       needsSafetyGlass: Array.isArray(answers.family_risk) && (answers.family_risk.includes('large_fixed') || answers.family_risk.includes('floor_window'))
@@ -570,10 +572,10 @@ function buildNeedsTable(resolved, answers, sealGrades) {
  * 构建参数说明脚注（三块结构）
  */
 function buildParameterNote({ windPressure, soundInsulation, thermal, shgc, safety, sealGrades, inputs }) {
-  const block1 = '本表各项参数综合三类信息确定：① 国家/行业标准的基准值；② 您填写的项目信息（城市、楼层、窗型、噪声环境等）；③ 李Sir 基于工程案例的专业修正。';
+  const block1 = '本表各项参数综合三类信息确定：国家/行业标准的基准值；您填写的项目信息（城市、楼层、窗型、噪声环境等）；李Sir 基于工程案例的专业修正。';
   const lines = [];
 
-  lines.push(`① **抗风压**：${inputs.city}属 ${windPressure.windZone} 风区，第 ${inputs.floor} 层高度比 ${Math.round(Number(inputs.heightRatio) * 100)}%，按 GB/T 7106 推荐等级取 ≥${windPressure.value} kPa。对应GB/T 7106抗风压等级P4及以上。`);
+  lines.push(`抗风压：${inputs.city}属 ${windPressure.windZone} 风区，第 ${inputs.floor} 层高度比 ${Math.round(Number(inputs.heightRatio) * 100)}%，按 GB/T 7106 推荐等级取 ≥${windPressure.value} kPa。对应GB/T 7106抗风压等级P4及以上。`);
 
   // 动态生成距离标签
   const distanceLabels = {
@@ -598,9 +600,9 @@ function buildParameterNote({ windPressure, soundInsulation, thermal, shgc, safe
   const quietUsageNote = soundInsulation.usageAdj > 0
     ? `；因您将隔声降噪列为核心诉求，加严修正+${soundInsulation.usageAdj}`
     : '';
-  lines.push(`② **隔声**：噪声环境评估为安静（夜间本底噪声约35–40dB），隔声基准取${soundInsulation.baseRw} dB，无距离修正${quietUsageNote}，最终 ≥${soundInsulation.value} dB。依据：GB 50118 · 安静环境基础隔声标准。`);
+  lines.push(`隔声：噪声环境评估为安静（夜间本底噪声约35–40dB），隔声基准取${soundInsulation.baseRw} dB，无距离修正${quietUsageNote}，最终 ≥${soundInsulation.value} dB。依据：GB 50118 · 安静环境基础隔声标准。`);
 } else {
-  lines.push(`② **隔声**：${noiseText}，基础 Rw≥${soundInsulation.baseRw} dB，距离修正 ${distAdjText}，${usageExplain}，最终 ≥${soundInsulation.value} dB。依据：GB 50118 + 工程经验修正。`);
+  lines.push(`隔声：${noiseText}，基础 Rw≥${soundInsulation.baseRw} dB，距离修正 ${distAdjText}，${usageExplain}，最终 ≥${soundInsulation.value} dB。依据：GB 50118 + 工程经验修正。`);
 }
 
   const factorMap = {
@@ -609,7 +611,7 @@ function buildParameterNote({ windPressure, soundInsulation, thermal, shgc, safe
     westSun: '西晒修正 -0.1'
   };
   const factorText = factorMap[thermal.appliedFactor] || '';
-  lines.push(`③ **传热系数**：${inputs.city}属 ${thermal.climateZone}，基准 ${thermal.kBase || '2.4'} W/(m²·K)${factorText ? `，${factorText}` : ''}，取 K≤${thermal.kValue}。`);
+  lines.push(`传热系数：${inputs.city}属 ${thermal.climateZone}，基准 ${thermal.kBase || '2.4'} W/(m²·K)${factorText ? `，${factorText}` : ''}，取 K≤${thermal.kValue}。`);
 
   const facing = inputs.facing || inputs.sunExposure;
   const facingMap = {
@@ -621,10 +623,21 @@ function buildParameterNote({ windPressure, soundInsulation, thermal, shgc, safe
     none: '朝向已评估，无特殊遮阳需求'
   };
   const facingText = facingMap[facing] || '朝向已评估';
-  lines.push(`④ **太阳得热**：${facingText}，按 GB/T 2680 标准取 SHGC≤${shgc.value}。`);
+  lines.push(`太阳得热：${facingText}，按 GB/T 2680 标准取 SHGC≤${shgc.value}。`);
 
   if (sealGrades) {
-    lines.push(`⑤ **气密性**：住宅基础线为 ${sealGrades.airMin} 级${inputs.isHighFloor ? `，高层（≥7F）建议上调至 ${sealGrades.airRec} 级，以减轻风噪和渗风感` : ''}。`);
+    // 气密性
+    const airReasons = [];
+    if (inputs.isHighFloor) airReasons.push('高层（≥7F）风压大，渗风感明显');
+    if (thermal.climateZoneCode === 'SC') airReasons.push('严寒地区保温需求');
+    if (inputs.windowType === 'fixed') airReasons.push('固定窗密封要求');
+    if (sealGrades.airRec > sealGrades.airMin && airReasons.length > 0) {
+      lines.push(`气密性：住宅基础线为 ${sealGrades.airMin} 级，因${airReasons.join('、')}，上调至 ${sealGrades.airRec} 级。`);
+    } else if (sealGrades.airRec > sealGrades.airMin) {
+      lines.push(`气密性：住宅基础线为 ${sealGrades.airMin} 级，本案目标上调至 ${sealGrades.airRec} 级。`);
+    } else {
+      lines.push(`气密性：按 GB/T 7106 住宅基础线取 ${sealGrades.airMin} 级。`);
+    }
     const spec = CLIMATE_SPEC[inputs.city] || null;
     const isCoastal = !!(spec && spec.isCoastal);
     const isTyphoon = !!(spec && spec.typhoonRisk);
@@ -632,6 +645,7 @@ function buildParameterNote({ windPressure, soundInsulation, thermal, shgc, safe
     const waterParts = [];
     if (isCoastal) waterParts.push('沿海城市');
     if (isHighFloor) waterParts.push('高层');
+    if (inputs.windowType === 'fixed') waterParts.push('固定窗');
     let waterText = `水密性：`;
     if (waterParts.length > 0) {
       let reason = '';
@@ -639,10 +653,16 @@ function buildParameterNote({ windPressure, soundInsulation, thermal, shgc, safe
         reason = '，以应对台风季暴雨侵蚀';
       } else if (isHighFloor) {
         reason = '，以提升高层抗渗能力';
+      } else if (inputs.windowType === 'fixed') {
+        reason = '，固定窗排水设计要求更高';
       }
       waterText += `${waterParts.join(' + ')}，由基础 ${sealGrades.waterMin} 级上调至本案目标 ${sealGrades.waterRec} 级${reason}。`;
     } else {
-      waterText += `基础 ${sealGrades.waterMin} 级，本案目标 ${sealGrades.waterRec} 级。`;
+      if (sealGrades.waterRec > sealGrades.waterMin) {
+        waterText += `基础 ${sealGrades.waterMin} 级，本案目标上调至 ${sealGrades.waterRec} 级。`;
+      } else {
+        waterText += `按 GB/T 7106 基础线取 ${sealGrades.waterMin} 级。`;
+      }
     }
     lines.push(waterText);
   } else {
@@ -650,7 +670,7 @@ function buildParameterNote({ windPressure, soundInsulation, thermal, shgc, safe
     lines.push(`水密性：按 GB/T 7106 推荐等级确定`);
   }
   if (inputs.needsSafetyGlass) {
-    lines.push(`⑦ **安全等级**：${inputs.hasBigWindow ? '落地窗 + ' : ''}${inputs.hasChild ? '儿童家庭' : ''}依据 GB 15763.3 强制要求夹胶安全玻璃构造。`);
+    lines.push(`安全等级：${inputs.hasBigWindow ? '落地窗 + ' : ''}${inputs.hasChild ? '儿童家庭' : ''}依据 GB 15763.3 强制要求夹胶安全玻璃构造。`);
   }
   const block2 = lines.join('\n');
   const block3 = '其中安全等级依据 GB 15763.3 强制条款，属于强制性要求，不可降级。';
@@ -1592,6 +1612,7 @@ function mapToSections(resolved, answers, pdfNo) {
       safetyBudgetWarning: safety.budgetWarning,
       conflictAlert: buildChapter3ConflictAlert(budgetSpec, resolved),
       is_dual_tier: budgetSpec.is_dual_tier || false,
+      narrative: needsAnalysis.parameterNote?.chapter3_note || null,
       dualTierSpecs: (budgetSpec.is_dual_tier && Array.isArray(budgetSpec.recommendedConfig))
         ? budgetSpec.recommendedConfig.map(c => ({
             label: c.label || '',
@@ -1601,7 +1622,6 @@ function mapToSections(resolved, answers, pdfNo) {
               ? ('铰链>=' + c.spec.hardware.min_load_kg + 'kg') : '',
             priceRange: c.spec && c.spec.price_range ? c.spec.price_range : '',
             upgradeReasons: Array.isArray(c.upgradeReasons) ? c.upgradeReasons : [],
-      narrative: needsAnalysis.parameterNote?.chapter3_note || null
           }))
         : []
     },
