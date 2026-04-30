@@ -169,11 +169,6 @@
           </view>
         </view>
       </view>
-      <!-- 噪声场景（条件显示） -->
-      <view wx:if="{{chapter1.noise.show}}" class="noise-context">
-        <text class="noise-type">{{chapter1.noise.typeLabel}}</text>
-        <text class="noise-dist">{{chapter1.noise.distLabel}}</text>
-      </view>
     </view>
 
     <!-- ===== 第二章 · 热工 ===== -->
