@@ -1,29 +1,18 @@
 // calculator-v2.js - 修复P0缺陷：P3线性化 + Rw加权 + 城市降级 + 安全冲突
-const CITY_MAP = {
-  "北京": { climate: "cold", wind_zone: "W4", base_P3: 3.5 },
-  "上海": { climate: "hot_summer", wind_zone: "W3", base_P3: 3.0 },
-  "广州": { climate: "hot_year", wind_zone: "W4", base_P3: 3.5 },
-  "深圳": { climate: "hot_year", wind_zone: "W5", base_P3: 4.0 },
-  "成都": { climate: "hot_summer", wind_zone: "W2", base_P3: 2.5 },
-  "武汉": { climate: "hot_summer", wind_zone: "W3", base_P3: 3.0 },
-  "西安": { climate: "cold", wind_zone: "W3", base_P3: 3.0 },
-  "杭州": { climate: "hot_summer", wind_zone: "W3", base_P3: 3.0 },
-  "南京": { climate: "hot_summer", wind_zone: "W3", base_P3: 3.0 },
-  "沈阳": { climate: "severe_cold", wind_zone: "W3", base_P3: 3.0 },
-  "哈尔滨": { climate: "severe_cold", wind_zone: "W3", base_P3: 3.0 },
-};
+const { CLIMATE_SPEC, getClimateZone } = require('./climateSpec.js');
 
 // FIX P0-1: P3连续线性化
 function calcP3(city, floor, total_floors) {
-  const config = CITY_MAP[city] || { base_P3: 2.5, wind_zone: "W2" };
+  const cityConfig = getCityConfig(city);
+  const base_P3 = cityConfig.base_P3;
   const ratio = Math.min(floor / Math.max(total_floors, 1), 1.0);
   const floor_adj = parseFloat((ratio * 0.6).toFixed(2));
-  const value = parseFloat((config.base_P3 + floor_adj).toFixed(2));
-  
+  const value = parseFloat((base_P3 + floor_adj).toFixed(2));
+
   const warnings = [];
   if (total_floors > 50) warnings.push("超过50层，建议专业风压评估");
   if (value > 5.0) warnings.push("P3>5.0，超出常规范围");
-  
+
   return { value, warnings };
 }
 
@@ -39,8 +28,6 @@ function calcRw({ noise_type, noise_dist, pain_point }) {
 
   return Math.min(Math.max(rw, 28), 45);
 }
-
-const { CLIMATE_SPEC, getClimateZone } = require('./climateSpec.js');
 
 function calcThermal(city, answers) {
   const spec = CLIMATE_SPEC[city];
@@ -120,11 +107,21 @@ function calcSHGC(city, orientation, west_shading) {
   };
 }
 
-// FIX P0-4: 城市降级处理
+// FIX P0-4: 城市降级处理（从 climateSpec.js 读取）
 function getCityConfig(city) {
-  if (CITY_MAP[city]) return { ...CITY_MAP[city], degraded: false };
+  const spec = CLIMATE_SPEC[city];
+  if (spec) {
+    return {
+      climate: spec.climateType,
+      wind_zone: spec.windZone || 'W2',
+      base_P3: spec.basePressure,
+      degraded: false
+    };
+  }
   return {
-    climate: "hot_summer", wind_zone: "W2", base_P3: 2.5,
+    climate: "hot_summer",
+    wind_zone: "W2",
+    base_P3: 2.5,
     degraded: true,
     degraded_msg: `城市"${city}"暂未精确覆盖，参数基于保守标准推算`
   };
@@ -175,14 +172,14 @@ const { BUDGET_SPEC } = require('./budgetSpec.js');
 function calculateAll(assessment) {
   const { city, floor, total_floors, noise_type, noise_dist, orientation, westShading, west_shading, pain_point, heating_type, family_risk, budget_tier } = assessment;
   const effectiveWestShading = (westShading !== undefined) ? westShading : west_shading;
-  
+
   const cityConfig = getCityConfig(city);
   const p3Result = calcP3(city, floor, total_floors);
   const rwValue = calcRw({ noise_type, noise_dist, pain_point });
   const thermalResult = calcThermal(city, { ...assessment, west_shading: effectiveWestShading, heatingType: heating_type });
   const solarResult = calcSHGC(city, orientation, effectiveWestShading);
   const K_target = Number(thermalResult.K_target);
-  
+
   const computed = {
     city,
     climate_zone: thermalResult.climateZone,
@@ -208,12 +205,12 @@ function calculateAll(assessment) {
     degraded_msg: cityConfig.degraded_msg,
     shgc_note: solarResult.shgc_note
   };
-  
+
   const resolved = resolveConflicts(computed, assessment);
   resolved.safety_items = buildSafetyRedLine(family_risk);
   resolved.hasSafetyClause = Array.isArray(family_risk) && (family_risk.includes('child') || family_risk.includes('elder'));
   resolved.budget_spec = BUDGET_SPEC[budget_tier] || BUDGET_SPEC["B"];
-  
+
   return resolved;
 }
 

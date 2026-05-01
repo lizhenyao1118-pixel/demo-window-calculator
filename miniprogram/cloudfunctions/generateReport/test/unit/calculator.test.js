@@ -25,9 +25,9 @@ describe('calcThermal', () => {
 
   test('CT03: 深圳/none/落地窗 - 触发kMin下限保护', () => {
     const r = calcThermal('深圳', fixtures.shenzhenSafety);
-    expect(r.K_target).toBe(2.3);
+    expect(r.K_target).toBe(2.0);
     expect(r.K_target).toBeGreaterThanOrEqual(r.kMin);
-    expect(r.kMin).toBe(2.3);
+    expect(r.kMin).toBe(2.0);
     expect(r.appliedFactor).toBe('bigWindow');
   });
 
@@ -45,9 +45,9 @@ describe('calcThermal', () => {
     expect(r.appliedFactor).toBe('heating');
   });
 
-  test('CT06: 成都/self/无场景修正 - 2.2-0.2=2.0', () => {
+  test('CT06: 成都/self/无场景修正 - 2.5-0.2=2.3', () => {
     const r = calcThermal('成都', fixtures.chengduMinimal);
-    expect(r.K_target).toBe(2.0);
+    expect(r.K_target).toBe(2.3);
     expect(r.adjustment).toBe(-0.2);
   });
 

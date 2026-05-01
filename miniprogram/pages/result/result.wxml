@@ -174,7 +174,7 @@
     <!-- ===== 第二章 · 热工 ===== -->
     <view class="chapter-header">
       <text class="chapter-num">第二章</text>
-      <text class="chapter-title">热工</text>
+      <text class="chapter-title">热工（保温与隔热）</text>
     </view>
     <view class="chapter2-block">
       <!-- 2.1 热工目标 -->
@@ -184,6 +184,10 @@
           <text class="target-value">K ≤ {{chapter2.targetValue.K}} {{chapter2.targetValue.unit_K}}</text>
           <text class="target-value" wx:if="{{chapter2.targetValue.SHGC}}">SHGC ≤ {{chapter2.targetValue.SHGC}}</text>
         </view>
+      </view>
+      <!-- 2.1.1 地方标准提示（kNote） -->
+      <view wx:if="{{chapter2.kNote}}" class="k-note">
+        <text>{{chapter2.kNote}}</text>
       </view>
       <!-- 2.2.1 推导说明 -->
       <view class="narrative-section" wx:if="{{chapter2.narrative.lines.length > 0}}">
@@ -338,22 +342,17 @@
       </view>
     </view>
 
-    <!-- ===== 过渡小节 ===== -->
-    <view class="transition-block" wx:if="{{transition}}">
-      <view class="transition-header">
-        <text class="transition-title">{{transition.title}}</text>
-      </view>
-      <view class="transition-body">
-        <text class="transition-guide">{{transition.guideText}}</text>
-      </view>
-    </view>
-
     <!-- ===== 第六章 · 配置汇总答题表 ===== -->
     <view class="chapter-header">
       <text class="chapter-num">第六章</text>
       <text class="chapter-title">配置汇总答题表</text>
     </view>
     <view class="chapter6-block">
+      <!-- 使用说明 -->
+      <view class="usage-note" wx:if="{{transition}}">
+        <text class="usage-title">{{transition.title}}</text>
+        <text class="usage-text">{{transition.guideText}}</text>
+      </view>
       <text class="section-sub-title" wx:if="{{chapter6.intro}}">{{chapter6.intro}}</text>
       <!-- 配置汇总表 -->
       <view class="config-table" wx:if="{{chapter6.configSummaryTable}}">

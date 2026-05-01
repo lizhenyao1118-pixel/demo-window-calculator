@@ -2,7 +2,7 @@ function buildRedlineRegistry({ TERM, getTierLabel, getField }) {
   return [
     // 型材系统主线
     { id: 'R01', text: '型材系统：须采用原生铝型材，并提供材质检验证明；如采用其他材质，应说明理由并提供检测依据', level: 'mandatory', softened: false, trigger: () => true, userMeaning: '部分商家用回收铝或杂料替代原生铝，外观无法区分。杂料型材强度不足，抗风压性能无法保证。材质证明、出厂合格证和必要的进场复验资料是核验材质真伪的主要依据，外观不能作为判断依据。' },
-    { id: 'R02', text: (a, r) => `型材系统：主受力壁厚≥1.5mm（当前风压要求P3≥${getField(r, 'P3')}kPa），须提供截面检测报告`, level: 'mandatory', softened: false, trigger: () => true, userMeaning: '壁厚是型材抗风压的主要参数之一。商家常见说法是"我们产品质量很好"，但不提供壁厚数据。壁厚不足在极端天气下可能导致型材变形或破坏，须要求提供截面检测报告。' },
+    { id: 'R02', text: (a, r) => `型材系统：主受力壁厚≥1.8mm（当前风压要求P3≥${getField(r, 'P3')}kPa），须提供截面检测报告`, level: 'mandatory', softened: false, trigger: () => true, userMeaning: '壁厚是型材抗风压的主要参数之一。商家常见说法是"我们产品质量很好"，但不提供壁厚数据。壁厚不足在极端天气下可能导致型材变形或破坏，须要求提供截面检测报告。' },
     { id: 'R03', text: '型材系统：须提供完整系统窗热工认证文件（含型材+隔热条+玻璃组合认证）', level: 'mandatory', softened: false, trigger: () => true, userMeaning: '系统窗的热工性能取决于型材+隔热条+玻璃的整体配合。商家常见做法是非配套拼装，整窗实际K值与标称值存在偏差。完整系统认证文件是唯一可核查的依据。' },
     { id: 'R04', text: '型材系统：禁止非配套隔热条拼装，不接受与型材品牌不一致的隔热条', level: 'mandatory', softened: false, trigger: () => true, userMeaning: '非配套隔热条会导致型材热工性能失真，整窗K值可能远高于标称值。外观上无法识别，须在合同中明确约定并要求认证文件。' },
     { id: 'R05', text: (a, r) => `型材系统：断桥铝隔热条宽度≥${r.insulationBar_mm || 28}mm（当前热工要求K≤${getField(r, 'K')}），禁止仿断桥产品`, level: 'mandatory', softened: false, trigger: () => true, userMeaning: '隔热条宽度直接影响型材整体K值。宽度不足时，即使玻璃达标，整窗K值仍可能超出本案要求。须在报价中明确列出隔热条型号、宽度及与型材系统的配套关系。' },

@@ -52,7 +52,7 @@ const FIELD_MAP = {
 const TERM = {
   paramLabel: '本案目标值',
   threshold: '采购技术底线',
-  excludeSoft: '建议不予优先考虑',
+  excludeSoft: '在本案技术要求中不达标',
   excludeHard: '方案即视为不合格',
   tierA: '经济实用 A档',
   tierB: '舒适均衡 B档',
@@ -851,7 +851,7 @@ function buildPerformanceChecks(answers, resolved) {
     });
     checks.push({
       id: 'perf_sound_report',
-      text: `要求商家提供同系列产品的隔声检测报告（第三方实验室），核对 Rw 值是否达到本文件 1.2 节${TERM.paramLabel}。无报告的商家应在合同中明确性能承诺。`
+      text: `商家须提供第三方Rw检测报告（GB/T 8485-2008），核对 Rw+Ctr 值是否达到本文件 1.2 节${TERM.paramLabel}。无报告或数据不达标的视为不合格方案。`
     });
   }
 
@@ -1384,6 +1384,8 @@ function mapToSections(resolved, answers, pdfNo) {
 
   const band = getHeightBand(answers.floor, answers.total_floors);
   const climateZone = answers.climateZone || resolved.climateZone || getClimateZone(answers.city);
+  const climateData = CLIMATE_SPEC[answers.city] || {};
+  const kNote = climateData.kNote || null;
   const normalizedAnswers = { ...answers, climateZone };
   const painTag = getPainTag(answers.pain_point);
   const budgetSpec = buildBudgetSpecView(resolved, normalizedAnswers);
@@ -1490,7 +1492,7 @@ function mapToSections(resolved, answers, pdfNo) {
         { name: '玻璃构造', description: '夹胶/三玻两腔配置决定理论 Rw 上限' },
         { name: '气密性能', description: `气密>=${resolvedSealGrades.airRec}级，防止缝隙漏声` },
         { name: '窗型选择', description: '平开窗密封优于推拉窗，高 Rw 场景优先平开' },
-        { name: '密封工艺', description: '胶条系统完整性、组角注胶工艺' }
+        { name: '密封工艺', description: '胶条系统完整性、组角注胶工艺；安装环节的窗框密封同样影响最终隔声效果' }
       ],
       redlines: (sharedRedlineChecklist.mandatory || []).filter(r =>
         ['R06', 'R08', 'R09'].includes(r.id)
@@ -1525,6 +1527,7 @@ function mapToSections(resolved, answers, pdfNo) {
         unit_K: 'W/(m2.K)',
         unit_SHGC: ''
       },
+      kNote: kNote,
       derivationLogic: {
         thermal: needsAnalysis.thermal || null,
         climateZone: climateLabel,
@@ -1533,7 +1536,7 @@ function mapToSections(resolved, answers, pdfNo) {
       factors: [
         { name: '玻璃配置', description: 'Low-E 镀膜位置、惰性气体填充' },
         { name: '隔热条规格', description: `≥${getInsulationBarRequirement(K).min_mm}mm，${getInsulationBarRequirement(K).process}` },
-        { name: '系统认证', description: '型材+玻璃+五金整体系统热工认证' }
+        { name: '系统设计', description: '型材+玻璃+五金整体系统热工认证' }
       ],
       narrative: {
         lines: needsAnalysis.parameterNote?.chapter2_note || []
@@ -1597,7 +1600,7 @@ function mapToSections(resolved, answers, pdfNo) {
         }
       },
       factors: [
-        { name: '型材壁厚', description: `主受力部位>=${budgetSpec.profileWallThickness || 1.5}mm` },
+        { name: '型材结构', description: `结构设计 + 主受力部位>=${budgetSpec.profileWallThickness || 1.8}mm（外窗）` },
         { name: '五金系统', description: '铰链/滑撑承重等级、防坠绳配置' },
         { name: '安装节点', description: '固定件规格、间距、锚固深度' }
       ],

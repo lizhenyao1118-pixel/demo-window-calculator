@@ -131,7 +131,7 @@
 
 | 改动文件 | 直接影响 | 需同步检查 |
 |---------|---------|---------|
-| `calculator-v2.js` | 所有性能参数计算结果 | `documentMapper.js` 的输入值 |
+| `calculator-v2.js` | 所有性能参数计算结果（数据源：climateSpec.js） | `documentMapper.js` 的输入值 |
 | `arbitrator.js` | 配置层仲裁结果 | `documentMapper.js` 的配置字段 |
 | `documentMapper.js` | reportSnapshot 全部字段 | `result.wxml` 所有数据绑定；buildParameterNote 新增字段须确认在 chapter 根级别（D-type 防范） |
 | `index.js` | 云函数入口、snapshot 写入完整性 | summary 字段是否包含在 return 里 |
@@ -210,6 +210,7 @@
 
 | 废弃项 | 原因 | 替代方案 |
 |--------|------|---------|
+| CITY_MAP | 双数据源问题，数据分散在 CITY_MAP 和 CLIMATE_SPEC | 合并至 climateSpec.js（basePressure + climateType 字段，SPEC-CITY-02） |
 | BUDGET_TIER_GLASS_BASE | 档位倒置，数据错乱 | GLASS_LEVELS 级差驱动（SPEC-02） |
 | getRwRequired() fallback | 死代码（已删除，commit 915db5b）| calculator-v2.js为唯一Rw数据源 |
 | 档位模板式红线生成 | 导致条款错配 | 性能层动态生成 |
@@ -271,7 +272,9 @@
 
 | 日期 | 类型 | 决策内容 | 约束／原因 |
 |------|------|---------|-----------|
-| 2026-04-13 | ❌ 关闭 | 遮罩付费墙方案 | 已改为 wx:if 条件渲染，不得重开 |
+| 2026-05-01 | ✅ 执行 | SPEC-CITY-02：数据源合并+哈尔滨+23城完整覆盖 | 解决双数据源问题：CITY_MAP 合并至 climateSpec.js（新增 basePressure + climateType 字段）；新增哈尔滨（23城）；calculator-v2.js 删除 CITY_MAP，改为从 climateSpec.js 读取；P3 回归验证11/11通过（原10城+哈尔滨）；海口非降级验证通过（P3=5.4, degraded=false）；calculator.test.js 同步更新（CT03/CT06 期望值修正） |
+| 2026-05-01 | ✅ 执行 | SPEC-CITY-01：kNote管道搭建+Batch1城市扩展 | 北京条目增加kLimit=1.1/kNote字段（DB11/891-2020地标提示）；climateSpec.js新增12城（天津/大连/济南/青岛/合肥/福州/厦门/长沙/南宁/海口/重庆/宁波）；城市覆盖10→22城；documentMapper.js双副本+kNote消费；result.wxml条件渲染；22城全量验证通过 |
+| 2026-05-01 | ✅ 执行 | SPEC-QA-01：P0国标合规+R08红线一致性+原则5文案硬化 | 真机截图审查触发：①壁厚1.5→1.8(GB/T 8478-2020第5.1.2.1.2条)；②"建议不予优先考虑"→"在本案技术要求中不达标"；③检测报告"建议要求"→"须提供"；④热工标题补充(保温与隔热)；⑤影响因素标签优化(系统设计/型材结构)；⑥密封工艺补充安装环节说明 |
 | 2026-04-13 | ⚠️ 待执行 | 清除DEBUG log（index.js 331-332行） | 只删两行，不改周边逻辑，完成标准：部署后生产日志无输出 |
 | 2026-04-14 | ✅ 确认 | 第三章 userMeaning 迁移至首页Q&A | MVP方式B：独立维护，不做红线关联跳转；渲染层第三章不消费；数据层字段保留；后续升级方向：方式A（"？"图标直达） |
 | 2026-04-14 | ✅ 确认 | 第四章重构：三阶段过程把控 | 过程把控>文件收集；三节点：下单前/安装前（进场）/安装后（竣工）；报告是预期结果证明，不是交付确定性来源 |
@@ -582,7 +585,10 @@ T4 审查确认：节能设计规范对西向外窗的主要要求是控制 SHGC
 ---
 ### 议题 5：城市级 K 值硬限值层（kNote 字段）
 
+**状态：Phase A 已完成，kNote 管道已搭建，北京已写入**
+
 登记日期：2026-04-22
+完成日期：2026-05-01（SPEC-CITY-01）
 触发入库标准：1（跨文件管道）+ 2（字段语义）
 
 问题描述：
@@ -590,15 +596,17 @@ T4 审查确认：节能设计规范对西向外窗的主要要求是控制 SHGC
 北京 DB11/891-2020 法定要求 K≤1.1，西安 DBJ/61-164-2019 法定要求 K<2.2，
 当前招标文件中无城市级合规说明，用户无法感知推荐值与地标之间的差距。
 
-候选方案：
-climateSpec.js 增加 kNote / kLimit 字段（城市级覆盖）
-→ documentMapper.js 消费字段
-→ result.wxml 在 K 值条目下渲染城市专项说明
+**已完成（Phase A）：**
+- climateSpec.js 增加 kNote / kLimit 字段（城市级覆盖）
+- documentMapper.js 消费字段（双副本同步）
+- result.wxml 在 K 值条目下渲染城市专项说明
+- 北京已写入（kLimit=1.1, kNote=DB11/891-2020提示）
 
-触发条件：收到北京/西安用户"推荐值与本地标准不符"类反馈，
-或推广稳定后第一批架构迭代启动时。
+**待补充（Phase B）：**
+- 西安 kNote/kLimit 待补充（需查证 DBJ/61-164-2019 最新版本）
+- 其余城市地方标准人工查证后补充
 
-覆盖范围：北京（1.1）、西安（2.2），其余城市待人工查标准后补充。
+覆盖范围：北京（1.1）✅ 已上线；西安（2.2）待补充；其余城市待查标准。
 
 约束：须走完整 SPEC；白皮书同步升版。
 
